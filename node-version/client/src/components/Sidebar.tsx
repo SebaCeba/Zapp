@@ -16,7 +16,8 @@ const menuItems: MenuItem[] = [
       { label: 'Suscripciones', href: '/app' },
       { label: 'Créditos y Seguros', href: '/creditos' },
       { label: 'Hipotecario', href: '/hipotecario' },
-      { label: 'Servicios Básicos', href: '/servicios-basicos' }
+      { label: 'Servicios Básicos', href: '/servicios-basicos' },
+      { label: 'Supermercado', href: '/supermercado' }
     ]
   }
 ];

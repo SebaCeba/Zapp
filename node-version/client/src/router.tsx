@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import ServiciosBasicos from './pages/ServiciosBasicos';
 import Ingresos from './pages/Ingresos';
 import Presupuesto from './pages/Presupuesto';
+import Supermercado from './pages/Supermercado';
 
 export default function Router() {
   return (
@@ -18,6 +19,7 @@ export default function Router() {
         <Route path="/hipotecario" element={<Hipotecario />} />
         <Route path="/servicios-basicos" element={<ServiciosBasicos />} />
         <Route path="/ingresos" element={<Ingresos />} />
+        <Route path="/supermercado" element={<Supermercado />} />
       </Routes>
     </BrowserRouter>
   );

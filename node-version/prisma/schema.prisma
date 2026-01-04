@@ -135,7 +135,26 @@ model PresupuestoServicioBasico {
   @@unique([servicioId, anio])
   @@map("presupuestos_servicios_basicos")
 }
+model SupermercadoPresupuesto {
+  id                Int      @id @default(autoincrement())
+  anio              Int      @unique
+  enero             Float    @default(0)
+  febrero           Float    @default(0)
+  marzo             Float    @default(0)
+  abril             Float    @default(0)
+  mayo              Float    @default(0)
+  junio             Float    @default(0)
+  julio             Float    @default(0)
+  agosto            Float    @default(0)
+  septiembre        Float    @default(0)
+  octubre           Float    @default(0)
+  noviembre         Float    @default(0)
+  diciembre         Float    @default(0)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
 
+  @@map("supermercado_presupuesto")
+}
 model IngresoBase {
   id                Int                          @id @default(autoincrement())
   nombre            String                       @unique

@@ -7,6 +7,7 @@ import obligacionesRoutes from './routes/obligaciones';
 import hipotecarioRoutes from './routes/hipotecario';
 import serviciosBasicosRoutes from './routes/servicios-basicos';
 import ingresosRoutes from './routes/ingresos';
+import supermercadoRoutes from './routes/supermercado';
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ app.use('/api/obligaciones', obligacionesRoutes);
 app.use('/api/hipotecario', hipotecarioRoutes);
 app.use('/api/servicios-basicos', serviciosBasicosRoutes);
 app.use('/api/ingresos', ingresosRoutes);
+app.use('/api/supermercado', supermercadoRoutes);
 
 app.get('/health', (_, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

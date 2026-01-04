@@ -8,6 +8,7 @@ interface ResumenMensual {
   creditos: number;
   hipotecario: number;
   serviciosBasicos: number;
+  supermercado: number;
   total: number;
   balance: number;
 }
@@ -37,6 +38,10 @@ interface DetalleObligacion {
   valores: number[];
 }
 
+interface DetalleSupermercado {
+  valores: number[];
+}
+
 const Presupuesto: React.FC = () => {
   const [anioActual] = useState(new Date().getFullYear());
   const [anioSeleccionado, setAnioSeleccionado] = useState(anioActual);
@@ -50,6 +55,7 @@ const Presupuesto: React.FC = () => {
   const [detalleHipotecario, setDetalleHipotecario] = useState<DetalleHipotecario[]>([]);
   const [detalleSuscripciones, setDetalleSuscripciones] = useState<DetalleSuscripcion[]>([]);
   const [detalleObligaciones, setDetalleObligaciones] = useState<DetalleObligacion[]>([]);
+  const [detalleSupermercado, setDetalleSupermercado] = useState<DetalleSupermercado | null>(null);
 
   const aniosDisponibles = Array.from(
     { length: 11 },
@@ -75,7 +81,7 @@ const Presupuesto: React.FC = () => {
       setLoading(true);
       
       // Cargar datos de todas las fuentes
-      const [ingresosRes, serviciosRes, bonosRes, subscriptionsRes, obligacionesRes, paymentsRes, segurosRes, supuestoRes] = await Promise.all([
+      const [ingresosRes, serviciosRes, bonosRes, subscriptionsRes, obligacionesRes, paymentsRes, segurosRes, supuestoRes, supermercadoRes] = await Promise.all([
         fetch(`http://localhost:3000/api/ingresos/presupuesto/${anioSeleccionado}`),
         fetch(`http://localhost:3000/api/servicios-basicos/presupuesto/${anioSeleccionado}`),
         fetch(`http://localhost:3000/api/ingresos/bonos/${anioSeleccionado}`),
@@ -83,7 +89,8 @@ const Presupuesto: React.FC = () => {
         fetch(`http://localhost:3000/api/obligaciones/`),
         fetch(`http://localhost:3000/api/hipotecario/payments`),
         fetch(`http://localhost:3000/api/hipotecario/seguros`),
-        fetch(`http://localhost:3000/api/obligaciones/supuestos/${anioSeleccionado}`)
+        fetch(`http://localhost:3000/api/obligaciones/supuestos/${anioSeleccionado}`),
+        fetch(`http://localhost:3000/api/supermercado/presupuesto/${anioSeleccionado}`)
       ]);
 
       const ingresosData = await ingresosRes.json();
@@ -94,6 +101,7 @@ const Presupuesto: React.FC = () => {
       const paymentsData = await paymentsRes.json();
       const segurosData = await segurosRes.json();
       const supuestoData = await supuestoRes.json();
+      const supermercadoData = await supermercadoRes.json();
       
       const valorUF = supuestoData.valorUfBase || 37000;
 
@@ -302,6 +310,13 @@ const Presupuesto: React.FC = () => {
       
       setDetalleObligaciones(detallesOblig);
 
+      // Preparar detalles de supermercado
+      const valoresSupermercado = MESES_KEYS.map(mesKey => {
+        return supermercadoData?.[mesKey] || 0;
+      });
+
+      setDetalleSupermercado({ valores: valoresSupermercado });
+
       // Calcular suscripciones por mes
       const calcularSuscripcionesMes = (mes: number): number => {
         return subscriptionsData.reduce((sum: number, sub: any) => {
@@ -402,8 +417,11 @@ const Presupuesto: React.FC = () => {
         const totalSuscripciones = detallesSubs.reduce((sum, sub) => sum + sub.valores[idx], 0);
         const totalCreditos = calcularObligacionesMes(mesNum);
         const totalHipotecario = calcularHipotecarioMes(mesNum);
+        
+        // Calcular supermercado
+        const totalSupermercado = valoresSupermercado[idx];
 
-        const totalEgresos = totalSuscripciones + totalCreditos + totalHipotecario + totalServicios;
+        const totalEgresos = totalSuscripciones + totalCreditos + totalHipotecario + totalServicios + totalSupermercado;
         const balance = totalIngresos - totalEgresos;
 
         return {
@@ -413,6 +431,7 @@ const Presupuesto: React.FC = () => {
           creditos: totalCreditos,
           hipotecario: totalHipotecario,
           serviciosBasicos: totalServicios,
+          supermercado: totalSupermercado,
           total: totalEgresos,
           balance
         };
@@ -691,6 +710,44 @@ const Presupuesto: React.FC = () => {
                     </td>
                   </tr>
                 ))}
+
+                {/* SUPERMERCADO */}
+                <tr 
+                  style={{ background: '#fee2e2', cursor: 'pointer' }}
+                  onClick={() => setExpandido(expandido === 'supermercado' ? null : 'supermercado')}
+                >
+                  <td style={{ position: 'sticky', left: 0, background: '#fee2e2', fontWeight: '500', zIndex: 1 }}>
+                    <span style={{ marginRight: '0.5rem' }}>
+                      {expandido === 'supermercado' ? '▼' : '▶'}
+                    </span>
+                    Supermercado
+                  </td>
+                  {resumen.map((mes) => (
+                    <td key={mes.mes} style={{ textAlign: 'right' }}>
+                      {formatearMonto(mes.supermercado)}
+                    </td>
+                  ))}
+                  <td style={{ textAlign: 'right', background: '#fecaca' }}>
+                    {formatearMonto(calcularTotalAnual('supermercado'))}
+                  </td>
+                </tr>
+
+                {/* Detalle de supermercado */}
+                {expandido === 'supermercado' && detalleSupermercado && (
+                  <tr style={{ background: '#fef2f2' }}>
+                    <td style={{ position: 'sticky', left: 0, background: '#fef2f2', paddingLeft: '2rem', fontSize: '0.875rem', zIndex: 1 }}>
+                      Compras
+                    </td>
+                    {detalleSupermercado.valores.map((valor, mesIdx) => (
+                      <td key={mesIdx} style={{ textAlign: 'right', fontSize: '0.875rem' }}>
+                        {formatearMonto(valor)}
+                      </td>
+                    ))}
+                    <td style={{ textAlign: 'right', background: '#fee2e2', fontSize: '0.875rem' }}>
+                      {formatearMonto(detalleSupermercado.valores.reduce((sum, v) => sum + v, 0))}
+                    </td>
+                  </tr>
+                )}
 
                 <tr style={{ background: '#fca5a5', fontWeight: '600' }}>
                   <td style={{ position: 'sticky', left: 0, background: '#fca5a5', zIndex: 1 }}>
