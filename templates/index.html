@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Planificador de Suscripciones</title>
+    <style>
+      :root{--sidebar-width:220px;}
+      body { font-family: Arial, sans-serif; margin: 0; }
+      /* layout */
+      .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: var(--sidebar-width);
+        background: #f8f9fa;
+        border-right: 1px solid #e0e0e0;
+        padding: 1rem;
+        overflow: auto;
+      }
+      .main {
+        margin-left: calc(var(--sidebar-width) + 40px);
+        padding: 2rem;
+      }
+
+      h1 { margin-top: 0; }
+      form { margin-bottom: 1rem; }
+      table { border-collapse: collapse; width: 100%; }
+      th, td { border: 1px solid #ddd; padding: 8px; }
+      th { background: #f2f2f2; }
+      /* Support table: keep first column on one line and let it size to content */
+      .support-table { table-layout: auto; }
+      .support-table th:first-child, .support-table td:first-child { white-space: nowrap; width: 1%; }
+
+      /* sidebar list */
+      .menu-title { font-weight: 700; margin-bottom: .5rem; }
+      .menu-item { display:block; padding: .4rem .5rem; border-radius:4px; color:#111; text-decoration:none; }
+      .menu-item:hover { background:#e9ecef; }
+      .menu-item.active { background:#dee2e6; font-weight:700; }
+
+      /* small details box */
+      .details { margin-top: 1rem; background:#fff; border:1px solid #e6e6e6; padding:.6rem; border-radius:4px; }
+      .controls { margin-top:.5rem; }
+      .occurrence { font-family: monospace; }
+      @media (max-width:700px){ .sidebar{position:relative;width:100%;border-right:none} .main{margin-left:0} }
+    </style>
+  </head>
+  <body>
+    {% include 'sidebar.html' %}
+
+    <div class="main">
+    <h1>Planificador de Suscripciones</h1>
+
+    <h2>Añadir suscripción</h2>
+    <form action="/add" method="post">
+      <label>Nombre: <input type="text" name="name" required></label><br>
+      <label>Precio: <input type="number" step="0.01" name="price" required></label><br>
+      <label>Periodicidad:
+        <select name="periodicity">
+          <option value="monthly">Mensual</option>
+          <option value="quarterly">Trimestral</option>
+          <option value="semiannual">Semestral</option>
+          <option value="annual">Anual</option>
+          <option value="weekly">Semanal</option>
+        </select>
+      </label><br>
+      <label>Fecha de inicio: <input type="date" name="start_date" value="{{ (subscriptions[-1].start_date if subscriptions else '') }}"></label><br>
+      <button type="submit">Agregar</button>
+    </form>
+
+    <h2>Suscripciones actuales</h2>
+    <h2>Visión anual</h2>
+    <div style="margin-bottom:0.6rem;">
+      <label>Año: 
+        <select id="year-select" name="year" style="width:140px">
+          {% for y in years %}
+            <option value="{{ y }}" {% if y|string == year|string %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    </div>
+    <div style="max-width:900px;margin:0 auto 1rem; text-align:center;">
+      <canvas id="yearChart" width="900" height="300" style="display:block;margin:0 auto;"></canvas>
+
+      {% if per_subscription_monthly %}
+      <div style="width:100%; margin-top:1rem;">
+        <table class="support-table" style="width:100%;">
+          <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Ene</th><th>Feb</th><th>Mar</th><th>Abr</th><th>May</th><th>Jun</th>
+            <th>Jul</th><th>Ago</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dic</th>
+            <th>Total</th>
+          </tr>
+          </thead>
+          <tbody id="support-tbody">
+          {% for p in per_subscription_monthly %}
+          <tr>
+            <th style="text-align:left">{{ p.name }}</th>
+            {% for v in p.monthly %}
+              <td style="text-align:right">{{ '{:,}'.format(((v|round)|int)) | replace(',', '.') }}</td>
+            {% endfor %}
+            <td style="text-align:right"><strong>{{ '{:,}'.format(((p.monthly|sum)|round|int)) | replace(',', '.') }}</strong></td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        <p>No hay suscripciones añadidas todavía.</p>
+      {% endif %}
+    </div>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+      // build stacked bar chart per month with one dataset per subscription
+      const perSubscriptionMonthly = {{ per_subscription_monthly|tojson }} || [];
+      const labels = months;
+      const colors = perSubscriptionMonthly.map((_,i) => `hsl(${(i*47)%360} 70% 50%)`);
+      const datasets = perSubscriptionMonthly.map((p,i) => ({
+        label: p.name,
+        data: p.monthly,
+        backgroundColor: colors[i],
+        stack: 'stack1'
+      }));
+
+      const ctx = document.getElementById('yearChart').getContext('2d');
+      const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: datasets
+        },
+        options: {
+          responsive: true,
+          plugins: { title: { display: true, text: 'Pagos por mes (stacked) — Año {{ year }}' }, legend: { position: 'top' } },
+          scales: {
+            x: { stacked: true },
+            y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Valor' }, ticks: { callback: function(v){ return Number(v).toLocaleString('es-CL'); } } }
+          }
+        }
+      });
+
+      // update chart with data for a given year via AJAX
+      const yearSelect = document.getElementById('year-select');
+      yearSelect.addEventListener('change', function(){
+        const y = this.value;
+        fetch(`/api/year-data?year=${y}`)
+          .then(r=>r.json())
+          .then(data=>{
+              const per = data.per_subscription_monthly || [];
+              const colors = per.map((_,i) => `hsl(${(i*47)%360} 70% 50%)`);
+              chart.data.labels = months;
+              // ensure integer values and format without decimals
+              chart.data.datasets = per.map((p,i) => ({ label: p.name, data: p.monthly.map(x=>Math.round(Number(x))), backgroundColor: colors[i], stack: 'stack1' }));
+              chart.options.plugins.title.text = 'Pagos por mes (stacked) — Año ' + data.year;
+              chart.update();
+              // update support table as well
+              updateSupportTable(per);
+            })
+          .catch(err=>{ console.error('Error cargando datos del año', err); });
+      });
+
+      function formatNumber(n){
+        try{ return new Intl.NumberFormat('es-CL').format(Math.round(Number(n)||0)); }catch(e){ return String(Math.round(Number(n)||0)); }
+      }
+
+      function updateSupportTable(per){
+        const tbody = document.getElementById('support-tbody');
+        if(!tbody) return;
+        tbody.innerHTML = '';
+        per.forEach(p=>{
+          const tr = document.createElement('tr');
+          const th = document.createElement('th');
+          th.style.textAlign = 'left';
+          th.textContent = p.name || '';
+          tr.appendChild(th);
+          let total = 0;
+          (p.monthly||[]).forEach((mv, mi)=>{
+            const td = document.createElement('td');
+            td.style.textAlign = 'right';
+            const val = Math.round(Number(mv)||0);
+            total += val;
+            // make cell editable for price override
+            td.contentEditable = true;
+            td.dataset.subscriptionId = p.id || '';
+            td.dataset.month = (mi+1);
+            td.classList.add('editable-cell');
+            td.textContent = formatNumber(val);
+            // commit on blur or Enter
+            td.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); this.blur(); } });
+            td.addEventListener('blur', function(e){
+              const raw = this.textContent.trim();
+              const subId = this.dataset.subscriptionId;
+              const month = Number(this.dataset.month);
+              const y = Number(document.getElementById('year-select').value);
+              // parse number, allow '.' thousands and ',' decimals
+              const payloadPrice = raw;
+              if(!subId) return;
+              fetch('/api/set-override', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ subscription_id: subId, year: y, month: month, price: payloadPrice }) })
+                .then(r=>r.json())
+                .then(res=>{
+                  if(res && res.ok){
+                    // refresh year data to reflect override in chart and table
+                    yearSelect.dispatchEvent(new Event('change'));
+                  } else {
+                    console.error('No se pudo guardar override', res);
+                  }
+                }).catch(err=>{ console.error('Error guardando override', err); });
+            });
+            tr.appendChild(td);
+          });
+          const tdTotal = document.createElement('td');
+          tdTotal.style.textAlign = 'right';
+          tdTotal.innerHTML = '<strong>' + formatNumber(total) + '</strong>';
+          tr.appendChild(tdTotal);
+          tbody.appendChild(tr);
+        });
+      }
+
+      // ensure table matches initial data
+      updateSupportTable(perSubscriptionMonthly);
+    </script>
+
+    <h2>Descargar planificación</h2>
+    <form action="/download" method="get">
+      <label>Año: <input type="number" name="year" value="{{ year }}"></label>
+      <button type="submit">Descargar CSV</button>
+    </form>
+
+    <script>
+      // Simple client-side occurrence generator and sidebar interactions
+      const menu = document.getElementById('menu-list');
+      const details = document.getElementById('details');
+      const detailName = document.getElementById('detail-name');
+      const occDate = document.getElementById('occurrence-date');
+      let current = {name:null, start:null, periodicity:null, index:0};
+
+      function parseDate(y){ return new Date(y); }
+
+      function addPeriod(dt, periodicity){
+        const d = new Date(dt.getTime());
+        if(periodicity === 'monthly') d.setMonth(d.getMonth()+1);
+        else if(periodicity === 'quarterly') d.setMonth(d.getMonth()+3);
+        else if(periodicity === 'semiannual') d.setMonth(d.getMonth()+6);
+        else if(periodicity === 'annual') d.setFullYear(d.getFullYear()+1);
+        else if(periodicity === 'weekly') d.setDate(d.getDate()+7);
+        else d.setMonth(d.getMonth()+1);
+        return d;
+      }
+
+      function occurrencesForYear(startIso, periodicity, year){
+        const start = new Date(startIso);
+        const from = new Date(year,0,1);
+        const to = new Date(year,11,31);
+        // advance start until >= from
+        let cur = new Date(start.getTime());
+        while(cur < from){ cur = addPeriod(cur, periodicity); if(cur.getTime() === start.getTime()) break; }
+        const out = [];
+        while(cur <= to){ if(cur >= from) out.push(new Date(cur.getTime())); cur = addPeriod(cur, periodicity); }
+        return out;
+      }
+
+      function showDetails(el){
+        const name = el.dataset.name;
+        const start = el.dataset.start;
+        const periodicity = el.dataset.periodicity;
+        current.name = name; current.start = start; current.periodicity = periodicity; current.index = 0;
+        detailName.textContent = name;
+        const year = {{ year }};
+        const occ = occurrencesForYear(start, periodicity, year);
+        if(occ.length>0) occDate.textContent = occ[0].toISOString().slice(0,10);
+        else occDate.textContent = 'No hay ocurrencias en ' + year;
+        details.style.display = 'block';
+      }
+
+      menu.addEventListener('click', function(e){
+        const a = e.target.closest('.menu-item');
+        if(!a) return;
+        e.preventDefault();
+        // highlight
+        Array.from(menu.querySelectorAll('.menu-item')).forEach(x=>x.classList.remove('active'));
+        a.classList.add('active');
+        showDetails(a);
+        // scroll to matching row if exists
+        const name = a.dataset.name;
+        const rows = document.querySelectorAll('table tr th:first-child, table tr td:first-child');
+        for(let i=0;i<rows.length;i++){
+          if(rows[i].textContent.trim() === name){ rows[i].scrollIntoView({behavior:'smooth',block:'center'}); break; }
+        }
+      });
+
+      document.getElementById('next-occ').addEventListener('click', function(){
+        if(!current.name) return;
+        const year = {{ year }};
+        const occ = occurrencesForYear(current.start, current.periodicity, year);
+        if(occ.length===0){ occDate.textContent = 'No hay ocurrencias en ' + year; return; }
+        current.index = (current.index + 1) % occ.length;
+        occDate.textContent = occ[current.index].toISOString().slice(0,10);
+      });
+      document.getElementById('prev-occ').addEventListener('click', function(){
+        if(!current.name) return;
+        const year = {{ year }};
+        const occ = occurrencesForYear(current.start, current.periodicity, year);
+        if(occ.length===0){ occDate.textContent = 'No hay ocurrencias en ' + year; return; }
+        current.index = (current.index - 1 + occ.length) % occ.length;
+        occDate.textContent = occ[current.index].toISOString().slice(0,10);
+      });
+    </script>
+  </body>
+</html>

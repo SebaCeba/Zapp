@@ -1,0 +1,201 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Calendar {
+  id            Int            @id @default(autoincrement())
+  date          DateTime       @unique
+  subscriptions Subscription[]
+
+  @@map("calendar")
+}
+
+model Subscription {
+  id             Int             @id @default(autoincrement())
+  name           String
+  price          Float
+  periodicity    String // monthly, quarterly, semiannual, annual, weekly
+  startDate      DateTime        @map("start_date")
+  startDateId    Int             @map("start_date_id")
+  calendar       Calendar        @relation(fields: [startDateId], references: [id])
+  priceOverrides PriceOverride[]
+  createdAt      DateTime        @default(now()) @map("created_at")
+
+  @@map("subscriptions")
+}
+
+model PriceOverride {
+  id             Int          @id @default(autoincrement())
+  subscriptionId Int          @map("subscription_id")
+  year           Int
+  month          Int
+  price          Float
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionId, year, month])
+  @@map("price_overrides")
+}
+
+model Obligacion {
+  id           Int      @id @default(autoincrement())
+  nombre       String
+  tipo         String   // hipotecario, consumo, seguro
+  moneda       String   // CLP, UF
+  montoCuota   Float    @map("monto_cuota")
+  cuotasTotales Int     @map("cuotas_totales")
+  mesInicio    Int      @map("mes_inicio")
+  anioInicio   Int      @map("anio_inicio")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("obligaciones")
+}
+
+model SupuestoAnual {
+  id               Int      @id @default(autoincrement())
+  anio             Int      @unique
+  valorUfBase      Float    @map("valor_uf_base")
+  variacionAnualUf Float    @map("variacion_anual_uf")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("supuestos_anuales")
+}
+
+model MortgagePayment {
+  id                Int      @id @default(autoincrement())
+  numDiv            Int      @map("num_div")
+  amortizacionUf    Float    @map("amortizacion_uf")
+  interesUf         Float    @map("interes_uf")
+  comDIn            Float    @map("com_d_in")
+  totalDivUf        Float    @map("total_div_uf")
+  fechaVencimiento  DateTime @map("fecha_vencimiento")
+  saldoInsolutoUf   Float    @map("saldo_insoluto_uf")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@map("mortgage_payments")
+}
+
+model MortgageBudgetConfig {
+  id           Int      @id @default(autoincrement())
+  anioProyectado Int    @map("anio_proyectado")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("mortgage_budget_config")
+}
+
+model MortgageInsurance {
+  id        Int      @id @default(autoincrement())
+  nombre    String   @map("nombre")
+  mesAnio   String   @map("mes_anio") // formato YYYY-MM
+  monto     Float    @map("monto")
+  moneda    String   @default("CLP") @map("moneda") // CLP o UF
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("mortgage_insurance")
+}
+
+model ServicioBasico {
+  id                Int                              @id @default(autoincrement())
+  nombre            String                           @unique
+  activo            Boolean                          @default(true)
+  esBase            Boolean                          @default(false) @map("es_base")
+  orden             Int                              @default(0)
+  createdAt         DateTime                         @default(now()) @map("created_at")
+  updatedAt         DateTime                         @updatedAt @map("updated_at")
+  presupuestos      PresupuestoServicioBasico[]
+
+  @@map("servicios_basicos")
+}
+
+model PresupuestoServicioBasico {
+  id                Int             @id @default(autoincrement())
+  servicioId        Int             @map("servicio_id")
+  anio              Int
+  enero             Float           @default(0)
+  febrero           Float           @default(0)
+  marzo             Float           @default(0)
+  abril             Float           @default(0)
+  mayo              Float           @default(0)
+  junio             Float           @default(0)
+  julio             Float           @default(0)
+  agosto            Float           @default(0)
+  septiembre        Float           @default(0)
+  octubre           Float           @default(0)
+  noviembre         Float           @default(0)
+  diciembre         Float           @default(0)
+  servicio          ServicioBasico  @relation(fields: [servicioId], references: [id], onDelete: Cascade)
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  @@unique([servicioId, anio])
+  @@map("presupuestos_servicios_basicos")
+}
+
+model IngresoBase {
+  id                Int                          @id @default(autoincrement())
+  nombre            String                       @unique
+  activo            Boolean                      @default(true)
+  esRecurrente      Boolean                      @default(true) @map("es_recurrente")
+  orden             Int                          @default(0)
+  createdAt         DateTime                     @default(now()) @map("created_at")
+  updatedAt         DateTime                     @updatedAt @map("updated_at")
+  presupuestos      PresupuestoIngreso[]
+
+  @@map("ingresos_base")
+}
+
+model PresupuestoIngreso {
+  id                Int             @id @default(autoincrement())
+  ingresoId         Int             @map("ingreso_id")
+  anio              Int
+  enero             Float           @default(0)
+  febrero           Float           @default(0)
+  marzo             Float           @default(0)
+  abril             Float           @default(0)
+  mayo              Float           @default(0)
+  junio             Float           @default(0)
+  julio             Float           @default(0)
+  agosto            Float           @default(0)
+  septiembre        Float           @default(0)
+  octubre           Float           @default(0)
+  noviembre         Float           @default(0)
+  diciembre         Float           @default(0)
+  ingreso           IngresoBase     @relation(fields: [ingresoId], references: [id], onDelete: Cascade)
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  @@unique([ingresoId, anio])
+  @@map("presupuestos_ingresos")
+}
+
+model Bono {
+  id                Int             @id @default(autoincrement())
+  nombre            String
+  anio              Int
+  mes               Int             // 1=Enero, 2=Febrero, etc.
+  monto             Float
+  descripcion       String?
+  repartos          RepartoBono[]
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  @@map("bonos")
+}
+
+model RepartoBono {
+  id                Int      @id @default(autoincrement())
+  bonoId            Int      @map("bono_id")
+  destino           String   // ahorro, deuda, vacaciones, apoyo_mensual, otros
+  monto             Float
+  porcentaje        Float?
+  mesesDistribucion Int?     @map("meses_distribucion") // solo para apoyo_mensual
+  bono              Bono     @relation(fields: [bonoId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@map("repartos_bonos")
+}
