@@ -17,7 +17,8 @@ const menuItems: MenuItem[] = [
       { label: 'Créditos y Seguros', href: '/creditos' },
       { label: 'Hipotecario', href: '/hipotecario' },
       { label: 'Servicios Básicos', href: '/servicios-basicos' },
-      { label: 'Supermercado', href: '/supermercado' }
+      { label: 'Supermercado', href: '/supermercado' },
+      { label: 'Tenpo TC', href: '/presupuesto/tenpo' }
     ]
   }
 ];

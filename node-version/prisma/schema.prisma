@@ -218,3 +218,94 @@ model RepartoBono {
 
   @@map("repartos_bonos")
 }
+
+model GoogleAuthToken {
+  id           Int      @id @default(autoincrement())
+  accessToken  String   @map("access_token")
+  refreshToken String   @map("refresh_token")
+  expiryDate   DateTime @map("expiry_date")
+  scope        String
+  tokenType    String   @default("Bearer") @map("token_type")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("google_auth_tokens")
+}
+
+model TenpoEmail {
+  id             Int             @id @default(autoincrement())
+  gmailMessageId String          @unique @map("gmail_message_id")
+  labelType      String          @map("label_type") // COMPRAS or PAGOS
+  rawBody        String          @map("raw_body")
+  emailDate      DateTime        @map("email_date")
+  parsedOk       Boolean         @default(false) @map("parsed_ok")
+  parseError     String?         @map("parse_error")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  purchases      TenpoPurchase[]
+  payments       TenpoPayment[]
+
+  @@map("tenpo_emails")
+}
+
+model TenpoPurchase {
+  id                        Int                @id @default(autoincrement())
+  emailId                   Int                @map("email_id")
+  purchaseDate              DateTime           @map("purchase_date")
+  merchant                  String
+  amountTotalClp            Float              @map("amount_total_clp") // Capital (C)
+  installmentsCount         Int                @map("installments_count")
+  tieneInteres              Boolean            @default(true) @map("tiene_interes") // Default: CON interés
+  modoMonto                 String             @default("ESTIMADO") @map("modo_monto") // ESTIMADO | REAL
+  totalFinanciadoEstimado   Float?             @map("total_financiado_estimado")
+  interesTotalEstimado      Float?             @map("interes_total_estimado")
+  email                     TenpoEmail         @relation(fields: [emailId], references: [id], onDelete: Cascade)
+  installments              TenpoInstallment[]
+  createdAt                 DateTime           @default(now()) @map("created_at")
+  updatedAt                 DateTime           @default(now()) @updatedAt @map("updated_at")
+
+  @@map("tenpo_purchases")
+}
+
+model TenpoInstallment {
+  id                       Int           @id @default(autoincrement())
+  purchaseId               Int           @map("purchase_id")
+  installmentNumber        Int           @map("installment_number")
+  baseAmountClp            Float         @map("base_amount_clp")
+  dueDate                  DateTime      @map("due_date")
+  payDateEstimated         DateTime      @map("pay_date_estimated")
+  estado                   String        @default("ESTIMADO") @map("estado") // ESTIMADO | REAL
+  overrideInterestRate     Float?        @map("override_interest_rate")
+  overrideMonthlyAmountClp Float?        @map("override_monthly_amount_clp")
+  finalMonthlyAmountClp    Float         @map("final_monthly_amount_clp")
+  purchase                 TenpoPurchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  createdAt                DateTime      @default(now()) @map("created_at")
+  updatedAt                DateTime      @updatedAt @map("updated_at")
+
+  @@map("tenpo_installments")
+}
+
+model TenpoPayment {
+  id                Int        @id @default(autoincrement())
+  emailId           Int        @map("email_id")
+  payDate           DateTime   @map("pay_date")
+  amountClp         Float      @map("amount_clp")
+  paymentMethod     String     @map("payment_method")
+  transactionCode   String     @map("transaction_code")
+  periodPay         String?    @map("period_pay") // periodo de pago (mes/año que se pagó)
+  periodBill        String?    @map("period_bill") // periodo de factura
+  email             TenpoEmail @relation(fields: [emailId], references: [id], onDelete: Cascade)
+  createdAt         DateTime   @default(now()) @map("created_at")
+
+  @@map("tenpo_payments")
+}
+// Configuración de Tasa Global de Cuotas (historial de cambios)
+model TenpoTasaCuotas {
+  id              Int       @id @default(autoincrement())
+  tasaMensual     Float     @map("tasa_mensual") // Ej: 0.0211 (2.11%)
+  cae             String?   @map("cae") // Informativo, ej: "28.4%"
+  vigenteDesde    DateTime  @map("vigente_desde")
+  vigenteHasta    DateTime? @map("vigente_hasta")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  @@map("tenpo_tasa_cuotas")
+}

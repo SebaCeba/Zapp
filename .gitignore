@@ -5,6 +5,9 @@ __pycache__/
 .venv/
 .env
 
+# Credenciales sensibles
+CREDENCIALES_GOOGLE.md
+
 # VSCode
 .vscode/
 
