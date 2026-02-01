@@ -9,6 +9,7 @@ import Presupuesto from './pages/Presupuesto';
 import Supermercado from './pages/Supermercado';
 import Tenpo from './pages/Tenpo';
 import TenpoConfig from './pages/TenpoConfig';
+import Actual from './pages/Actual';
 
 export default function Router() {
   return (
@@ -16,6 +17,7 @@ export default function Router() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/presupuesto" element={<Presupuesto />} />
+        <Route path="/actual" element={<Actual />} />
         <Route path="/app" element={<App />} />
         <Route path="/creditos" element={<Creditos />} />
         <Route path="/hipotecario" element={<Hipotecario />} />

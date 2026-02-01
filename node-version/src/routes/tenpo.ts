@@ -61,6 +61,7 @@ router.post('/sync', async (req, res) => {
 
         if (exists) {
           skippedCompras++;
+          console.log(`⏭️  Compra ya sincronizada (gmailMessageId: ${gmailMessageId}) - preservando scheduleMode y override`);
           continue;
         }
 
@@ -85,7 +86,8 @@ router.post('/sync', async (req, res) => {
             parsedPurchase.installmentsCount,
             primeraFechaVencimiento,
             tieneInteres,
-            tasaMensual
+            tasaMensual,
+            null // feePct: null por defecto para nuevas compras sincronizadas
           );
 
           // Crear email y compra
@@ -442,7 +444,7 @@ router.get('/installments', async (req, res) => {
 
 /**
  * GET /api/tenpo/purchases
- * Listar todas las compras
+ * Listar todas las compras con campos computed para fee
  */
 router.get('/purchases', async (req, res) => {
   try {
@@ -460,7 +462,48 @@ router.get('/purchases', async (req, res) => {
       }
     });
 
-    res.json(purchases);
+    // Agregar campos computed para fee (server-side)
+    const purchasesWithFee = purchases.map((purchase: any) => {
+      let feePct: number | null = null;
+      let feeAmountClp: number | null = null;
+      let financedBaseClp = purchase.amountTotalClp;
+      let feeMissing = false;
+
+      // Parsear metadata JSON si existe
+      if (purchase.metadata) {
+        try {
+          const metadata = JSON.parse(purchase.metadata);
+          feePct = metadata.feePct ?? null;
+        } catch (error) {
+          console.warn(`Error parsing metadata for purchase ${purchase.id}:`, error);
+        }
+      }
+
+      // Lógica para modo ESTIMADO
+      if (purchase.modoMonto === 'ESTIMADO') {
+        if (feePct !== null) {
+          // Caso 1: Fee definido (puede ser 0 o >0)
+          feeAmountClp = Math.round(purchase.amountTotalClp * feePct);
+          financedBaseClp = purchase.amountTotalClp + feeAmountClp;
+          feeMissing = false;
+        } else {
+          // Caso 2: Fee no definido (compra antigua sin metadata.feePct)
+          feeMissing = true;
+          feeAmountClp = null;
+          financedBaseClp = purchase.amountTotalClp; // Fallback: usar solo capital
+        }
+      }
+
+      return {
+        ...purchase,
+        feePct,
+        feeAmountClp,
+        financedBaseClp,
+        feeMissing
+      };
+    });
+
+    res.json(purchasesWithFee);
 
   } catch (error: any) {
     console.error('Error obteniendo compras:', error);
@@ -573,10 +616,12 @@ router.patch('/purchases/:id/interes', async (req, res) => {
       return res.status(404).json({ error: 'Compra no encontrada' });
     }
 
-    // No recalcular si está en modo REAL
+    // GUARDRAIL: No recalcular si está en modo REAL
     if (purchase.modoMonto === 'REAL') {
+      console.log(`🛡️  [GUARDRAIL] Intento de modificar tieneInteres en compra REAL bloqueado`);
+      console.log(`    Compra ID: ${id}, Merchant: ${purchase.merchant}`);
       return res.status(400).json({ 
-        error: 'No se puede modificar compra en modo REAL' 
+        error: 'No se puede modificar compra en modo REAL. Los valores fueron confirmados con el banco y no deben cambiar.' 
       });
     }
 
@@ -633,6 +678,198 @@ router.post('/recalcular-estimadas', async (req, res) => {
     res.json(resultado);
   } catch (error: any) {
     console.error('Error recalculando:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * PATCH /api/tenpo/purchases/:id/schedule
+ * Configura override de calendario para primera cuota
+ * 
+ * Body:
+ * - scheduleMode: 'AUTO' | 'MANUAL'
+ * - firstDueDateOverride?: string (ISO date, solo si scheduleMode='MANUAL')
+ * 
+ * GUARDRAIL: No permite modificar compras en modo REAL
+ */
+router.patch('/purchases/:id/schedule', async (req, res) => {
+  const { id } = req.params;
+  const { scheduleMode, firstDueDateOverride } = req.body;
+
+  try {
+    // Validar scheduleMode
+    if (!scheduleMode || !['AUTO', 'MANUAL'].includes(scheduleMode)) {
+      return res.status(400).json({ 
+        error: 'scheduleMode debe ser "AUTO" o "MANUAL"' 
+      });
+    }
+
+    // Validar que si es MANUAL, debe proveer firstDueDateOverride
+    if (scheduleMode === 'MANUAL' && !firstDueDateOverride) {
+      return res.status(400).json({ 
+        error: 'scheduleMode "MANUAL" requiere firstDueDateOverride' 
+      });
+    }
+
+    // Obtener compra actual
+    const purchase = await prisma.tenpoPurchase.findUnique({
+      where: { id: parseInt(id) }
+    });
+
+    if (!purchase) {
+      return res.status(404).json({ error: 'Compra no encontrada' });
+    }
+
+    // GUARDRAIL: No modificar si está en modo REAL
+    if (purchase.modoMonto === 'REAL') {
+      console.log(`🛡️  [GUARDRAIL] Intento de modificar schedule en compra REAL bloqueado`);
+      console.log(`    Compra ID: ${id}, Merchant: ${purchase.merchant}`);
+      return res.status(400).json({ 
+        error: 'No se puede modificar calendario de compra en modo REAL. Los valores fueron confirmados con el banco.' 
+      });
+    }
+
+    // Actualizar scheduleMode y override
+    const updateData: any = { scheduleMode };
+    
+    if (scheduleMode === 'MANUAL' && firstDueDateOverride) {
+      updateData.firstDueDateOverride = new Date(firstDueDateOverride);
+      console.log(`📅 [CALENDAR OVERRIDE] Configurando override para compra ${id}: ${firstDueDateOverride}`);
+    } else if (scheduleMode === 'AUTO') {
+      // Si vuelve a AUTO, limpiar override
+      updateData.firstDueDateOverride = null;
+      console.log(`📅 [CALENDAR OVERRIDE] Limpiando override para compra ${id} (modo AUTO)`);
+    }
+
+    await prisma.tenpoPurchase.update({
+      where: { id: parseInt(id) },
+      data: updateData
+    });
+
+    // Recalcular compra para aplicar nuevo calendario
+    const updatedPurchase = await tenpoCalculatorService.recalcularCompra(parseInt(id));
+
+    res.json(updatedPurchase);
+
+  } catch (error: any) {
+    console.error('Error actualizando schedule:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * POST /api/tenpo/purchases/manual
+ * Crear compra Tenpo manual (sin origen en email de Gmail)
+ * Body: { purchaseDate, merchant, amountTotalClp, installmentsCount, tieneInteres?, scheduleMode?, firstDueDateOverride? }
+ */
+router.post('/purchases/manual', async (req, res) => {
+  try {
+    const { 
+      purchaseDate, 
+      merchant, 
+      amountTotalClp, 
+      installmentsCount,
+      tieneInteres = true,
+      scheduleMode = 'AUTO',
+      firstDueDateOverride 
+    } = req.body;
+
+    // Validaciones
+    if (!purchaseDate || !merchant || !amountTotalClp || !installmentsCount) {
+      return res.status(400).json({ 
+        error: 'Campos requeridos: purchaseDate, merchant, amountTotalClp, installmentsCount' 
+      });
+    }
+
+    if (amountTotalClp <= 0) {
+      return res.status(400).json({ error: 'amountTotalClp debe ser mayor a 0' });
+    }
+
+    if (installmentsCount < 1 || !Number.isInteger(installmentsCount)) {
+      return res.status(400).json({ error: 'installmentsCount debe ser entero >= 1' });
+    }
+
+    if (!['AUTO', 'MANUAL'].includes(scheduleMode)) {
+      return res.status(400).json({ error: 'scheduleMode debe ser AUTO o MANUAL' });
+    }
+
+    if (scheduleMode === 'MANUAL' && !firstDueDateOverride) {
+      return res.status(400).json({ 
+        error: 'scheduleMode MANUAL requiere firstDueDateOverride' 
+      });
+    }
+
+    const parsedPurchaseDate = new Date(purchaseDate);
+    if (isNaN(parsedPurchaseDate.getTime())) {
+      return res.status(400).json({ error: 'purchaseDate inválida' });
+    }
+
+    // Obtener tasa vigente a la fecha de compra
+    const tasaConfig = await tenpoConfigService.getTasaVigente(parsedPurchaseDate);
+    const tasaMensual = tasaConfig?.tasaMensual || 0.0211; // Fallback 2.11%
+
+    // Calcular fecha de primera cuota
+    let primeraFechaVencimiento: Date;
+    if (scheduleMode === 'MANUAL' && firstDueDateOverride) {
+      primeraFechaVencimiento = new Date(firstDueDateOverride);
+      if (isNaN(primeraFechaVencimiento.getTime())) {
+        return res.status(400).json({ error: 'firstDueDateOverride inválida' });
+      }
+    } else {
+      primeraFechaVencimiento = tenpoParserService.calculateDueDate(parsedPurchaseDate);
+    }
+
+    // Calcular cuotas usando el sistema existente
+    const { cuotas, totalFinanciado, interesTotal } = tenpoCalculatorService.generarCalendarioCuotas(
+      amountTotalClp,
+      installmentsCount,
+      primeraFechaVencimiento,
+      tieneInteres,
+      tasaMensual,
+      null // feePct: null por defecto para compras manuales
+    );
+
+    // Crear compra manual (emailId = null, source = 'manual')
+    const purchase = await prisma.tenpoPurchase.create({
+      data: {
+        emailId: null,
+        source: 'manual',
+        purchaseDate: parsedPurchaseDate,
+        merchant,
+        amountTotalClp,
+        installmentsCount,
+        tieneInteres,
+        modoMonto: 'ESTIMADO',
+        totalFinanciadoEstimado: totalFinanciado,
+        interesTotalEstimado: interesTotal,
+        scheduleMode,
+        firstDueDateOverride: scheduleMode === 'MANUAL' ? primeraFechaVencimiento : null,
+        installments: {
+          create: cuotas.map((monto, index) => ({
+            installmentNumber: index + 1,
+            baseAmountClp: monto,
+            dueDate: addMonths(primeraFechaVencimiento, index),
+            payDateEstimated: addMonths(primeraFechaVencimiento, index),
+            estado: 'ESTIMADO',
+            finalMonthlyAmountClp: monto
+          }))
+        }
+      },
+      include: {
+        installments: {
+          orderBy: {
+            installmentNumber: 'asc'
+          }
+        }
+      }
+    });
+
+    console.log(`✅ Compra manual creada: ${merchant}, ${installmentsCount} cuotas, total financiado: ${totalFinanciado}`);
+
+    res.status(201).json(purchase);
+
+  } catch (error: any) {
+    console.error('Error creando compra manual:', error);
     res.status(500).json({ error: error.message });
   }
 });

@@ -20,7 +20,8 @@ const menuItems: MenuItem[] = [
       { label: 'Supermercado', href: '/supermercado' },
       { label: 'Tenpo TC', href: '/presupuesto/tenpo' }
     ]
-  }
+  },
+  { label: 'Actual', href: '/actual' }
 ];
 
 export default function Sidebar() {

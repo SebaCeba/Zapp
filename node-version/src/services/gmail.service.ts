@@ -84,6 +84,30 @@ export class GmailService {
     }
   }
 
+  async getAuthStatus(): Promise<{ authenticated: boolean; tokenExpired: boolean; expiryDate: Date | null }> {
+    try {
+      const tokenRecord = await prisma.googleAuthToken.findFirst();
+      
+      if (!tokenRecord) {
+        return { authenticated: false, tokenExpired: false, expiryDate: null };
+      }
+
+      const isExpired = new Date() >= tokenRecord.expiryDate;
+      
+      return {
+        authenticated: true,
+        tokenExpired: isExpired,
+        expiryDate: tokenRecord.expiryDate
+      };
+    } catch {
+      return { authenticated: false, tokenExpired: false, expiryDate: null };
+    }
+  }
+
+  async clearAuth() {
+    await prisma.googleAuthToken.deleteMany({});
+  }
+
   async getLabelIdByName(labelName: string): Promise<string | null> {
     const gmail = await this.getAuthenticatedClient();
     

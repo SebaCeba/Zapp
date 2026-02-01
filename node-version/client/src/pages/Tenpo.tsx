@@ -15,6 +15,12 @@ interface Purchase {
   modoMonto: 'ESTIMADO' | 'REAL';
   totalFinanciadoEstimado: number | null;
   interesTotalEstimado: number | null;
+  feePct?: number | null;
+  feeAmountClp?: number | null;
+  financedBaseClp?: number | null;
+  feeMissing?: boolean;
+  scheduleMode?: 'AUTO' | 'MANUAL';
+  firstDueDateOverride?: string | null;
   installments: Installment[];
 }
 
@@ -49,6 +55,7 @@ export default function Tenpo() {
   const anioActual = new Date().getFullYear();
   const [anioSeleccionado, setAnioSeleccionado] = useState(anioActual);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [tokenExpired, setTokenExpired] = useState(false);
   const [authUrl, setAuthUrl] = useState('');
   const [syncing, setSyncing] = useState(false);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
@@ -61,6 +68,17 @@ export default function Tenpo() {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [selectedPurchaseId, setSelectedPurchaseId] = useState<number | null>(null);
   const [cuotaRealInput, setCuotaRealInput] = useState('');
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+  const [scheduleDateInput, setScheduleDateInput] = useState('');
+  const [manualModalOpen, setManualModalOpen] = useState(false);
+  const [manualForm, setManualForm] = useState({
+    purchaseDate: new Date().toISOString().split('T')[0],
+    merchant: '',
+    amountTotalClp: '',
+    installmentsCount: '1',
+    tieneInteres: true,
+    firstDueDateOverride: ''
+  });
 
   const aniosDisponibles = Array.from(
     { length: 11 },
@@ -113,9 +131,10 @@ export default function Tenpo() {
     try {
       const response = await fetch('http://localhost:3000/api/integrations/google/status');
       const data = await response.json();
-      setIsAuthenticated(data.authenticated);
+      setIsAuthenticated(data.authenticated && !data.tokenExpired);
+      setTokenExpired(data.tokenExpired || false);
 
-      if (!data.authenticated) {
+      if (!data.authenticated || data.tokenExpired) {
         const authResponse = await fetch('http://localhost:3000/api/integrations/google/auth-url');
         const authData = await authResponse.json();
         setAuthUrl(authData.authUrl);
@@ -225,6 +244,180 @@ export default function Tenpo() {
       console.error('Error toggling interés:', error);
       setToast({
         message: error.message || 'Error al cambiar interés',
+        type: 'error'
+      });
+    }
+  };
+
+  const handleAdjustSchedule = (purchaseId: number) => {
+    const purchase = purchases.find(p => p.id === purchaseId);
+    if (!purchase) return;
+
+    const currentOverride = purchase.firstDueDateOverride 
+      ? new Date(purchase.firstDueDateOverride).toISOString().split('T')[0]
+      : '';
+
+    setSelectedPurchaseId(purchaseId);
+    setScheduleDateInput(currentOverride);
+    setScheduleModalOpen(true);
+  };
+
+  const handleCreateManualPurchase = async () => {
+    if (!manualForm.merchant || !manualForm.amountTotalClp || !manualForm.installmentsCount) {
+      setToast({
+        message: 'Completa todos los campos requeridos',
+        type: 'error'
+      });
+      return;
+    }
+
+    const amountClp = parseFloat(manualForm.amountTotalClp);
+    const installments = parseInt(manualForm.installmentsCount);
+
+    if (isNaN(amountClp) || amountClp <= 0) {
+      setToast({
+        message: 'El monto debe ser mayor a 0',
+        type: 'error'
+      });
+      return;
+    }
+
+    if (isNaN(installments) || installments < 1) {
+      setToast({
+        message: 'El número de cuotas debe ser mayor o igual a 1',
+        type: 'error'
+      });
+      return;
+    }
+
+    try {
+      const body: any = {
+        purchaseDate: manualForm.purchaseDate,
+        merchant: manualForm.merchant,
+        amountTotalClp: amountClp,
+        installmentsCount: installments,
+        tieneInteres: manualForm.tieneInteres
+      };
+
+      if (manualForm.firstDueDateOverride) {
+        body.scheduleMode = 'MANUAL';
+        body.firstDueDateOverride = manualForm.firstDueDateOverride;
+      }
+
+      const response = await fetch('http://localhost:3000/api/tenpo/purchases/manual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al crear compra');
+      }
+
+      setToast({
+        message: '✅ Compra manual creada exitosamente',
+        type: 'success'
+      });
+
+      setManualModalOpen(false);
+      setManualForm({
+        purchaseDate: new Date().toISOString().split('T')[0],
+        merchant: '',
+        amountTotalClp: '',
+        installmentsCount: '1',
+        tieneInteres: true,
+        firstDueDateOverride: ''
+      });
+      await loadData();
+    } catch (error: any) {
+      console.error('Error creando compra manual:', error);
+      setToast({
+        message: error.message || 'Error al crear compra',
+        type: 'error'
+      });
+    }
+  };
+
+  const handleApplySchedule = async () => {
+    if (!selectedPurchaseId) return;
+
+    // Usuario quiere volver a AUTO (string vacío)
+    if (!scheduleDateInput || scheduleDateInput.trim() === '') {
+      try {
+        const response = await fetch(`http://localhost:3000/api/tenpo/purchases/${selectedPurchaseId}/schedule`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ scheduleMode: 'AUTO' })
+        });
+
+        if (!response.ok) {
+          let errorMessage = 'Error al cambiar calendario';
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          } catch {
+            errorMessage = `Error del servidor (${response.status}): Endpoint no disponible`;
+          }
+          throw new Error(errorMessage);
+        }
+
+        setToast({
+          message: 'Calendario vuelto a modo automático',
+          type: 'success'
+        });
+        
+        setScheduleModalOpen(false);
+        setScheduleDateInput('');
+        setSelectedPurchaseId(null);
+        await loadData();
+        return;
+      } catch (error: any) {
+        console.error('Error:', error);
+        setToast({
+          message: error.message || 'Error al cambiar calendario',
+          type: 'error'
+        });
+        return;
+      }
+    }
+
+    // Usuario ingresó nueva fecha
+    try {
+      const response = await fetch(`http://localhost:3000/api/tenpo/purchases/${selectedPurchaseId}/schedule`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          scheduleMode: 'MANUAL',
+          firstDueDateOverride: scheduleDateInput
+        })
+      });
+
+      if (!response.ok) {
+        let errorMessage = 'Error al cambiar calendario';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          // Si no es JSON, puede ser HTML (404 o error del servidor)
+          errorMessage = `Error del servidor (${response.status}): Endpoint no disponible`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      setToast({
+        message: 'Calendario ajustado - Las cuotas se recalcularon con la nueva fecha',
+        type: 'success'
+      });
+      
+      setScheduleModalOpen(false);
+      setScheduleDateInput('');
+      setSelectedPurchaseId(null);
+      await loadData();
+    } catch (error: any) {
+      console.error('Error:', error);
+      setToast({
+        message: error.message || 'Error al cambiar calendario',
         type: 'error'
       });
     }
@@ -404,18 +597,30 @@ export default function Tenpo() {
           <h1 style={{ marginBottom: '1.5rem', color: '#1e40af' }}>💳 Tenpo - TC Prepago</h1>
           <div className="card" style={{ backgroundColor: '#fef3c7', borderColor: '#fbbf24' }}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem' }}>
-              Autenticación requerida
+              {tokenExpired ? '⚠️ Token expirado' : '🔐 Autenticación requerida'}
             </h2>
             <p style={{ marginBottom: '1rem', color: '#666' }}>
-              Para sincronizar con Gmail, debes autorizar el acceso a tu cuenta.
+              {tokenExpired 
+                ? 'Tu sesión con Gmail ha expirado. Debes autorizar nuevamente el acceso para continuar sincronizando.'
+                : 'Para sincronizar con Gmail, debes autorizar el acceso a tu cuenta.'}
             </p>
             <a
               href={authUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               className="button"
-              style={{ display: 'inline-block', padding: '0.5rem 1.5rem' }}
+              style={{ display: 'inline-block', padding: '0.5rem 1.5rem', backgroundColor: '#3b82f6', color: 'white', textDecoration: 'none' }}
+              onClick={(e) => {
+                // Asegurar que se abre en ventana nueva
+                e.preventDefault();
+                window.open(authUrl, '_blank', 'width=600,height=700');
+              }}
             >
-              Autorizar con Google
+              {tokenExpired ? '🔄 Re-autorizar con Google' : '✅ Autorizar con Google'}
             </a>
+            <p style={{ marginTop: '1rem', fontSize: '0.875rem', color: '#666' }}>
+              💡 Se abrirá una ventana emergente. Si no aparece, verifica que tu navegador no esté bloqueando pop-ups.
+            </p>
           </div>
         </div>
       </MainLayout>
@@ -484,6 +689,17 @@ export default function Tenpo() {
               }}
             >
               {syncing ? '🔄 Sincronizando...' : '🔄 Actualizar desde Gmail'}
+            </button>
+
+            <button
+              onClick={() => setManualModalOpen(true)}
+              className="button"
+              style={{ 
+                backgroundColor: '#10b981',
+                color: '#fff'
+              }}
+            >
+              ➕ Agregar compra manual
             </button>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '1rem' }}>
@@ -645,8 +861,10 @@ export default function Tenpo() {
                             {formatCurrency(purchase.amountTotalClp)}
                           </div>
                           {purchase.tieneInteres && purchase.totalFinanciadoEstimado && (
-                            <div style={{ fontSize: '0.75rem', color: '#666' }}>
+                            <div style={{ fontSize: '0.75rem', color: purchase.modoMonto === 'REAL' ? '#059669' : '#666' }}>
+                              {purchase.modoMonto === 'REAL' && '✓ '}
                               Total: ${Math.round(purchase.totalFinanciadoEstimado).toLocaleString('es-CL')}
+                              {purchase.modoMonto === 'ESTIMADO' && ' (est.)'}
                             </div>
                           )}
                         </td>
@@ -689,29 +907,156 @@ export default function Tenpo() {
                                 </label>
 
                                 {purchase.modoMonto === 'ESTIMADO' && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setSelectedPurchaseId(purchase.id);
-                                      setConfirmModalOpen(true);
-                                    }}
-                                    className="button"
-                                    style={{ 
-                                      fontSize: '0.875rem',
-                                      padding: '0.5rem 1rem',
-                                      backgroundColor: '#10b981',
-                                      color: '#fff'
-                                    }}
-                                  >
-                                    ✓ Confirmar valor real
-                                  </button>
+                                  <>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedPurchaseId(purchase.id);
+                                        setConfirmModalOpen(true);
+                                      }}
+                                      className="button"
+                                      style={{ 
+                                        fontSize: '0.875rem',
+                                        padding: '0.5rem 1rem',
+                                        backgroundColor: '#10b981',
+                                        color: '#fff'
+                                      }}
+                                    >
+                                      ✓ Confirmar valor real
+                                    </button>
+
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleAdjustSchedule(purchase.id);
+                                      }}
+                                      className="button"
+                                      style={{ 
+                                        fontSize: '0.875rem',
+                                        padding: '0.5rem 1rem',
+                                        backgroundColor: '#6366f1',
+                                        color: '#fff'
+                                      }}
+                                    >
+                                      📅 Ajustar mes de pago
+                                    </button>
+
+                                    {purchase.scheduleMode === 'MANUAL' && purchase.firstDueDateOverride && (
+                                      <span style={{
+                                        fontSize: '0.75rem',
+                                        padding: '0.375rem 0.625rem',
+                                        backgroundColor: '#dbeafe',
+                                        color: '#1e40af',
+                                        borderRadius: '0.375rem',
+                                        fontWeight: '600',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.25rem'
+                                      }}>
+                                        📅 Calendario manual (desde {format(new Date(purchase.firstDueDateOverride), 'MMM yyyy', { locale: es })})
+                                      </span>
+                                    )}
+                                  </>
                                 )}
 
                                 {purchase.tieneInteres && (
-                                  <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                                    Capital: ${Math.round(purchase.amountTotalClp).toLocaleString('es-CL')} → 
-                                    Total financiado: ${Math.round(purchase.totalFinanciadoEstimado || 0).toLocaleString('es-CL')} 
-                                    (+ ${Math.round(purchase.interesTotalEstimado || 0).toLocaleString('es-CL')} interés)
+                                  <div style={{ 
+                                    fontSize: '0.875rem', 
+                                    color: '#374151',
+                                    backgroundColor: '#f9fafb',
+                                    padding: '0.75rem',
+                                    borderRadius: '0.375rem',
+                                    border: '1px solid #e5e7eb',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '0.375rem'
+                                  }}>
+                                    <div style={{ 
+                                      fontWeight: '600', 
+                                      marginBottom: '0.25rem',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '0.5rem'
+                                    }}>
+                                      {purchase.modoMonto === 'REAL' ? (
+                                        <>
+                                          <span style={{ color: '#059669' }}>✓ Confirmado</span>
+                                          <span style={{ 
+                                            backgroundColor: '#d1fae5', 
+                                            color: '#065f46',
+                                            padding: '0.125rem 0.5rem',
+                                            borderRadius: '0.25rem',
+                                            fontSize: '0.75rem',
+                                            fontWeight: '600'
+                                          }}>
+                                            REAL
+                                          </span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <span style={{ color: '#6b7280' }}>Proyección</span>
+                                          <span style={{ 
+                                            backgroundColor: '#f3f4f6', 
+                                            color: '#6b7280',
+                                            padding: '0.125rem 0.5rem',
+                                            borderRadius: '0.25rem',
+                                            fontSize: '0.75rem',
+                                            fontWeight: '600'
+                                          }}>
+                                            ESTIMADO
+                                          </span>
+                                        </>
+                                      )}
+                                    </div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.5rem 1rem', fontSize: '0.875rem' }}>
+                                      <span style={{ color: '#6b7280' }}>Capital:</span>
+                                      <span style={{ fontWeight: '500' }}>${Math.round(purchase.amountTotalClp).toLocaleString('es-CL')}</span>
+                                      
+                                      {/* Caso 1: Fee definido y presente */}
+                                      {purchase.feePct !== null && purchase.feePct !== undefined && purchase.feeAmountClp !== null && purchase.feeAmountClp !== undefined && (
+                                        <>
+                                          <span style={{ color: '#6b7280' }}>
+                                            Comisión ({(purchase.feePct * 100).toFixed(2)}%):
+                                          </span>
+                                          <span style={{ fontWeight: '500', color: '#dc2626' }}>
+                                            +${Math.round(purchase.feeAmountClp).toLocaleString('es-CL')}
+                                          </span>
+                                        </>
+                                      )}
+                                      
+                                      {/* Caso 2: Fee faltante (compra antigua sin metadata.feePct) */}
+                                      {purchase.feeMissing && (
+                                        <>
+                                          <span style={{ color: '#9ca3af', fontStyle: 'italic' }}>Comisión:</span>
+                                          <span style={{ fontStyle: 'italic', color: '#9ca3af', fontSize: '0.8125rem' }}>
+                                            pendiente (se confirmará con estado de cuenta)
+                                          </span>
+                                        </>
+                                      )}
+                                      
+                                      {purchase.financedBaseClp && purchase.financedBaseClp !== purchase.amountTotalClp && (
+                                        <>
+                                          <span style={{ color: '#6b7280' }}>Base financiada:</span>
+                                          <span style={{ fontWeight: '600', color: '#1f2937' }}>
+                                            ${Math.round(purchase.financedBaseClp).toLocaleString('es-CL')}
+                                          </span>
+                                        </>
+                                      )}
+                                      
+                                      {purchase.installmentsCount > 1 && (
+                                        <>
+                                          <span style={{ color: '#6b7280' }}>Interés por cuotas:</span>
+                                          <span style={{ fontWeight: '500', color: '#dc2626' }}>
+                                            +${Math.round(purchase.interesTotalEstimado || 0).toLocaleString('es-CL')}
+                                          </span>
+                                        </>
+                                      )}
+                                      
+                                      <span style={{ color: '#6b7280', fontWeight: '600' }}>Total financiado:</span>
+                                      <span style={{ fontWeight: '700', fontSize: '0.9375rem', color: '#1f2937' }}>
+                                        ${Math.round(purchase.totalFinanciadoEstimado || 0).toLocaleString('es-CL')}
+                                      </span>
+                                    </div>
                                   </div>
                                 )}
                               </div>
@@ -854,6 +1199,238 @@ export default function Tenpo() {
               >
                 ✓ Confirmar
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal ajustar calendario */}
+      {scheduleModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={() => {
+            setScheduleModalOpen(false);
+            setScheduleDateInput('');
+            setSelectedPurchaseId(null);
+          }}
+        >
+          <div
+            className="card"
+            style={{ 
+              maxWidth: '500px',
+              width: '90%'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ marginBottom: '1rem', color: '#1e40af' }}>📅 Ajustar Mes de Pago</h3>
+            <p style={{ marginBottom: '1rem', color: '#666' }}>
+              Ingresa la <strong>fecha de la primera cuota</strong> según tu estado de cuenta.
+              El calendario completo se recalculará automáticamente desde esta fecha.
+            </p>
+            
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+                Fecha de primera cuota
+              </label>
+              <input
+                type="date"
+                value={scheduleDateInput}
+                onChange={(e) => setScheduleDateInput(e.target.value)}
+                className="input"
+                style={{ width: '100%', fontSize: '1rem', padding: '0.625rem' }}
+                autoFocus
+              />
+              <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.5rem' }}>
+                Ejemplo: 2026-03-05
+              </p>
+            </div>
+
+            <div style={{ 
+              padding: '0.75rem', 
+              backgroundColor: '#dbeafe', 
+              borderRadius: '0.375rem',
+              marginBottom: '1rem'
+            }}>
+              <p style={{ fontSize: '0.875rem', color: '#1e40af', margin: 0 }}>
+                💡 <strong>Tip:</strong> Deja el campo vacío para volver al modo automático
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => {
+                  setScheduleModalOpen(false);
+                  setScheduleDateInput('');
+                  setSelectedPurchaseId(null);
+                }}
+                className="button"
+                style={{ backgroundColor: '#6b7280', color: '#fff' }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleApplySchedule}
+                className="button"
+                style={{ backgroundColor: '#6366f1', color: '#fff' }}
+              >
+                ✓ Aplicar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para crear compra manual */}
+      {manualModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div className="card" style={{
+            maxWidth: '500px',
+            width: '90%',
+            maxHeight: '90vh',
+            overflow: 'auto'
+          }}>
+            <h2 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>
+              ➕ Agregar Compra Manual
+            </h2>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+                  Fecha de compra *
+                </label>
+                <input
+                  type="date"
+                  value={manualForm.purchaseDate}
+                  onChange={(e) => setManualForm({ ...manualForm, purchaseDate: e.target.value })}
+                  className="input"
+                  style={{ width: '100%' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+                  Comercio *
+                </label>
+                <input
+                  type="text"
+                  value={manualForm.merchant}
+                  onChange={(e) => setManualForm({ ...manualForm, merchant: e.target.value })}
+                  placeholder="Ej: Tienda XYZ"
+                  className="input"
+                  style={{ width: '100%' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+                  Monto total (CLP) *
+                </label>
+                <input
+                  type="number"
+                  value={manualForm.amountTotalClp}
+                  onChange={(e) => setManualForm({ ...manualForm, amountTotalClp: e.target.value })}
+                  placeholder="30000"
+                  className="input"
+                  style={{ width: '100%' }}
+                  min="1"
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+                  Número de cuotas *
+                </label>
+                <input
+                  type="number"
+                  value={manualForm.installmentsCount}
+                  onChange={(e) => setManualForm({ ...manualForm, installmentsCount: e.target.value })}
+                  className="input"
+                  style={{ width: '100%' }}
+                  min="1"
+                />
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input
+                  type="checkbox"
+                  id="tieneInteres"
+                  checked={manualForm.tieneInteres}
+                  onChange={(e) => setManualForm({ ...manualForm, tieneInteres: e.target.checked })}
+                  style={{ width: '18px', height: '18px' }}
+                />
+                <label htmlFor="tieneInteres" style={{ fontWeight: '500', cursor: 'pointer' }}>
+                  Tiene interés
+                </label>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+                  Fecha primera cuota (opcional)
+                </label>
+                <input
+                  type="date"
+                  value={manualForm.firstDueDateOverride}
+                  onChange={(e) => setManualForm({ ...manualForm, firstDueDateOverride: e.target.value })}
+                  className="input"
+                  style={{ width: '100%' }}
+                />
+                <p style={{ fontSize: '0.75rem', color: '#666', marginTop: '0.25rem' }}>
+                  Dejar vacío para calcular automáticamente
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                <button
+                  onClick={handleCreateManualPurchase}
+                  className="button"
+                  style={{ 
+                    flex: 1,
+                    backgroundColor: '#10b981',
+                    color: '#fff'
+                  }}
+                >
+                  ✅ Crear
+                </button>
+                <button
+                  onClick={() => {
+                    setManualModalOpen(false);
+                    setManualForm({
+                      purchaseDate: new Date().toISOString().split('T')[0],
+                      merchant: '',
+                      amountTotalClp: '',
+                      installmentsCount: '1',
+                      tieneInteres: true,
+                      firstDueDateOverride: ''
+                    });
+                  }}
+                  className="button"
+                  style={{ flex: 1 }}
+                >
+                  ❌ Cancelar
+                </button>
+              </div>
             </div>
           </div>
         </div>

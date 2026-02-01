@@ -249,7 +249,8 @@ model TenpoEmail {
 
 model TenpoPurchase {
   id                        Int                @id @default(autoincrement())
-  emailId                   Int                @map("email_id")
+  emailId                   Int?               @map("email_id")
+  source                    String             @default("gmail") // gmail | manual
   purchaseDate              DateTime           @map("purchase_date")
   merchant                  String
   amountTotalClp            Float              @map("amount_total_clp") // Capital (C)
@@ -258,7 +259,10 @@ model TenpoPurchase {
   modoMonto                 String             @default("ESTIMADO") @map("modo_monto") // ESTIMADO | REAL
   totalFinanciadoEstimado   Float?             @map("total_financiado_estimado")
   interesTotalEstimado      Float?             @map("interes_total_estimado")
-  email                     TenpoEmail         @relation(fields: [emailId], references: [id], onDelete: Cascade)
+  metadata                  String?            @map("metadata") // JSON string: { feePct: 0.02, ... }
+  scheduleMode              String             @default("AUTO") @map("schedule_mode") // AUTO | MANUAL
+  firstDueDateOverride      DateTime?          @map("first_due_date_override") // Override fecha primera cuota
+  email                     TenpoEmail?        @relation(fields: [emailId], references: [id], onDelete: Cascade)
   installments              TenpoInstallment[]
   createdAt                 DateTime           @default(now()) @map("created_at")
   updatedAt                 DateTime           @default(now()) @updatedAt @map("updated_at")
@@ -308,4 +312,21 @@ model TenpoTasaCuotas {
   createdAt       DateTime  @default(now()) @map("created_at")
 
   @@map("tenpo_tasa_cuotas")
+}
+
+model ActualEntry {
+  id         Int      @id @default(autoincrement())
+  year       Int
+  month      Int
+  category   String   // INGRESOS, SUSCRIPCIONES, OBLIGACIONES, HIPOTECARIO, SERVICIOS_BASICOS, SUPERMERCADO, AJUSTES
+  itemKey    String   @map("item_key")
+  label      String?
+  amountClp  Int      @map("amount_clp")
+  isPaid     Boolean  @default(false) @map("is_paid")
+  isLocked   Boolean  @default(false) @map("is_locked")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([year, month, category, itemKey], name: "year_month_category_itemKey")
+  @@map("actual_entries")
 }
