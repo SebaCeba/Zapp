@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { SelectPicker } from 'rsuite';
+import { SelectPicker, Button } from 'rsuite';
 import MainLayout from '../layout/MainLayout';
 import TablaPresupuestoIngresos from '../components/TablaPresupuestoIngresos';
 import GestionarIngresosModal from '../components/GestionarIngresosModal';
@@ -48,23 +48,22 @@ const Ingresos: React.FC = () => {
               />
             </div>
 
-            <button
+            <Button
+              appearance="primary"
               onClick={() => setModalIngresosAbierto(true)}
-              className="btn btn-primary"
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
               <span>⚙️</span>
               <span>Gestionar Ingresos</span>
-            </button>
+            </Button>
 
-            <button
+            <Button
               onClick={() => setModalBonosAbierto(true)}
-              className="btn"
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#fbbf24', color: '#78350f' }}
             >
               <span>💰</span>
               <span>Gestionar Bonos</span>
-            </button>
+            </Button>
           </div>
         </div>
 

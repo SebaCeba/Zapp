@@ -1,4 +1,5 @@
 import React from 'react';
+import { Panel, Button } from 'rsuite';
 import { ObligacionFormData } from './ObligacionForm';
 
 interface Props {
@@ -61,9 +62,8 @@ const VistaPreviaObligacion: React.FC<Props> = ({ data, year, uf, ufVariation, o
   const mesesNombre = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
   
   return (
-    <div className="card" style={{ marginBottom: '1.5rem' }}>
+    <Panel header="👁️ Vista Previa del Impacto Anual" bordered style={{ marginBottom: '1.5rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-        <h3 style={{ color: '#2d7a2d', margin: 0 }}>👁️ Vista Previa del Impacto Anual</h3>
         <span style={{ fontSize: '0.9rem', color: '#666' }}>📅 {data.nombre} - {year}</span>
       </div>
       
@@ -128,10 +128,10 @@ const VistaPreviaObligacion: React.FC<Props> = ({ data, year, uf, ufVariation, o
       </div>
 
       <div style={{ display: 'flex', gap: '1rem' }}>
-        <button className="btn" onClick={onBack} style={{ flex: 1 }}>← Volver</button>
-        <button className="btn" onClick={onSave} style={{ flex: 1, background: '#2d7a2d' }}>✓ Guardar Obligación</button>
+        <Button appearance="default" onClick={onBack} style={{ flex: 1 }}>← Volver</Button>
+        <Button appearance="primary" onClick={onSave} style={{ flex: 1, background: '#2d7a2d' }}>✓ Guardar Obligación</Button>
       </div>
-    </div>
+    </Panel>
   );
 };
 

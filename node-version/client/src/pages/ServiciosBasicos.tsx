@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { SelectPicker } from 'rsuite';
+import { SelectPicker, Button } from 'rsuite';
 import MainLayout from '../layout/MainLayout';
 import TablaPresupuestoServicios from '../components/TablaPresupuestoServicios';
 import GestionarCatalogoModal from '../components/GestionarCatalogoModal';
@@ -42,14 +42,14 @@ const ServiciosBasicos: React.FC = () => {
               />
             </div>
 
-            <button
+            <Button
+              appearance="primary"
               onClick={() => setModalAbierto(true)}
-              className="btn btn-primary"
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
               <span>⚙️</span>
               <span>Gestionar Catálogo</span>
-            </button>
+            </Button>
           </div>
         </div>
 
