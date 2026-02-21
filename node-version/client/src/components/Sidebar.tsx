@@ -1,104 +1,103 @@
 import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Sidenav, Nav } from 'rsuite';
+import DashboardIcon from '@rsuite/icons/Dashboard';
+import FunnelIcon from '@rsuite/icons/Funnel';
+import PageIcon from '@rsuite/icons/Page';
 
-interface MenuItem {
-  label: string;
-  href?: string;
-  subItems?: { label: string; href: string }[];
-}
-
-const menuItems: MenuItem[] = [
-  { label: 'Inicio', href: '/' },
-  { 
-    label: 'Presupuesto',
-    href: '/presupuesto',
-    subItems: [
-      { label: 'Ingresos', href: '/ingresos' },
-      { label: 'Suscripciones', href: '/app' },
-      { label: 'Créditos y Seguros', href: '/creditos' },
-      { label: 'Hipotecario', href: '/hipotecario' },
-      { label: 'Servicios Básicos', href: '/servicios-basicos' },
-      { label: 'Supermercado', href: '/supermercado' },
-      { label: 'Tenpo TC', href: '/presupuesto/tenpo' }
-    ]
+const menuItems = [
+  {
+    key: '/',
+    label: 'Inicio',
+    icon: <DashboardIcon />,
   },
-  { label: 'Actual', href: '/actual' }
+  {
+    key: 'presupuesto',
+    label: 'Presupuesto',
+    icon: <FunnelIcon />,
+    children: [
+      { key: '/presupuesto/resumen', label: 'Resumen' },
+      { key: '/ingresos', label: 'Ingresos' },
+      { key: '/app', label: 'Suscripciones' },
+      { key: '/creditos', label: 'Créditos y Seguros' },
+      { key: '/hipotecario', label: 'Hipotecario' },
+      { key: '/servicios-basicos', label: 'Servicios Básicos' },
+      { key: '/supermercado', label: 'Supermercado' },
+      { key: '/presupuesto/tenpo', label: 'Tenpo TC' },
+    ],
+  },
+  {
+    key: '/actual',
+    label: 'Actual',
+    icon: <PageIcon />,
+  },
 ];
 
 export default function Sidebar() {
-  const [open, setOpen] = useState(true);
-  const [expandedMenu, setExpandedMenu] = useState<string | null>('Presupuesto');
+  const [openKeys, setOpenKeys] = useState<string[]>(() => {
+    const saved = localStorage.getItem('sidebar-open-keys');
+    return saved !== null ? JSON.parse(saved) : ['presupuesto'];
+  });
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const toggleSubmenu = (label: string) => {
-    setExpandedMenu(expandedMenu === label ? null : label);
+  const handleOpenChange = (keys: string[]) => {
+    setOpenKeys(keys);
+    localStorage.setItem('sidebar-open-keys', JSON.stringify(keys));
   };
 
   return (
-    <aside className={`sidebar${open ? '' : ' collapsed'}`}>
-      <button
-        className="sidebar-toggle"
-        onClick={() => setOpen((v) => !v)}
-        aria-label="Toggle sidebar"
+    <div style={{ height: '100vh', position: 'sticky', top: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', flexShrink: 0 }}>
+      <Sidenav
+        appearance="subtle"
+        openKeys={openKeys}
+        onOpenChange={handleOpenChange}
+        style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}
       >
-        {open ? '⏴' : '⏵'}
-      </button>
-      <div className="menu-title">Menú</div>
-      <nav>
-        {menuItems.map((item) => (
-          <div key={item.label}>
-            {item.subItems ? (
-              <>
-                <a
-                  href={item.href}
-                  className="menu-item"
-                  style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    fontWeight: '600'
-                  }}
-                >
-                  <span>{item.label}</span>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      toggleSubmenu(item.label);
-                    }}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: 'inherit',
-                      cursor: 'pointer',
-                      padding: '0 0.25rem',
-                      fontSize: '0.875rem'
-                    }}
-                  >
-                    {expandedMenu === item.label ? '▼' : '▶'}
-                  </button>
-                </a>
-                {expandedMenu === item.label && (
-                  <div style={{ paddingLeft: '1rem' }}>
-                    {item.subItems.map((subItem) => (
-                      <a
-                        key={subItem.href}
-                        href={subItem.href}
-                        className="menu-item"
-                        style={{ fontSize: '0.9rem', paddingLeft: '1rem' }}
-                      >
-                        {subItem.label}
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </>
-            ) : (
-              <a href={item.href} className="menu-item">
-                {item.label}
-              </a>
-            )}
+        <Sidenav.Header>
+          <div style={{
+            padding: '18px 20px',
+            fontWeight: 700,
+            fontSize: '1rem',
+            letterSpacing: '0.02em',
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            color: 'var(--rs-text-primary)',
+          }}>
+            💰 <span>Zapps</span>
           </div>
-        ))}
-      </nav>
-    </aside>
+        </Sidenav.Header>
+        <Sidenav.Body>
+          <Nav activeKey={location.pathname} onSelect={(key) => navigate(key)}>
+            {menuItems.map((item) => {
+              if (item.children) {
+                return (
+                  <Nav.Menu
+                    key={item.key}
+                    eventKey={item.key}
+                    title={item.label}
+                    icon={item.icon}
+                  >
+                    {item.children.map((child) => (
+                      <Nav.Item key={child.key} eventKey={child.key}>
+                        {child.label}
+                      </Nav.Item>
+                    ))}
+                  </Nav.Menu>
+                );
+              }
+              return (
+                <Nav.Item key={item.key} eventKey={item.key} icon={item.icon}>
+                  {item.label}
+                </Nav.Item>
+              );
+            })}
+          </Nav>
+        </Sidenav.Body>
+      </Sidenav>
+    </div>
   );
 }

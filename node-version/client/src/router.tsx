@@ -17,7 +17,7 @@ export default function Router() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/presupuesto" element={<Presupuesto />} />
+        <Route path="/presupuesto/resumen" element={<Presupuesto />} />
         <Route path="/actual" element={<Actual />} />
         <Route path="/app" element={<App />} />
         <Route path="/creditos" element={<Creditos />} />
