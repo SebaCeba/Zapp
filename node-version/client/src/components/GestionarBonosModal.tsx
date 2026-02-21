@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { Modal, Button, Input, InputNumber, SelectPicker, IconButton, FlexboxGrid, Panel } from 'rsuite';
+import CloseIcon from '@rsuite/icons/Close';
 
 interface Bono {
   id?: number;
@@ -232,70 +234,33 @@ export default function GestionarBonosModal({ isOpen, onClose, onBonosUpdated, a
     }
   };
 
-  if (!isOpen) return null;
-
   const totalReparto = tipoReparto === 'porcentaje'
     ? repartos.reduce((sum, r) => sum + (r.porcentaje || 0), 0)
     : repartos.reduce((sum, r) => sum + (r.monto || 0), 0);
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      background: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
-      padding: '1rem'
-    }}>
-      <div style={{
-        background: 'white',
-        borderRadius: '8px',
-        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.3)',
-        maxWidth: '900px',
-        width: '100%',
-        maxHeight: '90vh',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        {/* Header */}
-        <div style={{
-          padding: '1.5rem',
-          borderBottom: '1px solid var(--gray-200)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}>
-          <h2 style={{ margin: 0 }}>Gestionar Bonos - {anio}</h2>
-          <button
-            onClick={() => {
-              setMostrarFormulario(false);
-              onClose();
-            }}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '1.5rem',
-              cursor: 'pointer',
-              color: 'var(--gray-400)',
-              lineHeight: 1
-            }}
-          >
-            ×
-          </button>
-        </div>
+    <Modal 
+      open={isOpen} 
+      onClose={() => {
+        setMostrarFormulario(false);
+        onClose();
+      }}
+      size="lg"
+      backdrop={true}
+      keyboard={true}
+    >
+      <Modal.Header closeButton>
+        <Modal.Title>Gestionar Bonos - {anio}</Modal.Title>
+      </Modal.Header>
 
-        {/* Content */}
-        <div style={{ flex: 1, overflow: 'auto', padding: '1.5rem' }}>
+      <Modal.Body style={{ minHeight: '400px', maxHeight: '70vh', overflow: 'auto' }}>
           {!mostrarFormulario ? (
             <>
               {/* Lista de bonos */}
               <div style={{ marginBottom: '1.5rem' }}>
-                <button onClick={iniciarNuevoBono} className="btn btn-primary">
+                <Button onClick={iniciarNuevoBono} appearance="primary">
                   ➕ Agregar Bono
-                </button>
+                </Button>
               </div>
 
               {loading ? (
@@ -333,16 +298,17 @@ export default function GestionarBonosModal({ isOpen, onClose, onBonosUpdated, a
                           )}
                         </div>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <button onClick={() => editarBono(bono)} className="btn btn-sm">
+                          <Button onClick={() => editarBono(bono)} size="xs">
                             ✏️ Editar
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             onClick={() => eliminarBono(bono.id!, bono.nombre)}
-                            className="btn btn-sm"
-                            style={{ color: '#dc2626' }}
+                            size="xs"
+                            color="red"
+                            appearance="primary"
                           >
                             🗑️
-                          </button>
+                          </Button>
                         </div>
                       </div>
 
@@ -390,12 +356,10 @@ export default function GestionarBonosModal({ isOpen, onClose, onBonosUpdated, a
                     <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.875rem', fontWeight: '500' }}>
                       Nombre del bono *
                     </label>
-                    <input
-                      type="text"
+                    <Input
                       value={nombre}
-                      onChange={(e) => setNombre(e.target.value)}
+                      onChange={(value) => setNombre(value)}
                       placeholder="Ej: Aguinaldo, Bono Septiembre"
-                      className="input"
                     />
                   </div>
 
@@ -403,23 +367,26 @@ export default function GestionarBonosModal({ isOpen, onClose, onBonosUpdated, a
                     <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.875rem', fontWeight: '500' }}>
                       Mes *
                     </label>
-                    <select value={mes} onChange={(e) => setMes(parseInt(e.target.value))} className="select">
-                      {MESES.map(m => (
-                        <option key={m.value} value={m.value}>{m.label}</option>
-                      ))}
-                    </select>
+                    <SelectPicker
+                      data={MESES}
+                      value={mes}
+                      onChange={(value) => setMes(value as number)}
+                      searchable={false}
+                      cleanable={false}
+                      block
+                    />
                   </div>
 
                   <div>
                     <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.875rem', fontWeight: '500' }}>
                       Monto total *
                     </label>
-                    <input
-                      type="number"
-                      value={monto}
-                      onChange={(e) => setMonto(e.target.value)}
+                    <InputNumber
+                      value={parseFloat(monto) || 0}
+                      onChange={(value) => setMonto(value?.toString() || '')}
                       placeholder="0"
-                      className="input"
+                      prefix="$"
+                      formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
                     />
                   </div>
 
@@ -427,14 +394,17 @@ export default function GestionarBonosModal({ isOpen, onClose, onBonosUpdated, a
                     <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.875rem', fontWeight: '500' }}>
                       Tipo de reparto
                     </label>
-                    <select
+                    <SelectPicker
+                      data={[
+                        { label: 'Porcentaje (%)', value: 'porcentaje' },
+                        { label: 'Monto ($)', value: 'monto' }
+                      ]}
                       value={tipoReparto}
-                      onChange={(e) => setTipoReparto(e.target.value as 'porcentaje' | 'monto')}
-                      className="select"
-                    >
-                      <option value="porcentaje">Porcentaje (%)</option>
-                      <option value="monto">Monto ($)</option>
-                    </select>
+                      onChange={(value) => setTipoReparto(value as 'porcentaje' | 'monto')}
+                      searchable={false}
+                      cleanable={false}
+                      block
+                    />
                   </div>
                 </div>
 
@@ -442,12 +412,10 @@ export default function GestionarBonosModal({ isOpen, onClose, onBonosUpdated, a
                   <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.875rem', fontWeight: '500' }}>
                     Descripción (opcional)
                   </label>
-                  <input
-                    type="text"
+                  <Input
                     value={descripcion}
-                    onChange={(e) => setDescripcion(e.target.value)}
+                    onChange={(value) => setDescripcion(value)}
                     placeholder="Notas adicionales..."
-                    className="input"
                   />
                 </div>
 
@@ -457,9 +425,9 @@ export default function GestionarBonosModal({ isOpen, onClose, onBonosUpdated, a
                     <label style={{ fontSize: '0.875rem', fontWeight: '500' }}>
                       Destinos del reparto *
                     </label>
-                    <button onClick={agregarReparto} className="btn btn-sm">
+                    <Button onClick={agregarReparto} size="sm" appearance="ghost">
                       ➕ Agregar destino
-                    </button>
+                    </Button>
                   </div>
 
                   {repartos.map((reparto, idx) => (
@@ -475,49 +443,42 @@ export default function GestionarBonosModal({ isOpen, onClose, onBonosUpdated, a
                         borderRadius: '4px'
                       }}
                     >
-                      <select
+                      <SelectPicker
+                        data={DESTINOS}
                         value={reparto.destino}
-                        onChange={(e) => actualizarReparto(idx, 'destino', e.target.value)}
-                        className="select"
-                        style={{ fontSize: '0.875rem' }}
-                      >
-                        {DESTINOS.map(d => (
-                          <option key={d.value} value={d.value}>{d.label}</option>
-                        ))}
-                      </select>
+                        onChange={(value) => actualizarReparto(idx, 'destino', value as string)}
+                        searchable={false}
+                        cleanable={false}
+                        block
+                        size="sm"
+                      />
 
-                      <input
-                        type="number"
+                      <InputNumber
                         value={tipoReparto === 'porcentaje' ? (reparto.porcentaje || 0) : (reparto.monto || 0)}
-                        onChange={(e) => actualizarReparto(idx, tipoReparto === 'porcentaje' ? 'porcentaje' : 'monto', parseFloat(e.target.value) || 0)}
+                        onChange={(value) => actualizarReparto(idx, tipoReparto === 'porcentaje' ? 'porcentaje' : 'monto', value || 0)}
                         placeholder={tipoReparto === 'porcentaje' ? '%' : '$'}
-                        className="input"
-                        style={{ fontSize: '0.875rem' }}
+                        size="sm"
+                        postfix={tipoReparto === 'porcentaje' ? '%' : undefined}
+                        prefix={tipoReparto === 'monto' ? '$' : undefined}
                       />
 
                       {reparto.destino === 'apoyo_mensual' && (
-                        <input
-                          type="number"
-                          value={reparto.mesesDistribucion || ''}
-                          onChange={(e) => actualizarReparto(idx, 'mesesDistribucion', parseInt(e.target.value) || undefined)}
+                        <InputNumber
+                          value={reparto.mesesDistribucion || 0}
+                          onChange={(value) => actualizarReparto(idx, 'mesesDistribucion', value || undefined)}
                           placeholder="Meses"
-                          className="input"
-                          style={{ fontSize: '0.875rem' }}
+                          size="sm"
                         />
                       )}
 
-                      <button
+                      <IconButton
+                        icon={<CloseIcon />}
+                        circle
+                        size="xs"
+                        color="red"
+                        appearance="primary"
                         onClick={() => eliminarReparto(idx)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#dc2626',
-                          cursor: 'pointer',
-                          fontSize: '1.25rem'
-                        }}
-                      >
-                        ×
-                      </button>
+                      />
                     </div>
                   ))}
 
@@ -539,32 +500,25 @@ export default function GestionarBonosModal({ isOpen, onClose, onBonosUpdated, a
 
                 {/* Botones */}
                 <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
-                  <button onClick={() => setMostrarFormulario(false)} className="btn">
+                  <Button onClick={() => setMostrarFormulario(false)} appearance="subtle">
                     Cancelar
-                  </button>
-                  <button onClick={guardarBono} className="btn btn-primary">
+                  </Button>
+                  <Button onClick={guardarBono} appearance="primary">
                     {bonoEditando ? 'Actualizar' : 'Guardar'} Bono
-                  </button>
+                  </Button>
                 </div>
               </div>
             </>
           )}
-        </div>
+      </Modal.Body>
 
-        {/* Footer */}
-        {!mostrarFormulario && (
-          <div style={{
-            padding: '1rem 1.5rem',
-            borderTop: '1px solid var(--gray-200)',
-            display: 'flex',
-            justifyContent: 'flex-end'
-          }}>
-            <button onClick={onClose} className="btn">
-              Cerrar
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
+      {!mostrarFormulario && (
+        <Modal.Footer>
+          <Button onClick={onClose} appearance="subtle">
+            Cerrar
+          </Button>
+        </Modal.Footer>
+      )}
+    </Modal>
   );
 }
