@@ -42,43 +42,36 @@
 
 ### 💳 Integración Tenpo
 
-| Documento | Descripción |
-|-----------|-------------|
-| **[TENPO_INTEGRATION.md](TENPO_INTEGRATION.md)** | Overview de integración con Tenpo + Gmail |
-| **[tenpo_addon_v1_impl.md](tenpo_addon_v1_impl.md)** | Implementación cálculo de intereses Add-On V1 |
-| **[tenpo_addon_fee_base.md](tenpo_addon_fee_base.md)** | Fórmulas de cálculo con fee incluido |
-| **[tenpo_addon_fee_base_wiring.md](tenpo_addon_fee_base_wiring.md)** | Wiring completo del sistema de fees |
-| **[tenpo_fee_exposure.md](tenpo_fee_exposure.md)** | Exposición de campos fee en API |
-| **[tenpo_fee_missing.md](tenpo_fee_missing.md)** | Manejo de casos sin fee |
-| **[tenpo_ui_desglose.md](tenpo_ui_desglose.md)** | UI desglose de costos financiados |
-| **[tenpo_calendar_override.md](tenpo_calendar_override.md)** | Sistema de override de calendario |
-| **[tenpo_real_guardrails.md](tenpo_real_guardrails.md)** | Validaciones de datos reales vs estimados |
-| **[tenpo_auditoria.md](tenpo_auditoria.md)** | Auditoría completa del sistema Tenpo |
-| **[tenpo_qa_checklist.md](tenpo_qa_checklist.md)** | Checklist de QA para Tenpo |
+**📁 [tenpo/](tenpo/)** - 17 documentos sobre integración Tenpo + Gmail
 
-#### Compras Manuales Tenpo
-| Documento | Descripción |
-|-----------|-------------|
-| **[tenpo-manual-purchases-api.md](tenpo-manual-purchases-api.md)** | API para compras manuales |
-| **[tenpo-manual-purchases-model.md](tenpo-manual-purchases-model.md)** | Modelo de datos de compras manuales |
-| **[tenpo-manual-purchases-ui.md](tenpo-manual-purchases-ui.md)** | UI para crear compras manuales |
-| **[tenpo-manual-purchases-audit.md](tenpo-manual-purchases-audit.md)** | Auditoría de compras manuales |
+| Documento Principal | Descripción |
+|--------------------|-------------|
+| **[tenpo/TENPO_INTEGRATION.md](tenpo/TENPO_INTEGRATION.md)** ⭐ | Overview completo de integración |
+| **[tenpo/README.md](tenpo/README.md)** | Índice con todos los documentos organizados |
 
-#### Correcciones Históricas
-| Documento | Descripción |
-|-----------|-------------|
-| **[cuotas_interes_fix.md](cuotas_interes_fix.md)** | Fix histórico: cálculo de intereses |
+**Temas cubiertos:**
+- Cálculo de intereses (Add-On V1, fees, sistema francés)
+- UI y desglose de costos
+- Compras manuales
+- Calendario y overrides
+- Validación y auditoría
+- QA y testing
 
 ---
 
 ### 🏦 TC Billing Cycles (Tarjetas de Crédito)
 
-| Documento | Descripción |
-|-----------|-------------|
-| **[tc-billing-cycle-design.md](tc-billing-cycle-design.md)** | Diseño del sistema de ciclos de facturación |
-| **[tc-billing-cycle-backend.md](tc-billing-cycle-backend.md)** | Implementación backend de billing cycles |
-| **[tc-billing-cycle-ui.md](tc-billing-cycle-ui.md)** | Implementación UI de configuración TC |
-| **[auditoria-routing-configuracion-tc.md](auditoria-routing-configuracion-tc.md)** | Auditoría de routing y configuración |
+**📁 [tc-billing/](tc-billing/)** - 5 documentos sobre ciclos de facturación
+
+| Documento Principal | Descripción |
+|--------------------|-------------|
+| **[tc-billing/tc-billing-cycle-design.md](tc-billing/tc-billing-cycle-design.md)** ⭐ | Diseño completo del sistema |
+| **[tc-billing/README.md](tc-billing/README.md)** | Índice con todos los documentos |
+
+**Temas cubiertos:**
+- Diseño del sistema
+- Implementación backend y frontend
+- Auditoría de implementación
 
 ---
 
@@ -110,21 +103,30 @@ Los siguientes documentos fueron movidos a `archive/` por estar obsoletos o comp
 
 ```
 docs/
-├── README.md                          # Este archivo
+├── README.md                          # Este archivo - Índice principal
 ├── ARQUITECTURA.md                    # ⭐ Documento maestro
-├── ANALISIS_DOCUMENTACION.md          # Análisis de docs
+├── ANALISIS_DOCUMENTACION.md          # Análisis de documentación
+├── DESARROLLO.md                      # Comandos y desarrollo
+├── CREDENCIALES_GOOGLE.md            # Setup Gmail OAuth
 │
-├── Desarrollo/
-│   ├── DESARROLLO.md
-│   └── CREDENCIALES_GOOGLE.md
-│
-├── implementacion_rsuite/
+├── 🎨 implementacion_rsuite/          # Migración a RSuite
+│   ├── README.md
 │   ├── PLAN_IMPLEMENTACION_RSUITE.md
 │   └── FASE_0_RSUITE_PREPARACION.md
 │
-├── Tenpo/                            # 15 documentos
-├── TC Billing/                       # 4 documentos
-└── archive/                          # 7 documentos obsoletos
+├── 💳 tenpo/                          # 17 documentos Tenpo
+│   ├── README.md                      # ⭐ Índice completo
+│   ├── TENPO_INTEGRATION.md
+│   └── ... (16 documentos más)
+│
+├── 🏦 tc-billing/                     # 5 documentos TC Billing
+│   ├── README.md
+│   ├── tc-billing-cycle-design.md
+│   └── ... (4 documentos más)
+│
+└── 🗄️ archive/                        # 7 documentos obsoletos
+    ├── FRONTEND_ACTUAL_IMPLEMENTACION.md
+    └── ...
 ```
 
 ---
@@ -138,8 +140,8 @@ docs/
 | Entender arquitectura completa | [ARQUITECTURA.md](ARQUITECTURA.md) |
 | Empezar a desarrollar | [DESARROLLO.md](DESARROLLO.md) |
 | Implementar RSuite | [PLAN_IMPLEMENTACION_RSUITE.md](implementacion_rsuite/PLAN_IMPLEMENTACION_RSUITE.md) |
-| Entender Tenpo | [TENPO_INTEGRATION.md](TENPO_INTEGRATION.md) |
-| Entender TC Billing | [tc-billing-cycle-design.md](tc-billing-cycle-design.md) |
+| Entender Tenpo | [tenpo/TENPO_INTEGRATION.md](tenpo/TENPO_INTEGRATION.md) → [tenpo/README.md](tenpo/README.md) |
+| Entender TC Billing | [tc-billing/tc-billing-cycle-design.md](tc-billing/tc-billing-cycle-design.md) → [tc-billing/README.md](tc-billing/README.md) |
 | Configurar Gmail | [CREDENCIALES_GOOGLE.md](CREDENCIALES_GOOGLE.md) |
 | Ver docs antiguas | [archive/](archive/) |
 
