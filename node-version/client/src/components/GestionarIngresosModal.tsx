@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Modal, Button, Input } from 'rsuite';
 
 interface IngresoBase {
   id: number;
@@ -146,81 +147,42 @@ export default function GestionarIngresosModal({ isOpen, onClose, onIngresosUpda
     }
   };
 
-  if (!isOpen) return null;
-
   const ingresosActivos = ingresos.filter(i => i.activo);
   const ingresosInactivos = ingresos.filter(i => !i.activo);
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      background: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
-      padding: '1rem'
-    }}>
-      <div style={{
-        background: 'white',
-        borderRadius: '8px',
-        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.3)',
-        maxWidth: '800px',
-        width: '100%',
-        maxHeight: '90vh',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        {/* Header */}
-        <div style={{
-          padding: '1.5rem',
-          borderBottom: '1px solid var(--gray-200)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}>
-          <h2 style={{ margin: 0 }}>Gestionar Ingresos Base</h2>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '1.5rem',
-              cursor: 'pointer',
-              color: 'var(--gray-400)',
-              lineHeight: 1
-            }}
-          >
-            ×
-          </button>
-        </div>
+    <Modal 
+      open={isOpen} 
+      onClose={onClose}
+      size="md"
+      backdrop={true}
+      keyboard={true}
+    >
+      <Modal.Header closeButton>
+        <Modal.Title>Gestionar Ingresos Base</Modal.Title>
+      </Modal.Header>
 
-        {/* Content */}
-        <div style={{ flex: 1, overflow: 'auto', padding: '1.5rem' }}>
+      <Modal.Body style={{ minHeight: '400px', maxHeight: '70vh', overflow: 'auto' }}>
           {/* Agregar nuevo ingreso */}
           <div style={{ marginBottom: '2rem' }}>
             <h3 style={{ fontSize: '1rem', marginBottom: '0.75rem', color: '#374151' }}>
               ➕ Agregar Nuevo Ingreso
             </h3>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
-                type="text"
+              <Input
                 placeholder="Ej: Sueldo líquido, Bonos anuales..."
                 value={nuevoNombre}
-                onChange={(e) => setNuevoNombre(e.target.value)}
+                onChange={(value) => setNuevoNombre(value)}
                 onKeyDown={(e) => e.key === 'Enter' && agregarIngreso()}
-                className="input"
                 style={{ flex: 1 }}
               />
-              <button
+              <Button
                 onClick={agregarIngreso}
-                className="btn btn-primary"
+                appearance="primary"
                 disabled={!nuevoNombre.trim()}
               >
                 Agregar
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -255,10 +217,9 @@ export default function GestionarIngresosModal({ isOpen, onClose, onIngresosUpda
                         }}
                       >
                         {editandoId === ingreso.id ? (
-                          <input
-                            type="text"
+                          <Input
                             value={editandoNombre}
-                            onChange={(e) => setEditandoNombre(e.target.value)}
+                            onChange={(value) => setEditandoNombre(value)}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') renombrarIngreso(ingreso.id, editandoNombre);
                               if (e.key === 'Escape') {
@@ -266,7 +227,6 @@ export default function GestionarIngresosModal({ isOpen, onClose, onIngresosUpda
                                 setEditandoNombre('');
                               }
                             }}
-                            className="input"
                             autoFocus
                             style={{ flex: 1, marginRight: '0.5rem' }}
                           />
@@ -279,51 +239,50 @@ export default function GestionarIngresosModal({ isOpen, onClose, onIngresosUpda
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                           {editandoId === ingreso.id ? (
                             <>
-                              <button
+                              <Button
                                 onClick={() => renombrarIngreso(ingreso.id, editandoNombre)}
-                                className="btn btn-sm"
-                                style={{ fontSize: '0.75rem' }}
+                                size="xs"
+                                appearance="primary"
                               >
                                 Guardar
-                              </button>
-                              <button
+                              </Button>
+                              <Button
                                 onClick={() => {
                                   setEditandoId(null);
                                   setEditandoNombre('');
                                 }}
-                                className="btn btn-sm"
-                                style={{ fontSize: '0.75rem' }}
+                                size="xs"
+                                appearance="subtle"
                               >
                                 Cancelar
-                              </button>
+                              </Button>
                             </>
                           ) : (
                             <>
-                              <button
+                              <Button
                                 onClick={() => {
                                   setEditandoId(ingreso.id);
                                   setEditandoNombre(ingreso.nombre);
                                 }}
-                                className="btn btn-sm"
-                                style={{ fontSize: '0.75rem' }}
+                                size="xs"
                               >
                                 ✏️ Renombrar
-                              </button>
-                              <button
+                              </Button>
+                              <Button
                                 onClick={() => toggleActivo(ingreso.id, ingreso.nombre, true)}
-                                className="btn btn-sm"
-                                style={{ fontSize: '0.75rem' }}
+                                size="xs"
                               >
                                 👁️ Ocultar
-                              </button>
+                              </Button>
                               {(!ingreso.presupuestos || ingreso.presupuestos.length === 0) && (
-                                <button
+                                <Button
                                   onClick={() => eliminarIngreso(ingreso.id, ingreso.nombre)}
-                                  className="btn btn-sm"
-                                  style={{ fontSize: '0.75rem', color: '#dc2626' }}
+                                  size="xs"
+                                  color="red"
+                                  appearance="primary"
                                 >
                                   🗑️
-                                </button>
+                                </Button>
                               )}
                             </>
                           )}
@@ -337,21 +296,17 @@ export default function GestionarIngresosModal({ isOpen, onClose, onIngresosUpda
               {/* Ingresos inactivos (opcional) */}
               {ingresosInactivos.length > 0 && (
                 <div>
-                  <button
+                  <Button
                     onClick={() => setMostrarInactivos(!mostrarInactivos)}
+                    appearance="link"
                     style={{
-                      background: 'none',
-                      border: 'none',
-                      fontSize: '1rem',
-                      fontWeight: '500',
                       color: '#9ca3af',
-                      cursor: 'pointer',
                       marginBottom: '1rem',
                       padding: 0
                     }}
                   >
                     {mostrarInactivos ? '▼' : '▶'} Ingresos Ocultos ({ingresosInactivos.length})
-                  </button>
+                  </Button>
 
                   {mostrarInactivos && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -371,21 +326,21 @@ export default function GestionarIngresosModal({ isOpen, onClose, onIngresosUpda
                         >
                           <span style={{ color: '#9ca3af' }}>{ingreso.nombre}</span>
                           <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <button
+                            <Button
                               onClick={() => toggleActivo(ingreso.id, ingreso.nombre, false)}
-                              className="btn btn-sm"
-                              style={{ fontSize: '0.75rem' }}
+                              size="xs"
                             >
                               ♻️ Reactivar
-                            </button>
+                            </Button>
                             {(!ingreso.presupuestos || ingreso.presupuestos.length === 0) && (
-                              <button
+                              <Button
                                 onClick={() => eliminarIngreso(ingreso.id, ingreso.nombre)}
-                                className="btn btn-sm"
-                                style={{ fontSize: '0.75rem', color: '#dc2626' }}
+                                size="xs"
+                                color="red"
+                                appearance="primary"
                               >
                                 🗑️
-                              </button>
+                              </Button>
                             )}
                           </div>
                         </div>
@@ -396,20 +351,13 @@ export default function GestionarIngresosModal({ isOpen, onClose, onIngresosUpda
               )}
             </>
           )}
-        </div>
+      </Modal.Body>
 
-        {/* Footer */}
-        <div style={{
-          padding: '1rem 1.5rem',
-          borderTop: '1px solid var(--gray-200)',
-          display: 'flex',
-          justifyContent: 'flex-end'
-        }}>
-          <button onClick={onClose} className="btn">
-            Cerrar
-          </button>
-        </div>
-      </div>
-    </div>
+      <Modal.Footer>
+        <Button onClick={onClose} appearance="subtle">
+          Cerrar
+        </Button>
+      </Modal.Footer>
+    </Modal>
   );
 }
