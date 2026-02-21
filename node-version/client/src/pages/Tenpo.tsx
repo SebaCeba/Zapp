@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../layout/MainLayout';
-import Toast from '../components/Toast';
+import { showToast } from '../components/Toast';
 
 interface Purchase {
   id: number;
@@ -62,7 +62,7 @@ export default function Tenpo() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [expandido, setExpandido] = useState<number | null>(null);
   const [lastSync, setLastSync] = useState<Date | null>(null);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [searching, setSearching] = useState(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
@@ -166,18 +166,12 @@ export default function Tenpo() {
           message += `⏭️ Ya existían: ${data.skippedCompras || 0} compras, ${data.skippedPagos || 0} pagos`;
         }
         
-        setToast({
-          message,
-          type: 'success'
-        });
+        showToast(message, 'success');
         loadData();
       }
     } catch (error) {
       console.error('Error sincronizando:', error);
-      setToast({
-        message: 'Error al sincronizar con Gmail',
-        type: 'error'
-      });
+      showToast('Error al sincronizar con Gmail', 'error');
     } finally {
       setSyncing(false);
     }
@@ -185,10 +179,7 @@ export default function Tenpo() {
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
-      setToast({
-        message: 'Ingresa un texto para buscar',
-        type: 'info'
-      });
+      showToast('Ingresa un texto para buscar', 'info');
       return;
     }
 
@@ -200,22 +191,13 @@ export default function Tenpo() {
       console.log('🔍 Resultados de búsqueda:', data);
 
       if (data.emailsFound === 0 && data.purchasesFound === 0) {
-        setToast({
-          message: `No se encontró "${searchQuery}" en emails ni compras`,
-          type: 'info'
-        });
+        showToast(`No se encontró "${searchQuery}" en emails ni compras`, 'info');
       } else {
-        setToast({
-          message: `Encontrado: ${data.emailsFound} emails, ${data.purchasesFound} compras. Ver consola (F12) para detalles.`,
-          type: 'success'
-        });
+        showToast(`Encontrado: ${data.emailsFound} emails, ${data.purchasesFound} compras. Ver consola (F12) para detalles.`, 'success');
       }
     } catch (error) {
       console.error('Error buscando:', error);
-      setToast({
-        message: 'Error al buscar',
-        type: 'error'
-      });
+      showToast('Error al buscar', 'error');
     } finally {
       setSearching(false);
     }
@@ -234,18 +216,12 @@ export default function Tenpo() {
         throw new Error(errorData.error || 'Error al cambiar interés');
       }
 
-      setToast({
-        message: `Interés ${!currentValue ? 'activado' : 'desactivado'} y cuotas recalculadas`,
-        type: 'success'
-      });
+      showToast(`Interés ${!currentValue ? 'activado' : 'desactivado'} y cuotas recalculadas`, 'success');
       
       await loadData();
     } catch (error: any) {
       console.error('Error toggling interés:', error);
-      setToast({
-        message: error.message || 'Error al cambiar interés',
-        type: 'error'
-      });
+      showToast(error.message || 'Error al cambiar interés', 'error');
     }
   };
 
@@ -264,10 +240,7 @@ export default function Tenpo() {
 
   const handleCreateManualPurchase = async () => {
     if (!manualForm.merchant || !manualForm.amountTotalClp || !manualForm.installmentsCount) {
-      setToast({
-        message: 'Completa todos los campos requeridos',
-        type: 'error'
-      });
+      showToast('Completa todos los campos requeridos', 'error');
       return;
     }
 
@@ -275,18 +248,12 @@ export default function Tenpo() {
     const installments = parseInt(manualForm.installmentsCount);
 
     if (isNaN(amountClp) || amountClp <= 0) {
-      setToast({
-        message: 'El monto debe ser mayor a 0',
-        type: 'error'
-      });
+      showToast('El monto debe ser mayor a 0', 'error');
       return;
     }
 
     if (isNaN(installments) || installments < 1) {
-      setToast({
-        message: 'El número de cuotas debe ser mayor o igual a 1',
-        type: 'error'
-      });
+      showToast('El número de cuotas debe ser mayor o igual a 1', 'error');
       return;
     }
 
@@ -315,10 +282,7 @@ export default function Tenpo() {
         throw new Error(errorData.error || 'Error al crear compra');
       }
 
-      setToast({
-        message: '✅ Compra manual creada exitosamente',
-        type: 'success'
-      });
+      showToast('✅ Compra manual creada exitosamente', 'success');
 
       setManualModalOpen(false);
       setManualForm({
@@ -332,10 +296,7 @@ export default function Tenpo() {
       await loadData();
     } catch (error: any) {
       console.error('Error creando compra manual:', error);
-      setToast({
-        message: error.message || 'Error al crear compra',
-        type: 'error'
-      });
+      showToast(error.message || 'Error al crear compra', 'error');
     }
   };
 
@@ -362,10 +323,7 @@ export default function Tenpo() {
           throw new Error(errorMessage);
         }
 
-        setToast({
-          message: 'Calendario vuelto a modo automático',
-          type: 'success'
-        });
+        showToast('Calendario vuelto a modo automático', 'success');
         
         setScheduleModalOpen(false);
         setScheduleDateInput('');
@@ -374,10 +332,7 @@ export default function Tenpo() {
         return;
       } catch (error: any) {
         console.error('Error:', error);
-        setToast({
-          message: error.message || 'Error al cambiar calendario',
-          type: 'error'
-        });
+        showToast(error.message || 'Error al cambiar calendario', 'error');
         return;
       }
     }
@@ -405,10 +360,7 @@ export default function Tenpo() {
         throw new Error(errorMessage);
       }
 
-      setToast({
-        message: 'Calendario ajustado - Las cuotas se recalcularon con la nueva fecha',
-        type: 'success'
-      });
+      showToast('Calendario ajustado - Las cuotas se recalcularon con la nueva fecha', 'success');
       
       setScheduleModalOpen(false);
       setScheduleDateInput('');
@@ -416,28 +368,19 @@ export default function Tenpo() {
       await loadData();
     } catch (error: any) {
       console.error('Error:', error);
-      setToast({
-        message: error.message || 'Error al cambiar calendario',
-        type: 'error'
-      });
+      showToast(error.message || 'Error al cambiar calendario', 'error');
     }
   };
 
   const handleConfirmarReal = async () => {
     if (!selectedPurchaseId || !cuotaRealInput) {
-      setToast({
-        message: 'Ingresa el monto de la cuota',
-        type: 'error'
-      });
+      showToast('Ingresa el monto de la cuota', 'error');
       return;
     }
 
     const cuotaReal = parseInt(cuotaRealInput);
     if (isNaN(cuotaReal) || cuotaReal <= 0) {
-      setToast({
-        message: 'Monto inválido',
-        type: 'error'
-      });
+      showToast('Monto inválido', 'error');
       return;
     }
 
@@ -453,10 +396,7 @@ export default function Tenpo() {
         throw new Error(errorData.error || 'Error al confirmar');
       }
 
-      setToast({
-        message: 'Valor real confirmado - Las cuotas ya no se recalcularán automáticamente',
-        type: 'success'
-      });
+      showToast('Valor real confirmado - Las cuotas ya no se recalcularán automáticamente', 'success');
       
       setConfirmModalOpen(false);
       setCuotaRealInput('');
@@ -464,10 +404,7 @@ export default function Tenpo() {
       await loadData();
     } catch (error: any) {
       console.error('Error confirmando:', error);
-      setToast({
-        message: error.message || 'Error al confirmar valor real',
-        type: 'error'
-      });
+      showToast(error.message || 'Error al confirmar valor real', 'error');
     }
   };
 
@@ -1451,15 +1388,6 @@ export default function Tenpo() {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Toast notification */}
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
       )}
     </MainLayout>
   );

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import MainLayout from '../layout/MainLayout';
-import Toast from '../components/Toast';
+import { showToast } from '../components/Toast';
 
 interface TasaConfig {
   id: number;
@@ -19,7 +19,6 @@ export default function TenpoConfig() {
   const [nuevoCae, setNuevoCae] = useState('28.4');
   const [vigenteDesde, setVigenteDesde] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   useEffect(() => {
     loadData();
@@ -53,10 +52,7 @@ export default function TenpoConfig() {
     const cae = parseFloat(nuevoCae);
 
     if (isNaN(tasaMensual) || isNaN(cae) || tasaMensual < 0 || cae < 0) {
-      setToast({
-        message: 'Valores inválidos',
-        type: 'error'
-      });
+      showToast('Valores inválidos', 'error');
       return;
     }
 
@@ -77,28 +73,19 @@ export default function TenpoConfig() {
         throw new Error(errorData.error || 'Error al crear tasa');
       }
 
-      setToast({
-        message: 'Tasa actualizada. Se recalcularán las compras en modo ESTIMADO.',
-        type: 'success'
-      });
+      showToast('Tasa actualizada. Se recalcularán las compras en modo ESTIMADO.', 'info');
 
       // Recalcular compras estimadas
       await fetch('http://localhost:3000/api/tenpo/recalcular-estimadas', {
         method: 'POST'
       });
 
-      setToast({
-        message: 'Tasa actualizada y compras recalculadas exitosamente',
-        type: 'success'
-      });
+      showToast('Tasa actualizada y compras recalculadas exitosamente', 'success');
 
       await loadData();
     } catch (error: any) {
       console.error('Error creando tasa:', error);
-      setToast({
-        message: error.message || 'Error al crear tasa',
-        type: 'error'
-      });
+      showToast(error.message || 'Error al crear tasa', 'error');
     } finally {
       setLoading(false);
     }
@@ -284,15 +271,6 @@ export default function TenpoConfig() {
           )}
         </div>
       </div>
-
-      {/* Toast notification */}
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
     </MainLayout>
   );
 }
