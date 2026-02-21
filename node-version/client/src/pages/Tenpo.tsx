@@ -645,21 +645,38 @@ export default function Tenpo() {
               Gestión de compras con tarjeta de crédito Tenpo - Proyección de cuotas
             </p>
           </div>
-          <button
-            onClick={() => navigate('/presupuesto/tenpo/config')}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: '#3b82f6',
-              color: '#fff',
-              borderRadius: '6px',
-              border: 'none',
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              cursor: 'pointer'
-            }}
-          >
-            ⚙️ Configurar Tasa
-          </button>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <button
+              onClick={() => navigate('/presupuesto/tenpo/config')}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#3b82f6',
+                color: '#fff',
+                borderRadius: '6px',
+                border: 'none',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                cursor: 'pointer'
+              }}
+            >
+              ⚙️ Configurar Tasa
+            </button>
+            <button
+              onClick={() => navigate('/configuracion-tc/TENPO')}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#10b981',
+                color: '#fff',
+                borderRadius: '6px',
+                border: 'none',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                cursor: 'pointer'
+              }}
+            >
+              📅 Configuración TC
+            </button>
+          </div>
         </div>
 
         {/* Controles */}

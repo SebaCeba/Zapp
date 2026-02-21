@@ -1,0 +1,96 @@
+.tcConfigForm {
+  background: #fff;
+  padding: 24px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.tcConfigForm h3 {
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.tcConfigForm__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.tcConfigForm__field {
+  display: flex;
+  flex-direction: column;
+}
+
+.tcConfigForm__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #555;
+  margin-bottom: 8px;
+}
+
+.tcConfigForm__input {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.tcConfigForm__input:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
+.tcConfigForm__select {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.tcConfigForm__select:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
+.tcConfigForm__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.tcConfigForm__button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.tcConfigForm__button--primary {
+  background-color: #4CAF50;
+  color: #fff;
+}
+
+.tcConfigForm__button--primary:hover {
+  background-color: #45a049;
+}
+
+.tcConfigForm__button--primary:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.tcConfigForm__helper {
+  font-size: 13px;
+  color: #666;
+  margin-top: 4px;
+}

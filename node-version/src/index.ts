@@ -11,6 +11,7 @@ import supermercadoRoutes from './routes/supermercado';
 import googleIntegrationRoutes from './routes/google-integration';
 import tenpoRoutes from './routes/tenpo';
 import actualRoutes from './routes/actual';
+import tcBillingRoutes from './routes/tc-billing';
 import { tenpoConfigService } from './services/tenpo-config.service';
 
 dotenv.config();
@@ -32,6 +33,7 @@ app.use('/api/supermercado', supermercadoRoutes);
 app.use('/api/integrations/google', googleIntegrationRoutes);
 app.use('/api/tenpo', tenpoRoutes);
 app.use('/api/actual', actualRoutes);
+app.use('/api/tc-billing', tcBillingRoutes);
 
 app.get('/health', (_, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

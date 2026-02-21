@@ -10,6 +10,7 @@ import Supermercado from './pages/Supermercado';
 import Tenpo from './pages/Tenpo';
 import TenpoConfig from './pages/TenpoConfig';
 import Actual from './pages/Actual';
+import ConfiguracionTC from './pages/ConfiguracionTC';
 
 export default function Router() {
   return (
@@ -26,6 +27,7 @@ export default function Router() {
         <Route path="/supermercado" element={<Supermercado />} />
         <Route path="/presupuesto/tenpo" element={<Tenpo />} />
         <Route path="/presupuesto/tenpo/config" element={<TenpoConfig />} />
+        <Route path="/configuracion-tc/:tcKey" element={<ConfiguracionTC />} />
       </Routes>
     </BrowserRouter>
   );

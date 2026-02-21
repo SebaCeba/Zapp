@@ -330,3 +330,32 @@ model ActualEntry {
   @@unique([year, month, category, itemKey], name: "year_month_category_itemKey")
   @@map("actual_entries")
 }
+
+// Configuración de ciclos de facturación por TC
+model TcBillingConfig {
+  id                    Int                      @id @default(autoincrement())
+  tcKey                 String                   @unique @map("tc_key") // "TENPO", "BCI", etc.
+  closingDay            Int                      @default(21) @map("closing_day") // 1..31
+  dueDay                Int                      @default(5) @map("due_day") // 1..31 (día de vencimiento)
+  businessDayRule       String                   @default("PREVIOUS") @map("business_day_rule") // PREVIOUS | NEXT | NONE
+  createdAt             DateTime                 @default(now()) @map("created_at")
+  updatedAt             DateTime                 @updatedAt @map("updated_at")
+  overrides             TcBillingOverride[]
+
+  @@map("tc_billing_configs")
+}
+
+// Overrides mensuales de ciclo de facturación
+model TcBillingOverride {
+  id                    Int                @id @default(autoincrement())
+  tcKey                 String             @map("tc_key")
+  year                  Int
+  month                 Int                // 1..12
+  effectiveCloseDate    DateTime           @map("effective_close_date") // Fecha de cierre efectiva (solo fecha)
+  config                TcBillingConfig    @relation(fields: [tcKey], references: [tcKey], onDelete: Cascade)
+  createdAt             DateTime           @default(now()) @map("created_at")
+  updatedAt             DateTime           @updatedAt @map("updated_at")
+
+  @@unique([tcKey, year, month])
+  @@map("tc_billing_overrides")
+}
