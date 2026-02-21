@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Button, Input } from 'rsuite';
 
 interface Servicio {
   id: number;
@@ -167,12 +168,12 @@ export default function TablaPresupuestoServicios({ anio, onOpenCatalogo }: Prop
     return (
       <div className="card" style={{ textAlign: 'center', padding: '2rem' }}>
         <p style={{ color: '#666', marginBottom: '1rem' }}>No tienes servicios básicos configurados.</p>
-        <button
+        <Button
           onClick={onOpenCatalogo}
-          className="btn btn-primary"
+          appearance="primary"
         >
           Agregar primer servicio
-        </button>
+        </Button>
       </div>
     );
   }
@@ -214,13 +215,12 @@ export default function TablaPresupuestoServicios({ anio, onOpenCatalogo }: Prop
                     return (
                       <td key={idx} style={{ textAlign: 'right' }}>
                         {isEditando ? (
-                          <input
-                            type="text"
+                          <Input
                             autoFocus
                             defaultValue={valor || ''}
-                            className="input"
-                            style={{ width: '100%', padding: '0.25rem 0.5rem', textAlign: 'right' }}
-                            onBlur={(e) => guardarMonto(servicio.id, mes, e.target.value)}
+                            style={{ width: '100%', textAlign: 'right' }}
+                            size="sm"
+                            onBlur={(e) => guardarMonto(servicio.id, mes, (e.target as HTMLInputElement).value)}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                 guardarMonto(servicio.id, mes, (e.target as HTMLInputElement).value);

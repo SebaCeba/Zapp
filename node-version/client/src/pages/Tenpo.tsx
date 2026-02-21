@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
+import { SelectPicker, Input, InputNumber, DatePicker } from 'rsuite';
 import MainLayout from '../layout/MainLayout';
 import { showToast } from '../components/Toast';
 
@@ -621,16 +622,14 @@ export default function Tenpo() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <label style={{ fontWeight: '500', color: '#374151' }}>Año:</label>
-              <select
+              <SelectPicker
                 value={anioSeleccionado}
-                onChange={(e) => setAnioSeleccionado(parseInt(e.target.value))}
-                className="select"
-                style={{ width: 'auto', minWidth: '100px' }}
-              >
-                {aniosDisponibles.map(anio => (
-                  <option key={anio} value={anio}>{anio}</option>
-                ))}
-              </select>
+                onChange={(value) => value && setAnioSeleccionado(value)}
+                data={aniosDisponibles.map(anio => ({ label: anio.toString(), value: anio }))}
+                searchable={false}
+                cleanable={false}
+                style={{ width: '120px' }}
+              />
             </div>
 
             <button
@@ -657,13 +656,11 @@ export default function Tenpo() {
             </button>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '1rem' }}>
-              <input
-                type="text"
+              <Input
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                onChange={(value) => setSearchQuery(value)}
+                onKeyPress={(e: any) => e.key === 'Enter' && handleSearch()}
                 placeholder="Buscar compra..."
-                className="input"
                 style={{ width: '250px' }}
               />
               <button
@@ -1123,12 +1120,10 @@ export default function Tenpo() {
               <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
                 Valor de cada cuota (CLP)
               </label>
-              <input
-                type="number"
-                value={cuotaRealInput}
-                onChange={(e) => setCuotaRealInput(e.target.value)}
+              <InputNumber
+                value={cuotaRealInput ? parseFloat(cuotaRealInput) : undefined}
+                onChange={(value) => setCuotaRealInput(value?.toString() || '')}
                 placeholder="Ej: 15000"
-                className="input"
                 style={{ width: '100%' }}
                 autoFocus
               />
@@ -1197,13 +1192,13 @@ export default function Tenpo() {
               <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
                 Fecha de primera cuota
               </label>
-              <input
-                type="date"
-                value={scheduleDateInput}
-                onChange={(e) => setScheduleDateInput(e.target.value)}
-                className="input"
-                style={{ width: '100%', fontSize: '1rem', padding: '0.625rem' }}
-                autoFocus
+              <DatePicker
+                value={scheduleDateInput ? new Date(scheduleDateInput) : null}
+                onChange={(value) => setScheduleDateInput(value ? format(value, 'yyyy-MM-dd') : '')}
+                format="yyyy-MM-dd"
+                placeholder="2026-03-05"
+                style={{ width: '100%' }}
+                oneTap
               />
               <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.5rem' }}>
                 Ejemplo: 2026-03-05
@@ -1274,12 +1269,12 @@ export default function Tenpo() {
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
                   Fecha de compra *
                 </label>
-                <input
-                  type="date"
-                  value={manualForm.purchaseDate}
-                  onChange={(e) => setManualForm({ ...manualForm, purchaseDate: e.target.value })}
-                  className="input"
+                <DatePicker
+                  value={manualForm.purchaseDate ? new Date(manualForm.purchaseDate) : null}
+                  onChange={(value) => setManualForm({ ...manualForm, purchaseDate: value ? format(value, 'yyyy-MM-dd') : '' })}
+                  format="yyyy-MM-dd"
                   style={{ width: '100%' }}
+                  oneTap
                 />
               </div>
 
@@ -1287,12 +1282,10 @@ export default function Tenpo() {
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
                   Comercio *
                 </label>
-                <input
-                  type="text"
+                <Input
                   value={manualForm.merchant}
-                  onChange={(e) => setManualForm({ ...manualForm, merchant: e.target.value })}
+                  onChange={(value) => setManualForm({ ...manualForm, merchant: value })}
                   placeholder="Ej: Tienda XYZ"
-                  className="input"
                   style={{ width: '100%' }}
                 />
               </div>
@@ -1301,14 +1294,12 @@ export default function Tenpo() {
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
                   Monto total (CLP) *
                 </label>
-                <input
-                  type="number"
-                  value={manualForm.amountTotalClp}
-                  onChange={(e) => setManualForm({ ...manualForm, amountTotalClp: e.target.value })}
+                <InputNumber
+                  value={manualForm.amountTotalClp ? parseFloat(manualForm.amountTotalClp) : undefined}
+                  onChange={(value) => setManualForm({ ...manualForm, amountTotalClp: value?.toString() || '' })}
                   placeholder="30000"
-                  className="input"
                   style={{ width: '100%' }}
-                  min="1"
+                  min={1}
                 />
               </div>
 
@@ -1316,13 +1307,11 @@ export default function Tenpo() {
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
                   Número de cuotas *
                 </label>
-                <input
-                  type="number"
-                  value={manualForm.installmentsCount}
-                  onChange={(e) => setManualForm({ ...manualForm, installmentsCount: e.target.value })}
-                  className="input"
+                <InputNumber
+                  value={manualForm.installmentsCount ? parseInt(manualForm.installmentsCount) : undefined}
+                  onChange={(value) => setManualForm({ ...manualForm, installmentsCount: value?.toString() || '' })}
                   style={{ width: '100%' }}
-                  min="1"
+                  min={1}
                 />
               </div>
 
@@ -1343,12 +1332,12 @@ export default function Tenpo() {
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
                   Fecha primera cuota (opcional)
                 </label>
-                <input
-                  type="date"
-                  value={manualForm.firstDueDateOverride}
-                  onChange={(e) => setManualForm({ ...manualForm, firstDueDateOverride: e.target.value })}
-                  className="input"
+                <DatePicker
+                  value={manualForm.firstDueDateOverride ? new Date(manualForm.firstDueDateOverride) : null}
+                  onChange={(value) => setManualForm({ ...manualForm, firstDueDateOverride: value ? format(value, 'yyyy-MM-dd') : '' })}
+                  format="yyyy-MM-dd"
                   style={{ width: '100%' }}
+                  oneTap
                 />
                 <p style={{ fontSize: '0.75rem', color: '#666', marginTop: '0.25rem' }}>
                   Dejar vacío para calcular automáticamente
