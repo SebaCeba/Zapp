@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Modal, Button, Input, IconButton } from 'rsuite';
 
 interface Servicio {
   id: number;
@@ -146,79 +147,40 @@ export default function GestionarCatalogoModal({ isOpen, onClose, onServiciosUpd
     }
   };
 
-  if (!isOpen) return null;
-
   const serviciosActivos = servicios.filter(s => s.activo);
   const serviciosInactivos = servicios.filter(s => !s.activo);
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      background: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
-      padding: '1rem'
-    }}>
-      <div style={{
-        background: 'white',
-        borderRadius: '8px',
-        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.3)',
-        maxWidth: '800px',
-        width: '100%',
-        maxHeight: '90vh',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        {/* Header */}
-        <div style={{
-          padding: '1.5rem',
-          borderBottom: '1px solid var(--gray-200)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}>
-          <h2 style={{ margin: 0 }}>Gestionar Servicios Básicos</h2>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '1.5rem',
-              cursor: 'pointer',
-              color: 'var(--gray-400)',
-              lineHeight: 1
-            }}
-          >
-            ×
-          </button>
-        </div>
+    <Modal 
+      open={isOpen} 
+      onClose={onClose}
+      size="md"
+      backdrop={true}
+      keyboard={true}
+    >
+      <Modal.Header closeButton>
+        <Modal.Title>Gestionar Servicios Básicos</Modal.Title>
+      </Modal.Header>
 
-        {/* Content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
+      <Modal.Body style={{ minHeight: '400px', maxHeight: '70vh', overflow: 'auto' }}>
           {/* Agregar nuevo servicio */}
           <div style={{ marginBottom: '1.5rem' }}>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
-                type="text"
+              <Input
                 placeholder="Nombre del nuevo servicio"
                 value={nuevoNombre}
-                onChange={(e) => setNuevoNombre(e.target.value)}
+                onChange={(value) => setNuevoNombre(value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') agregarServicio();
                 }}
-                className="input"
                 style={{ flex: 1 }}
               />
-              <button
+              <Button
                 onClick={agregarServicio}
-                className="btn btn-primary"
+                appearance="primary"
               >
                 + Agregar
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -247,10 +209,9 @@ export default function GestionarCatalogoModal({ isOpen, onClose, onServiciosUpd
                   >
                     <div style={{ flex: 1 }}>
                       {editandoId === servicio.id ? (
-                        <input
-                          type="text"
+                        <Input
                           value={editandoNombre}
-                          onChange={(e) => setEditandoNombre(e.target.value)}
+                          onChange={(value) => setEditandoNombre(value)}
                           onBlur={() => renombrarServicio(servicio.id, editandoNombre)}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') renombrarServicio(servicio.id, editandoNombre);
@@ -260,8 +221,7 @@ export default function GestionarCatalogoModal({ isOpen, onClose, onServiciosUpd
                             }
                           }}
                           autoFocus
-                          className="input"
-                          style={{ padding: '0.25rem 0.5rem' }}
+                          size="sm"
                         />
                       ) : (
                         <div>
@@ -273,46 +233,32 @@ export default function GestionarCatalogoModal({ isOpen, onClose, onServiciosUpd
                       )}
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button
+                      <IconButton
                         onClick={() => {
                           setEditandoId(servicio.id);
                           setEditandoNombre(servicio.nombre);
                         }}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          fontSize: '1rem'
-                        }}
-                        title="Renombrar"
-                      >
-                        ✏️
-                      </button>
-                      <button
+                        size="xs"
+                        icon={<span>✏️</span>}
+                        circle
+                        appearance="subtle"
+                      />
+                      <IconButton
                         onClick={() => toggleActivo(servicio.id, servicio.nombre, servicio.activo)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          fontSize: '1rem'
-                        }}
-                        title="Desactivar"
-                      >
-                        🔻
-                      </button>
+                        size="xs"
+                        icon={<span>🔻</span>}
+                        circle
+                        appearance="subtle"
+                      />
                       {!servicio.esBase && (!servicio.presupuestos || servicio.presupuestos.length === 0) && (
-                        <button
+                        <IconButton
                           onClick={() => eliminarServicio(servicio.id, servicio.nombre)}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            fontSize: '1rem'
-                          }}
-                          title="Eliminar"
-                        >
-                          🗑️
-                        </button>
+                          size="xs"
+                          icon={<span>🗑️</span>}
+                          circle
+                          color="red"
+                          appearance="primary"
+                        />
                       )}
                     </div>
                   </div>
@@ -324,18 +270,12 @@ export default function GestionarCatalogoModal({ isOpen, onClose, onServiciosUpd
           {/* Servicios inactivos */}
           {serviciosInactivos.length > 0 && (
             <div>
-              <button
+              <Button
                 onClick={() => setMostrarInactivos(!mostrarInactivos)}
+                block
+                appearance="subtle"
                 style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
                   justifyContent: 'space-between',
-                  padding: '0.75rem',
-                  background: 'var(--gray-100)',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
                   marginBottom: '0.5rem'
                 }}
               >
@@ -343,7 +283,7 @@ export default function GestionarCatalogoModal({ isOpen, onClose, onServiciosUpd
                   SERVICIOS INACTIVOS ({serviciosInactivos.length})
                 </span>
                 <span style={{ color: '#666' }}>{mostrarInactivos ? '▼' : '▶'}</span>
-              </button>
+              </Button>
               {mostrarInactivos && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {serviciosInactivos.map((servicio) => (
@@ -365,18 +305,13 @@ export default function GestionarCatalogoModal({ isOpen, onClose, onServiciosUpd
                           {servicio.esBase ? '(Base)' : '(Personalizado)'}
                         </span>
                       </div>
-                      <button
+                      <IconButton
                         onClick={() => toggleActivo(servicio.id, servicio.nombre, servicio.activo)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          fontSize: '1rem'
-                        }}
-                        title="Reactivar"
-                      >
-                        🔼
-                      </button>
+                        size="xs"
+                        icon={<span>🔼</span>}
+                        circle
+                        appearance="subtle"
+                      />
                     </div>
                   ))}
                 </div>
@@ -386,21 +321,13 @@ export default function GestionarCatalogoModal({ isOpen, onClose, onServiciosUpd
         </div>
 
         {/* Footer */}
-        <div style={{
-          padding: '1rem 1.5rem',
-          borderTop: '1px solid var(--gray-200)',
-          display: 'flex',
-          justifyContent: 'flex-end'
-        }}>
-          <button
-            onClick={onClose}
-            className="btn"
-            style={{ background: 'var(--gray-600)', color: 'white' }}
-          >
-            Cerrar
-          </button>
-        </div>
-      </div>
-    </div>
+      </Modal.Body>
+
+      <Modal.Footer>
+        <Button onClick={onClose} appearance="subtle">
+          Cerrar
+        </Button>
+      </Modal.Footer>
+    </Modal>
   );
 }
