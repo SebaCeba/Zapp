@@ -315,9 +315,6 @@ export default function GestionarCatalogoModal({ isOpen, onClose, onServiciosUpd
               )}
             </div>
           )}
-        </div>
-
-        {/* Footer */}
       </Modal.Body>
 
       <Modal.Footer>
