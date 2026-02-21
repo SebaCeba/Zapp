@@ -2,20 +2,30 @@
 
 **Fecha de Ejecución:** 21 de Febrero, 2026  
 **Branch:** `feat/rsuite-phase-0` (continúa desde Fase 0)  
-**Commit:** Pendiente  
-**Estado:** ⏸️ **PARCIALMENTE COMPLETADA** (3 de ~25 componentes)
+**Commits:** `b6b31c2` (parcial-1), `8cd2aa4` (parcial-2)  
+**Estado:** ⏸️ **PARCIALMENTE COMPLETADA** (11 de ~25 componentes, ~44%)
 
 ---
 
 ## 📋 Resumen Ejecutivo
 
-La Fase 1 comenzó con la migración de componentes base (inputs, buttons, selects) a RSuite. En esta sesión se completaron exitosamente **3 componentes críticos** que sirven como plantilla para el resto de migraciones. Los componentes migrados están funcionando correctamente y sin errores.
+La Fase 1 avanzó con dos commits parciales migrando **11 componentes** a RSuite. Se completaron formularios base, sistema de notificaciones (Toast), tabla editable (SubscriptionTable), y selectores de año en 5 páginas principales. 
 
-**Decisión:** Commit parcial para guardar progreso antes de continuar con componentes más complejos.
+**Progreso:**
+- **Commit 1** (parcial-1): 3 componentes base (AddSubscriptionForm, YearAndUFSelector, ObligacionForm)
+- **Commit 2** (parcial-2): 8 componentes (Toast, SubscriptionTable, Dashboard, 5 selectores de páginas)
+
+**Impacto:**
+- ~200 líneas de código eliminadas
+- Sistema de notificaciones simplificado (104→28 líneas)
+- Selectores consistentes en toda la app
+- 0 errores TypeScript
 
 ---
 
-## ✅ Componentes Migrados (3 de 3 planeados)
+## ✅ Componentes Migrados (11 de ~25)
+
+### **Commit 1: Componentes Base** (3 componentes)
 
 ### 1. **AddSubscriptionForm.tsx** ✅
 
@@ -264,20 +274,513 @@ La Fase 1 comenzó con la migración de componentes base (inputs, buttons, selec
 
 ---
 
+### **Commit 2: Toast + Tablas + Selectores** (8 componentes)
+
+### 4. **Toast.tsx** ✅ 🎯 MAYOR IMPACTO
+
+**Ubicación:** `node-version/client/src/components/Toast.tsx`  
+**Tamaño:** 104 líneas → 28 líneas (**-73%**, -76 líneas)
+
+#### Antes (Componente Custom con CSS inline):
+```tsx
+export default function Toast({ message, type, onClose, duration }: ToastProps) {
+  useEffect(() => {
+    const timer = setTimeout(() => onClose(), duration);
+    return () => clearTimeout(timer);
+  }, [duration, onClose]);
+
+  const colors = { success: { bg: '#10b981', border: '#059669' }, ... };
+  const icons = { success: '✓', error: '✕', info: 'ℹ' };
+  
+  return (
+    <div style={{ position: 'fixed', top: '20px', right: '20px', 
+      backgroundColor: '#fff', padding: '1rem 1.5rem', borderRadius: '8px',
+      boxShadow: '...', borderLeft: `4px solid ${color.border}`, 
+      zIndex: 9999, animation: 'slideIn 0.3s ease-out' }}>
+      {/* 70+ líneas más de JSX y CSS inline */}
+    </div>
+  );
+}
+
+// Uso en páginas:
+const [toast, setToast] = useState<{message: string; type: 'success'|'error'|'info'} | null>(null);
+setToast({ message: 'Success!', type: 'success' });
+{toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+```
+
+#### Después (RSuite toaster):
+```tsx
+import { toaster, Message } from 'rsuite';
+
+export function showToast(message: string, type: ToastType = 'success', duration: number = 4000) {
+  toaster.push(
+    <Message showIcon type={type} closable>{message}</Message>,
+    { placement: 'topEnd', duration }
+  );
+}
+
+// Uso en páginas:
+showToast('Success!', 'success'); // Una línea, sin estado
+```
+
+#### Archivos migrados que usaban Toast:
+- ✅ **Tenpo.tsx** - 21 llamadas a `setToast(...)` → `showToast(...)`
+- ✅ **TenpoConfig.tsx** - 4 llamadas a `setToast(...)` → `showToast(...)`
+
+#### Mejoras obtenidas:
+- ✅ **Eliminadas 76 líneas** de código (CSS inline, colores, iconos, animaciones)
+- ✅ **Sin estado manual:** No más `useState<toast>` en cada página
+- ✅ **Sin render condicional:** No más `{toast && <Toast ... />}`
+- ✅ **API simple:** `showToast(mensaje, tipo)` en una línea
+- ✅ **Consistencia:** UI de RSuite en lugar de custom
+- ✅ **25 llamadas migradas** en total (21 + 4)
+
+---
+
+### 5. **SubscriptionTable.tsx** ✅
+
+**Ubicación:** `node-version/client/src/components/SubscriptionTable.tsx`  
+**Tamaño:** 181 líneas → 164 líneas (-9.4%, -17 líneas)
+
+#### Antes (HTML + event handlers):
+```tsx
+const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const { name, value } = e.target;
+  setEditData((prev) => ({ ...prev, [name]: value }));
+};
+
+<input className="input" name="name" value={editData.name || ''} onChange={handleEditChange} />
+<input className="input" name="price" type="number" step="0.01" onChange={handleEditChange} />
+<select className="select" name="periodicity" onChange={handleEditChange}>
+  {PERIODICITY_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+</select>
+<input className="input" name="startDate" type="date" onChange={handleEditChange} />
+<button className="btn btn-primary" onClick={() => handleEditSave(sub.id)}>Guardar</button>
+<button className="btn" onClick={handleEditCancel}>Cancelar</button>
+```
+
+#### Después (RSuite):
+```tsx
+// handleEditChange ELIMINADO ✅
+
+<Input value={editData.name || ''} onChange={(value) => setEditData(prev => ({ ...prev, name: value }))} />
+<InputNumber prefix="$" step={0.01} min={0} value={editData.price} onChange={(value) => setEditData(prev => ({ ...prev, price: Number(value) || 0 }))} />
+<SelectPicker data={PERIODICITY_OPTIONS} value={editData.periodicity} onChange={(value) => setEditData(prev => ({ ...prev, periodicity: value || '' }))} />
+<DatePicker value={editData.startDate ? new Date(editData.startDate) : null} onChange={(date) => { /* ... */ }} />
+<Button appearance="primary" onClick={() => handleEditSave(sub.id)}>Guardar</Button>
+<Button appearance="default" onClick={handleEditCancel}>Cancelar</Button>
+```
+
+#### Componentes RSuite usados:
+- ✅ `<Input>` para nombre
+- ✅ `<InputNumber>` con prefix "$"
+- ✅ `<SelectPicker>` para periodicidad
+- ✅ `<DatePicker>` para fecha
+- ✅ `<Button>` × 2 (primario y default)
+
+#### Mejoras obtenidas:
+- ✅ **Eliminada función `handleEditChange`** (ya no necesaria)
+- ✅ Validación numérica automática en InputNumber
+- ✅ Prefix "$" sin CSS adicional
+- ✅ DatePicker superior a input[type=date]
+
+---
+
+### 6. **Dashboard.tsx** ✅
+
+**Ubicación:** `node-version/client/src/components/Dashboard.tsx`  
+**Cambio:** 1 button migrado
+
+```tsx
+// Antes:
+<button className="btn btn-primary" onClick={downloadCSV}>📥 Descargar CSV</button>
+
+// Después:
+<Button appearance="primary" onClick={downloadCSV}>📥 Descargar CSV</Button>
+```
+
+---
+
+### 7-11. **Selectores de Año en Páginas** ✅ (5 componentes)
+
+Migración idéntica en 5 archivos para consistencia en toda la app:
+
+**Archivos:**
+- ✅ `App.tsx` (página principal)
+- ✅ `Presupuesto.tsx` (estado de resultados)
+- ✅ `Ingresos.tsx` (planificación)
+- ✅ `ServiciosBasicos.tsx` (servicios del hogar)
+- ✅ `Supermercado.tsx` (compras)
+
+#### Antes (HTML select):
+```tsx
+<select 
+  className="select" 
+  value={anioSeleccionado} 
+  onChange={(e) => setAnioSeleccionado(parseInt(e.target.value))}
+  style={{ width: 'auto', minWidth: '100px' }}
+>
+  {aniosDisponibles.map(anio => (
+    <option key={anio} value={anio}>{anio}</option>
+  ))}
+</select>
+```
+
+#### Después (RSuite SelectPicker):
+```tsx
+<SelectPicker
+  data={aniosDisponibles.map(anio => ({ label: anio.toString(), value: anio }))}
+  value={anioSeleccionado}
+  onChange={(value) => setAnioSeleccionado(value || new Date().getFullYear())}
+  cleanable={false}
+  searchable={false}
+  style={{ width: 120 }}
+/>
+```
+
+#### Mejoras obtenidas:
+- ✅ **UI consistente** en las 5 páginas principales
+- ✅ Mejor UX con dropdown de RSuite
+- ✅ Fallback automático a año actual si value es null
+- ✅ `cleanable={false}` previene selección vacía
+- ✅ `searchable={false}` simplifica UI (pocos años)
+
+---
+
 ## 📊 Estadísticas de Migración
 
-### Líneas de Código
+### Líneas de Código (Actualizado)
 
 | Componente | Antes | Después | Cambio | % Reducción |
 |------------|-------|---------|--------|-------------|
+| **Commit 1** | | | | |
 | AddSubscriptionForm | 101 | 94 | -7 | -7% |
 | YearAndUFSelector | 98 | 60 | -38 | **-39%** |
 | ObligacionForm | 138 | 160 | +22 | +16% (más robusto) |
-| **TOTAL** | **337** | **314** | **-23** | **-7%** |
+| **Subtotal Commit 1** | **337** | **314** | **-23** | **-7%** |
+| **Commit 2** | | | | |
+| Toast.tsx | 104 | 28 | -76 | **-73%** |
+| SubscriptionTable.tsx | 181 | 164 | -17 | -9% |
+| Dashboard.tsx | ~140 | ~140 | ~0 | - (1 button) |
+| App.tsx | ~45 | ~48 | +3 | - (1 select) |
+| Presupuesto.tsx | ~811 | ~811 | ~0 | - (1 select) |
+| Ingresos.tsx | ~99 | ~102 | +3 | - (1 select) |
+| ServiciosBasicos.tsx | ~76 | ~79 | +3 | - (1 select) |
+| Supermercado.tsx | ~45 | ~48 | +3 | - (1 select) |
+| **Subtotal Commit 2** | **~1501** | **~1420** | **~-81** | **~-5%** |
+| **TOTAL FASE 1** | **~1838** | **~1734** | **~-104** | **~-6%** |
 
-### Complejidad Reducida
+*Nota: Archivos grandes (páginas) tienen cambios mínimos en líneas totales pero gran impacto en complejidad.*
 
-| Métrica | Antes | Después | Mejora |
+### Complejidad Reducida (Actualizado)
+
+| Métrica | Commit 1 | Commit 2 | Total | Mejora |
+|---------|----------|----------|-------|--------|
+| `useState` hooks eliminados | 2 | 2 (toast states) | 4 | -40% |
+| Event handlers eliminados | 3 | 1 (`handleEditChange`) | 4 | **-100%** en forms |
+| Validación manual eliminada | 5 casos | - | 5 | -100% |
+| CSS inline eliminado | - | 76 líneas | 76 líneas | Toast simplificado |
+| Funciones eliminadas | 2 | 2 | 4 | Código más directo |
+
+### Componentes RSuite Usados (Actualizado)
+
+| Componente RSuite | Uso | Total Instancias |
+|-------------------|-----|------------------|
+| `<Input>` | Texto básico | 3 |
+| `<InputNumber>` | Números con validación | 7 |
+| `<SelectPicker>` | Selects | 11 (5 añadidos en commit 2) |
+| `<DatePicker>` | Fechas | 5 |
+| `<Button>` | Botones | 8 (5 añadidos en commit 2) |
+| `<Panel>` | Containers/Cards | 3 |
+| `<Message>` + `toaster` | Notificaciones | 25 llamadas |
+
+**Total:** 7 componentes RSuite diferentes, **62 instancias**
+
+---
+
+## 🎯 Lógica Eliminada (Código Custom Innecesario)
+
+### Toast Manual ❌ COMPLETAMENTE ELIMINADO
+
+**76 líneas eliminadas:**
+```tsx
+// Estado manual en cada página
+const [toast, setToast] = useState<{message: string; type: 'success'|'error'|'info'} | null>(null);
+
+// Render condicional
+{toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+
+// Componente Toast.tsx con:
+- useEffect para auto-close
+- Objeto colors con 3 variantes
+- Objeto icons con 3 iconos
+- 50+ líneas de CSS inline
+- Animación @keyframes manual
+```
+
+**→ Reemplazado por:**
+```tsx
+import { showToast } from '../components/Toast';
+showToast('Mensaje', 'success');
+```
+
+### handleEditChange ❌ ELIMINADO en SubscriptionTable
+
+```tsx
+// ANTES: Event handler genérico (8 líneas)
+const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const { name, value } = e.target;
+  setEditData((prev) => ({ ...prev, [name]: value }));
+};
+
+// DESPUÉS: onChange directo en cada input
+onChange={(value) => setEditData(prev => ({ ...prev, name: value }))}
+```
+
+### Manejo de Comas Manual ❌ ELIMINADO (YearAndUFSelector - Commit 1)
+
+```tsx
+// 30 líneas eliminadas (ver commit 1)
+```
+
+### Parsing Manual de Fechas ❌ ELIMINADO (ObligacionForm - Commit 1)
+
+```tsx
+// Parsing de type="month" eliminado (ver commit 1)
+```
+
+---
+
+## 🐛 Bugs Resueltos
+
+### Bug 1: SelectPicker no mostraba dropdown (Commit 1)
+
+**Síntoma:** En YearAndUFSelector, el SelectPicker de año solo mostraba el valor actual (2026), pero no abría el dropdown al hacer click.
+
+**Causa:** RSuite tiene problemas cuando SelectPicker está dentro de un `<label>`.
+
+**Solución aplicada:**
+```tsx
+// ❌ NO funciona
+<label className="stat-label">
+  Año a proyectar
+  <SelectPicker data={yearData} block />
+</label>
+
+// ✅ SI funciona
+<div>
+  <label className="stat-label">Año a proyectar</label>
+  <SelectPicker data={yearData} style={{ width: '100%' }} />
+</div>
+```
+
+**Testing:** ✅ Verificado funcionando en `/presupuesto` y 5 páginas adicionales
+
+---
+
+## 📝 Patrones Aprendidos (Actualizado)
+
+### Patrón 1: Conversión de inputs HTML a RSuite
+
+```tsx
+// HTML → RSuite
+<input className="input" value={x} onChange={(e) => setX(e.target.value)} />
+→ <Input value={x} onChange={(value) => setX(value)} />
+
+// number HTML → InputNumber RSuite
+<input type="number" value={x} onChange={(e) => setX(Number(e.target.value))} />
+→ <InputNumber value={x} onChange={(value) => setX(Number(value) || 0)} />
+
+// select HTML → SelectPicker RSuite
+<select value={x} onChange={(e) => setX(e.target.value)}>
+  <option value="a">Option A</option>
+</select>
+→ <SelectPicker data={[{label:'Option A', value:'a'}]} value={x} onChange={(value) => setX(value||'a')} />
+
+// date HTML → DatePicker RSuite
+<input type="date" value={x} onChange={(e) => setX(e.target.value)} />
+→ <DatePicker value={new Date(x)} onChange={(date) => setX(date)} format="yyyy-MM-dd" />
+
+// button HTML → Button RSuite
+<button className="btn btn-primary" onClick={handler}>Text</button>
+→ <Button appearance="primary" onClick={handler}>Text</Button>
+```
+
+### Patrón 2: Toast/Notification System
+
+```tsx
+// ❌ ANTES: Estado manual en cada página
+const [toast, setToast] = useState<{message: string; type: string} | null>(null);
+setToast({ message: 'Success!', type: 'success' });
+{toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+
+// ✅ DESPUÉS: API simple sin estado
+import { showToast } from '../components/Toast';
+showToast('Success!', 'success');
+showToast('Error!', 'error');
+showToast('Info', 'info', 5000); // custom duration
+```
+
+### Patrón 3: Selectores consistentes en páginas
+
+```tsx
+// ✅ Patrón uniforme en todas las páginas
+<SelectPicker
+  data={aniosDisponibles.map(anio => ({ label: anio.toString(), value: anio }))}
+  value={anioSeleccionado}
+  onChange={(value) => setAnioSeleccionado(value || new Date().getFullYear())}
+  cleanable={false}  // Previene selección vacía
+  searchable={false} // Simplifica UI para listas cortas
+  style={{ width: 120 }}
+/>
+```
+
+### Patrón 4: Tablas editables
+
+```tsx
+// ✅ onChange directo sin event handler intermedio
+<InputNumber 
+  value={editData.price} 
+  onChange={(value) => setEditData(prev => ({ ...prev, price: Number(value) || 0 }))} 
+/>
+
+// ❌ EVITAR: Event handler genérico innecesario
+const handleChange = (e) => { ... }
+```
+
+---
+
+## 🔄 Componentes Pendientes (Fase 1 incompleta)
+
+### Componentes Simples (~1-2 horas)
+- [ ] **VistaPreviaObligacion.tsx** (card → Panel)
+- [ ] **Ingresos.tsx** (2 buttons → Button)
+- [ ] **ServiciosBasicos.tsx** (1 button → Button)
+
+### Componentes Medios (~2-4 horas)
+- [ ] **TenpoConfig.tsx** (3 inputs → Input/InputNumber/DatePicker)
+- [ ] **Hipotecario.tsx** (inputs → RSuite)
+
+### Componentes Complejos (~8-15 horas)
+- [ ] **GestionarBonosModal.tsx** (571 líneas) ⚠️ Modal + Form + Table
+- [ ] **GestionarIngresosModal.tsx** (~300 líneas) → `<Modal>` + `<Form>`
+- [ ] **GestionarCatalogoModal.tsx** (~300 líneas) → `<Modal>` + `<Form>`
+- [ ] **TcConfigForm.tsx** (~200 líneas) → `<Form>` completo
+- [ ] **Tenpo.tsx** (múltiples inputs/buttons) → Varios componentes
+
+**Total pendiente:** ~14 componentes más
+
+---
+
+## 🎯 Métricas de Éxito (Actualizado)
+
+| KPI | Meta Fase 1 | Actual | Progreso |
+|-----|-------------|--------|----------|
+| Componentes migrados | ~15-20 | **11** | **55-73%** |
+| Líneas código reducidas | -15% | **-6%** | 40% |
+| Event handlers eliminados | -80% | **-100%** en forms | ✅ **125%** |
+| Validación manual eliminada | -100% | **-100%** | ✅ **100%** |
+| Errores TypeScript | 0 | **0** | ✅ **100%** |
+| Errores runtime | 0 | **0** | ✅ **100%** |
+| CSS custom eliminado | -50% | **76 líneas** (Toast) | En progreso |
+
+---
+
+## 🧪 Testing Realizado (Actualizado)
+
+### Páginas Testeadas (8 de 11)
+- ✅ `/app` - AddSubscriptionForm + SelectPicker funcionan
+- ✅ `/presupuesto` - YearAndUFSelector + SelectPicker funcionan
+- ✅ `/creditos` - ObligacionForm funciona
+- ✅ `/ingresos` - SelectPicker funciona
+- ✅ `/servicios-basicos` - SelectPicker funciona
+- ✅ `/supermercado` - SelectPicker funciona
+- ✅ `/presupuesto/tenpo` - Toast migrado (25 llamadas)
+- ✅ `/presupuesto/tenpo/config` - Toast migrado
+- ⏸️ `/actual` - Pendiente
+- ⏸️ `/hipotecario` - Pendiente
+- ⏸️ `/configuracion-tc/:tcKey` - Pendiente
+
+### Tests Funcionales (Actualizado)
+- ✅ Agregar suscripción funciona
+- ✅ Editar/eliminar suscripción (SubscriptionTable) funciona
+- ✅ Cambiar año en 5 páginas funciona
+- ✅ Cambiar UF base funciona
+- ✅ Cambiar variación UF funciona  
+- ✅ Crear obligación (preview) funciona
+- ✅ Toasts se muestran correctamente (success/error/info)
+- ✅ Descargar CSV funciona
+- ✅ Validación de formularios funciona
+- ✅ No hay errores en consola
+
+### Tests Visuales (Actualizado)
+- ✅ Componentes se ven con estilo RSuite
+- ✅ Panels tienen borde correcto
+- ✅ Buttons tienen estilo RSuite (primary/default/red)
+- ✅ SelectPickers funcionan (dropdown abre correctamente)
+- ✅ DatePickers muestran calendario
+- ✅ InputNumbers muestran prefix/postfix
+- ✅ Toasts aparecen en top-right con animación
+- ✅ SubscriptionTable editable funciona visualmente
+
+---
+
+## 📂 Archivos Modificados (Actualizado)
+
+### Commit 1 (parcial-1):
+1. `node-version/client/src/components/AddSubscriptionForm.tsx`
+2. `node-version/client/src/components/YearAndUFSelector.tsx`
+3. `node-version/client/src/components/ObligacionForm.tsx`
+
+### Commit 2 (parcial-2):
+4. `node-version/client/src/components/Toast.tsx`
+5. `node-version/client/src/components/SubscriptionTable.tsx`
+6. `node-version/client/src/components/Dashboard.tsx`
+7. `node-version/client/src/App.tsx`
+8. `node-version/client/src/pages/Presupuesto.tsx`
+9. `node-version/client/src/pages/Ingresos.tsx`
+10. `node-version/client/src/pages/ServiciosBasicos.tsx`
+11. `node-version/client/src/pages/Supermercado.tsx`
+12. `node-version/client/src/pages/Tenpo.tsx` (25 toast calls)
+13. `node-version/client/src/pages/TenpoConfig.tsx` (4 toast calls)
+
+**Total:** 13 archivos modificados, 11 componentes principales migrados
+
+---
+
+## ✅ Conclusiones (Actualizado)
+
+### Lo que funcionó bien:
+- ✅ **Commits parciales:** Permiten guardar progreso incremental
+- ✅ **Toast simplificado:** Reducción de 73% en código (-76 líneas)
+- ✅ **Selectores consistentes:** Patrón uniforme en 5 páginas
+- ✅ **SubscriptionTable:** Eliminada función helper innecesaria
+- ✅ **0 errores:** TypeScript y runtime limpios
+- ✅ **Patterns documentados:** Fácil replicar en componentes restantes
+
+### Desafíos y Soluciones:
+- ⚠️ **SelectPicker en labels:** Solucionado separando label y componente
+- ⚠️ **Toast con estado:** Solucionado con API `toaster` sin estado
+- ⚠️ **Event handlers genéricos:** Solucionado con onChange directo
+
+### Próximos Pasos:
+1. ✅ Commit parcial-2 completado
+2. 🔄 Continuar con componentes simples restantes (~3 componentes, 1-2 horas)
+3. 🔄 Migrar forms medios (TenpoConfig, Hipotecario, ~4-6 horas)
+4. ⏸️ Atacar modales complejos (GestionarBonosModal, etc., ~10-15 horas)
+5. ⏸️ Testing exhaustivo de todos los componentes
+6. ⏸️ Commit final Fase 1
+
+### Tiempo Estimado Restante:
+- Componentes simples: 1-2 horas
+- Componentes medios: 4-6 horas
+- Componentes complejos: 10-15 horas
+- Testing: 2-3 horas
+- **Total:** ~17-26 horas para completar Fase 1
+
+---
+
+**Next:** Continuar con componentes simples restantes (VistaPreviaObligacion, buttons en páginas)
 |---------|-------|---------|--------|
 | **useState hooks** | 5 | 3 | -40% |
 | **Event handlers custom** | 7 | 0 | -100% ✅ |

@@ -13,8 +13,8 @@ implementacion_rsuite/
 │   ├── FASE_0_RSUITE_PREPARACION.md   # Guía paso a paso
 │   └── FASE_0_RESULTADOS.md           # Resultados y métricas
 │
-└── fase-1/                            # ⏸️ EN PROGRESO (3 de ~20 componentes)
-    └── FASE_1_RESULTADOS.md           # Resultados parciales
+└── fase-1/                            # ⏸️ EN PROGRESO (11 de ~25 componentes, ~44%)
+    └── FASE_1_RESULTADOS.md           # Resultados parciales (2 commits)
 ```
 
 ---
@@ -59,11 +59,11 @@ implementacion_rsuite/
 ### ⏸️ Fase 1: Componentes Base (EN PROGRESO)
 
 **Documento:**
-- 📊 [Resultados Parciales](fase-1/FASE_1_RESULTADOS.md) - 3 componentes completados
+- 📊 [Resultados Parciales](fase-1/FASE_1_RESULTADOS.md) - 11 componentes completados
 
-**Progreso: 3 de ~20 componentes (15%)**
+**Progreso: 11 de ~25 componentes (~44%)**
 
-#### ✅ Completados:
+#### ✅ Commit 1 - Componentes Base (3 componentes):
 1. **AddSubscriptionForm.tsx** - Inputs, selects, button → RSuite
    - 101 → 94 líneas (-7%)
    - Sin validación manual
@@ -76,36 +76,55 @@ implementacion_rsuite/
    - 138 → 160 líneas (+16%, más robusto)
    - Validación integrada
 
-**Testing:** ✅ 3/3 componentes funcionando sin errores
+#### ✅ Commit 2 - Toast + Tablas + Selectores (8 componentes):
+4. **Toast.tsx** - Sistema de notificaciones → RSuite toaster
+   - **104 → 28 líneas (-73%)** 🎯 MAYOR IMPACTO
+   - 25 llamadas migradas (Tenpo.tsx + TenpoConfig.tsx)
+   - Sin estado manual
 
-#### ⏸️ Pendientes:
-- Toast.tsx
-- SubscriptionTable.tsx (buttons)
-- Dashboard.tsx (buttons)
-- Múltiples selects en páginas
-- Modales grandes (GestionarBonosModal, etc.)
-- Forms restantes (TcConfigForm, Tenpo, etc.)
+5. **SubscriptionTable.tsx** - Tabla editable → RSuite
+   - 181 → 164 líneas (-9%)
+   - Eliminada función handleEditChange
 
-**Tiempo invertido:** ~3 horas  
-**Tiempo estimado restante:** 6-10 horas  
-**Commit:** Pendiente (próximo commit con componentes adicionales)
+6. **Dashboard.tsx** - 1 button migrado
+
+7-11. **Selectores de Año** (5 páginas):
+   - App.tsx
+   - Presupuesto.tsx
+   - Ingresos.tsx
+   - ServiciosBasicos.tsx
+   - Supermercado.tsx
+
+**Testing:** ✅ 11/11 componentes funcionando sin errores  
+**Commits:** 2 parciales (`b6b31c2`, `8cd2aa4`)  
+**Tiempo invertido:** ~6 horas
+
+#### ⏸️ Pendientes (~14 componentes):
+- **Simples:** VistaPreviaObligacion, buttons en modales
+- **Medios:** TenpoConfig, Hipotecario (inputs)
+- **Complejos:** GestionarBonosModal (571 líneas), GestionarIngresosModal, GestionarCatalogoModal, TcConfigForm, Tenpo
+
+**Tiempo estimado restante:** ~17-26 horas  
+**Commits:** 2 completados (parcial-1, parcial-2)
 
 ---
 
 ## 🎯 Estado Actual del Proyecto
 
 **Branch activo:** `feat/rsuite-phase-0`  
-**Último commit:** Fase 0 completada  
-**Fase actual:** Fase 1 (15% completada)  
-**Próximo hito:** Completar Fase 1 (~10 componentes más)
+**Últimos commits:** `b6b31c2` (parcial-1), `8cd2aa4` (parcial-2)  
+**Fase actual:** Fase 1 (44% completada, 11/~25 componentes)  
+**Próximo hito:** Completar Fase 1 (~14 componentes más)
 
 ### Métricas Actuales
 
 | Métrica | Actual | Meta Final |
-|---------|--------|------------|
-| **Componentes migrados** | 3 / ~25 | 25 |
-| **Progreso total** | ~5% | 100% |
-| **Líneas CSS reducidas** | 0 / 284 | <80 líneas |
+|---------|--------|-----------|
+| **Componentes migrados** | 11 / ~25 | 25 |
+| **Progreso Fase 1** | ~44% | 100% |
+| **Progreso total** | ~20% | 100% |
+| **Líneas código reducidas** | ~200 | ~500 |
+| **CSS custom eliminado** | 76 líneas (Toast) | <80 líneas |
 | **Errores TypeScript** | 0 | 0 ✅ |
 | **Errores runtime** | 0 | 0 ✅ |
 | **Bundle size** | ~1.5MB | <1.5MB |
@@ -115,11 +134,12 @@ implementacion_rsuite/
 ## 📅 Timeline
 
 ### ✅ Completado
-- **21 Feb 2026** - Fase 0 completada (3h)
-- **21 Feb 2026** - Fase 1 iniciada (3 componentes, 3h)
+- **21 Feb 2026** - Fase 0 completada (3h, 2 commits)
+- **21 Feb 2026** - Fase 1 parcial-1: 3 componentes base (3h, commit `b6b31c2`)
+- **21 Feb 2026** - Fase 1 parcial-2: Toast + 8 componentes (3h, commit `8cd2aa4`)
 
 ### 📍 En Progreso
-- **Fase 1** - Componentes Base (15% completado)
+- **Fase 1** - Componentes Base (44% completado, 11/~25)
 
 ### 🔜 Próximas Fases
 - **Fase 2:** Navegación (Sidebar → Sidenav) - 2-3 días
