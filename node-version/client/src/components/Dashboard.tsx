@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Button } from 'rsuite';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 interface DashboardProps {
@@ -70,9 +71,9 @@ export default function Dashboard({ year, refreshKey }: DashboardProps) {
         </div>
         <div className="stat-card">
           <div className="stat-label">Acción</div>
-          <button className="btn btn-primary" onClick={downloadCSV} style={{ marginTop: '0.5rem' }}>
+          <Button appearance="primary" onClick={downloadCSV} style={{ marginTop: '0.5rem' }}>
             📥 Descargar CSV
-          </button>
+          </Button>
         </div>
       </div>
 

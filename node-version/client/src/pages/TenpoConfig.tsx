@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
+import { InputNumber, DatePicker, Button } from 'rsuite';
 import MainLayout from '../layout/MainLayout';
-import Toast from '../components/Toast';
+import { showToast } from '../components/Toast';
 
 interface TasaConfig {
   id: number;
@@ -19,7 +20,6 @@ export default function TenpoConfig() {
   const [nuevoCae, setNuevoCae] = useState('28.4');
   const [vigenteDesde, setVigenteDesde] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   useEffect(() => {
     loadData();
@@ -53,10 +53,7 @@ export default function TenpoConfig() {
     const cae = parseFloat(nuevoCae);
 
     if (isNaN(tasaMensual) || isNaN(cae) || tasaMensual < 0 || cae < 0) {
-      setToast({
-        message: 'Valores inválidos',
-        type: 'error'
-      });
+      showToast('Valores inválidos', 'error');
       return;
     }
 
@@ -77,28 +74,19 @@ export default function TenpoConfig() {
         throw new Error(errorData.error || 'Error al crear tasa');
       }
 
-      setToast({
-        message: 'Tasa actualizada. Se recalcularán las compras en modo ESTIMADO.',
-        type: 'success'
-      });
+      showToast('Tasa actualizada. Se recalcularán las compras en modo ESTIMADO.', 'info');
 
       // Recalcular compras estimadas
       await fetch('http://localhost:3000/api/tenpo/recalcular-estimadas', {
         method: 'POST'
       });
 
-      setToast({
-        message: 'Tasa actualizada y compras recalculadas exitosamente',
-        type: 'success'
-      });
+      showToast('Tasa actualizada y compras recalculadas exitosamente', 'success');
 
       await loadData();
     } catch (error: any) {
       console.error('Error creando tasa:', error);
-      setToast({
-        message: error.message || 'Error al crear tasa',
-        type: 'error'
-      });
+      showToast(error.message || 'Error al crear tasa', 'error');
     } finally {
       setLoading(false);
     }
@@ -157,13 +145,13 @@ export default function TenpoConfig() {
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
                   Tasa Mensual (%)
                 </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={nuevaTasaMensual}
-                  onChange={(e) => setNuevaTasaMensual(e.target.value)}
-                  className="input"
-                  required
+                <InputNumber
+                  step={0.01}
+                  min={0}
+                  value={parseFloat(nuevaTasaMensual) || 0}
+                  onChange={(value) => setNuevaTasaMensual(String(value || 0))}
+                  postfix="%"
+                  style={{ width: '100%' }}
                 />
                 <div style={{ fontSize: '0.75rem', color: '#666', marginTop: '0.25rem' }}>
                   Ejemplo: 2.11 para 2.11%
@@ -174,13 +162,13 @@ export default function TenpoConfig() {
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
                   CAE Anual (%)
                 </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={nuevoCae}
-                  onChange={(e) => setNuevoCae(e.target.value)}
-                  className="input"
-                  required
+                <InputNumber
+                  step={0.01}
+                  min={0}
+                  value={parseFloat(nuevoCae) || 0}
+                  onChange={(value) => setNuevoCae(String(value || 0))}
+                  postfix="%"
+                  style={{ width: '100%' }}
                 />
                 <div style={{ fontSize: '0.75rem', color: '#666', marginTop: '0.25rem' }}>
                   Ejemplo: 28.4 para 28.4%
@@ -191,12 +179,13 @@ export default function TenpoConfig() {
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
                   Vigente Desde
                 </label>
-                <input
-                  type="date"
-                  value={vigenteDesde}
-                  onChange={(e) => setVigenteDesde(e.target.value)}
-                  className="input"
-                  required
+                <DatePicker
+                  value={new Date(vigenteDesde)}
+                  onChange={(date) => {
+                    if (date) setVigenteDesde(format(date, 'yyyy-MM-dd'));
+                  }}
+                  format="yyyy-MM-dd"
+                  style={{ width: '100%' }}
                 />
                 <div style={{ fontSize: '0.75rem', color: '#666', marginTop: '0.25rem' }}>
                   Fecha desde la cual aplica
@@ -204,19 +193,17 @@ export default function TenpoConfig() {
               </div>
             </div>
 
-            <button
+            <Button
               type="submit"
+              appearance="primary"
               disabled={loading}
-              className="button"
               style={{
                 backgroundColor: '#10b981',
-                color: '#fff',
-                opacity: loading ? 0.5 : 1,
-                cursor: loading ? 'not-allowed' : 'pointer'
+                opacity: loading ? 0.5 : 1
               }}
             >
               {loading ? 'Creando y recalculando...' : '✓ Crear Nueva Tasa'}
-            </button>
+            </Button>
           </form>
         </div>
 
@@ -284,15 +271,6 @@ export default function TenpoConfig() {
           )}
         </div>
       </div>
-
-      {/* Toast notification */}
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
     </MainLayout>
   );
 }

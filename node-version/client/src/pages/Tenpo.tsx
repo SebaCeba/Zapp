@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
+import { SelectPicker, Input, InputNumber, DatePicker } from 'rsuite';
 import MainLayout from '../layout/MainLayout';
-import Toast from '../components/Toast';
+import { showToast } from '../components/Toast';
 
 interface Purchase {
   id: number;
@@ -62,7 +63,7 @@ export default function Tenpo() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [expandido, setExpandido] = useState<number | null>(null);
   const [lastSync, setLastSync] = useState<Date | null>(null);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [searching, setSearching] = useState(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
@@ -166,18 +167,12 @@ export default function Tenpo() {
           message += `⏭️ Ya existían: ${data.skippedCompras || 0} compras, ${data.skippedPagos || 0} pagos`;
         }
         
-        setToast({
-          message,
-          type: 'success'
-        });
+        showToast(message, 'success');
         loadData();
       }
     } catch (error) {
       console.error('Error sincronizando:', error);
-      setToast({
-        message: 'Error al sincronizar con Gmail',
-        type: 'error'
-      });
+      showToast('Error al sincronizar con Gmail', 'error');
     } finally {
       setSyncing(false);
     }
@@ -185,10 +180,7 @@ export default function Tenpo() {
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
-      setToast({
-        message: 'Ingresa un texto para buscar',
-        type: 'info'
-      });
+      showToast('Ingresa un texto para buscar', 'info');
       return;
     }
 
@@ -200,22 +192,13 @@ export default function Tenpo() {
       console.log('🔍 Resultados de búsqueda:', data);
 
       if (data.emailsFound === 0 && data.purchasesFound === 0) {
-        setToast({
-          message: `No se encontró "${searchQuery}" en emails ni compras`,
-          type: 'info'
-        });
+        showToast(`No se encontró "${searchQuery}" en emails ni compras`, 'info');
       } else {
-        setToast({
-          message: `Encontrado: ${data.emailsFound} emails, ${data.purchasesFound} compras. Ver consola (F12) para detalles.`,
-          type: 'success'
-        });
+        showToast(`Encontrado: ${data.emailsFound} emails, ${data.purchasesFound} compras. Ver consola (F12) para detalles.`, 'success');
       }
     } catch (error) {
       console.error('Error buscando:', error);
-      setToast({
-        message: 'Error al buscar',
-        type: 'error'
-      });
+      showToast('Error al buscar', 'error');
     } finally {
       setSearching(false);
     }
@@ -234,18 +217,12 @@ export default function Tenpo() {
         throw new Error(errorData.error || 'Error al cambiar interés');
       }
 
-      setToast({
-        message: `Interés ${!currentValue ? 'activado' : 'desactivado'} y cuotas recalculadas`,
-        type: 'success'
-      });
+      showToast(`Interés ${!currentValue ? 'activado' : 'desactivado'} y cuotas recalculadas`, 'success');
       
       await loadData();
     } catch (error: any) {
       console.error('Error toggling interés:', error);
-      setToast({
-        message: error.message || 'Error al cambiar interés',
-        type: 'error'
-      });
+      showToast(error.message || 'Error al cambiar interés', 'error');
     }
   };
 
@@ -264,10 +241,7 @@ export default function Tenpo() {
 
   const handleCreateManualPurchase = async () => {
     if (!manualForm.merchant || !manualForm.amountTotalClp || !manualForm.installmentsCount) {
-      setToast({
-        message: 'Completa todos los campos requeridos',
-        type: 'error'
-      });
+      showToast('Completa todos los campos requeridos', 'error');
       return;
     }
 
@@ -275,18 +249,12 @@ export default function Tenpo() {
     const installments = parseInt(manualForm.installmentsCount);
 
     if (isNaN(amountClp) || amountClp <= 0) {
-      setToast({
-        message: 'El monto debe ser mayor a 0',
-        type: 'error'
-      });
+      showToast('El monto debe ser mayor a 0', 'error');
       return;
     }
 
     if (isNaN(installments) || installments < 1) {
-      setToast({
-        message: 'El número de cuotas debe ser mayor o igual a 1',
-        type: 'error'
-      });
+      showToast('El número de cuotas debe ser mayor o igual a 1', 'error');
       return;
     }
 
@@ -315,10 +283,7 @@ export default function Tenpo() {
         throw new Error(errorData.error || 'Error al crear compra');
       }
 
-      setToast({
-        message: '✅ Compra manual creada exitosamente',
-        type: 'success'
-      });
+      showToast('✅ Compra manual creada exitosamente', 'success');
 
       setManualModalOpen(false);
       setManualForm({
@@ -332,10 +297,7 @@ export default function Tenpo() {
       await loadData();
     } catch (error: any) {
       console.error('Error creando compra manual:', error);
-      setToast({
-        message: error.message || 'Error al crear compra',
-        type: 'error'
-      });
+      showToast(error.message || 'Error al crear compra', 'error');
     }
   };
 
@@ -362,10 +324,7 @@ export default function Tenpo() {
           throw new Error(errorMessage);
         }
 
-        setToast({
-          message: 'Calendario vuelto a modo automático',
-          type: 'success'
-        });
+        showToast('Calendario vuelto a modo automático', 'success');
         
         setScheduleModalOpen(false);
         setScheduleDateInput('');
@@ -374,10 +333,7 @@ export default function Tenpo() {
         return;
       } catch (error: any) {
         console.error('Error:', error);
-        setToast({
-          message: error.message || 'Error al cambiar calendario',
-          type: 'error'
-        });
+        showToast(error.message || 'Error al cambiar calendario', 'error');
         return;
       }
     }
@@ -405,10 +361,7 @@ export default function Tenpo() {
         throw new Error(errorMessage);
       }
 
-      setToast({
-        message: 'Calendario ajustado - Las cuotas se recalcularon con la nueva fecha',
-        type: 'success'
-      });
+      showToast('Calendario ajustado - Las cuotas se recalcularon con la nueva fecha', 'success');
       
       setScheduleModalOpen(false);
       setScheduleDateInput('');
@@ -416,28 +369,19 @@ export default function Tenpo() {
       await loadData();
     } catch (error: any) {
       console.error('Error:', error);
-      setToast({
-        message: error.message || 'Error al cambiar calendario',
-        type: 'error'
-      });
+      showToast(error.message || 'Error al cambiar calendario', 'error');
     }
   };
 
   const handleConfirmarReal = async () => {
     if (!selectedPurchaseId || !cuotaRealInput) {
-      setToast({
-        message: 'Ingresa el monto de la cuota',
-        type: 'error'
-      });
+      showToast('Ingresa el monto de la cuota', 'error');
       return;
     }
 
     const cuotaReal = parseInt(cuotaRealInput);
     if (isNaN(cuotaReal) || cuotaReal <= 0) {
-      setToast({
-        message: 'Monto inválido',
-        type: 'error'
-      });
+      showToast('Monto inválido', 'error');
       return;
     }
 
@@ -453,10 +397,7 @@ export default function Tenpo() {
         throw new Error(errorData.error || 'Error al confirmar');
       }
 
-      setToast({
-        message: 'Valor real confirmado - Las cuotas ya no se recalcularán automáticamente',
-        type: 'success'
-      });
+      showToast('Valor real confirmado - Las cuotas ya no se recalcularán automáticamente', 'success');
       
       setConfirmModalOpen(false);
       setCuotaRealInput('');
@@ -464,10 +405,7 @@ export default function Tenpo() {
       await loadData();
     } catch (error: any) {
       console.error('Error confirmando:', error);
-      setToast({
-        message: error.message || 'Error al confirmar valor real',
-        type: 'error'
-      });
+      showToast(error.message || 'Error al confirmar valor real', 'error');
     }
   };
 
@@ -684,16 +622,14 @@ export default function Tenpo() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <label style={{ fontWeight: '500', color: '#374151' }}>Año:</label>
-              <select
+              <SelectPicker
                 value={anioSeleccionado}
-                onChange={(e) => setAnioSeleccionado(parseInt(e.target.value))}
-                className="select"
-                style={{ width: 'auto', minWidth: '100px' }}
-              >
-                {aniosDisponibles.map(anio => (
-                  <option key={anio} value={anio}>{anio}</option>
-                ))}
-              </select>
+                onChange={(value) => value && setAnioSeleccionado(value)}
+                data={aniosDisponibles.map(anio => ({ label: anio.toString(), value: anio }))}
+                searchable={false}
+                cleanable={false}
+                style={{ width: '120px' }}
+              />
             </div>
 
             <button
@@ -720,13 +656,11 @@ export default function Tenpo() {
             </button>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '1rem' }}>
-              <input
-                type="text"
+              <Input
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                onChange={(value) => setSearchQuery(value)}
+                onKeyPress={(e: any) => e.key === 'Enter' && handleSearch()}
                 placeholder="Buscar compra..."
-                className="input"
                 style={{ width: '250px' }}
               />
               <button
@@ -1186,12 +1120,10 @@ export default function Tenpo() {
               <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
                 Valor de cada cuota (CLP)
               </label>
-              <input
-                type="number"
-                value={cuotaRealInput}
-                onChange={(e) => setCuotaRealInput(e.target.value)}
+              <InputNumber
+                value={cuotaRealInput ? parseFloat(cuotaRealInput) : undefined}
+                onChange={(value) => setCuotaRealInput(value?.toString() || '')}
                 placeholder="Ej: 15000"
-                className="input"
                 style={{ width: '100%' }}
                 autoFocus
               />
@@ -1260,13 +1192,13 @@ export default function Tenpo() {
               <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
                 Fecha de primera cuota
               </label>
-              <input
-                type="date"
-                value={scheduleDateInput}
-                onChange={(e) => setScheduleDateInput(e.target.value)}
-                className="input"
-                style={{ width: '100%', fontSize: '1rem', padding: '0.625rem' }}
-                autoFocus
+              <DatePicker
+                value={scheduleDateInput ? new Date(scheduleDateInput) : null}
+                onChange={(value) => setScheduleDateInput(value ? format(value, 'yyyy-MM-dd') : '')}
+                format="yyyy-MM-dd"
+                placeholder="2026-03-05"
+                style={{ width: '100%' }}
+                oneTap
               />
               <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.5rem' }}>
                 Ejemplo: 2026-03-05
@@ -1337,12 +1269,12 @@ export default function Tenpo() {
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
                   Fecha de compra *
                 </label>
-                <input
-                  type="date"
-                  value={manualForm.purchaseDate}
-                  onChange={(e) => setManualForm({ ...manualForm, purchaseDate: e.target.value })}
-                  className="input"
+                <DatePicker
+                  value={manualForm.purchaseDate ? new Date(manualForm.purchaseDate) : null}
+                  onChange={(value) => setManualForm({ ...manualForm, purchaseDate: value ? format(value, 'yyyy-MM-dd') : '' })}
+                  format="yyyy-MM-dd"
                   style={{ width: '100%' }}
+                  oneTap
                 />
               </div>
 
@@ -1350,12 +1282,10 @@ export default function Tenpo() {
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
                   Comercio *
                 </label>
-                <input
-                  type="text"
+                <Input
                   value={manualForm.merchant}
-                  onChange={(e) => setManualForm({ ...manualForm, merchant: e.target.value })}
+                  onChange={(value) => setManualForm({ ...manualForm, merchant: value })}
                   placeholder="Ej: Tienda XYZ"
-                  className="input"
                   style={{ width: '100%' }}
                 />
               </div>
@@ -1364,14 +1294,12 @@ export default function Tenpo() {
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
                   Monto total (CLP) *
                 </label>
-                <input
-                  type="number"
-                  value={manualForm.amountTotalClp}
-                  onChange={(e) => setManualForm({ ...manualForm, amountTotalClp: e.target.value })}
+                <InputNumber
+                  value={manualForm.amountTotalClp ? parseFloat(manualForm.amountTotalClp) : undefined}
+                  onChange={(value) => setManualForm({ ...manualForm, amountTotalClp: value?.toString() || '' })}
                   placeholder="30000"
-                  className="input"
                   style={{ width: '100%' }}
-                  min="1"
+                  min={1}
                 />
               </div>
 
@@ -1379,13 +1307,11 @@ export default function Tenpo() {
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
                   Número de cuotas *
                 </label>
-                <input
-                  type="number"
-                  value={manualForm.installmentsCount}
-                  onChange={(e) => setManualForm({ ...manualForm, installmentsCount: e.target.value })}
-                  className="input"
+                <InputNumber
+                  value={manualForm.installmentsCount ? parseInt(manualForm.installmentsCount) : undefined}
+                  onChange={(value) => setManualForm({ ...manualForm, installmentsCount: value?.toString() || '' })}
                   style={{ width: '100%' }}
-                  min="1"
+                  min={1}
                 />
               </div>
 
@@ -1406,12 +1332,12 @@ export default function Tenpo() {
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
                   Fecha primera cuota (opcional)
                 </label>
-                <input
-                  type="date"
-                  value={manualForm.firstDueDateOverride}
-                  onChange={(e) => setManualForm({ ...manualForm, firstDueDateOverride: e.target.value })}
-                  className="input"
+                <DatePicker
+                  value={manualForm.firstDueDateOverride ? new Date(manualForm.firstDueDateOverride) : null}
+                  onChange={(value) => setManualForm({ ...manualForm, firstDueDateOverride: value ? format(value, 'yyyy-MM-dd') : '' })}
+                  format="yyyy-MM-dd"
                   style={{ width: '100%' }}
+                  oneTap
                 />
                 <p style={{ fontSize: '0.75rem', color: '#666', marginTop: '0.25rem' }}>
                   Dejar vacío para calcular automáticamente
@@ -1451,15 +1377,6 @@ export default function Tenpo() {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Toast notification */}
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
       )}
     </MainLayout>
   );

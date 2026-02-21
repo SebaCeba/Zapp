@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Input, InputNumber, SelectPicker, Button } from 'rsuite';
 import MainLayout from '../layout/MainLayout';
 import YearAndUFSelector from '../components/YearAndUFSelector';
 
@@ -286,7 +287,7 @@ export default function Hipotecario() {
               Usa punto y coma (;) como separador.
             </p>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-              <label className="btn" style={{ cursor: 'pointer', display: 'inline-block' }}>
+              <Button appearance="primary" style={{ cursor: 'pointer' }} as="label">
                 📤 Importar CSV
                 <input
                   type="file"
@@ -294,7 +295,7 @@ export default function Hipotecario() {
                   onChange={handleImportCSV}
                   style={{ display: 'none' }}
                 />
-              </label>
+              </Button>
               {payments.length > 0 && (
                 <span style={{ padding: '0.5rem 1rem', background: '#e8f5e9', borderRadius: '4px', fontSize: '0.9rem', color: '#2d7a2d' }}>
                   ✅ {payments.length} cuotas cargadas
@@ -316,34 +317,31 @@ export default function Hipotecario() {
             </p>
             
             <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-              <input
-                className="input"
-                type="text"
+              <Input
                 value={newSeguroNombre}
-                onChange={e => setNewSeguroNombre(e.target.value)}
+                onChange={(value) => setNewSeguroNombre(value)}
                 placeholder="Nombre del seguro"
                 style={{ flex: '1 1 200px' }}
               />
-              <input
-                className="input"
-                type="text"
-                value={newSeguroMonto}
-                onChange={e => setNewSeguroMonto(e.target.value)}
+              <InputNumber
+                value={parseFloat(newSeguroMonto) || 0}
+                onChange={(value) => setNewSeguroMonto(String(value || 0))}
                 placeholder="Monto mensual"
+                step={0.01}
+                min={0}
                 style={{ flex: '0 0 120px' }}
               />
-              <select
-                className="input"
+              <SelectPicker
+                data={[{ label: 'CLP', value: 'CLP' }, { label: 'UF', value: 'UF' }]}
                 value={newSeguroMoneda}
-                onChange={e => setNewSeguroMoneda(e.target.value)}
-                style={{ flex: '0 0 80px' }}
-              >
-                <option value="CLP">CLP</option>
-                <option value="UF">UF</option>
-              </select>
-              <button className="btn" onClick={handleAddSeguro}>
+                onChange={(value) => setNewSeguroMoneda(value || 'CLP')}
+                cleanable={false}
+                searchable={false}
+                style={{ flex: '0 0 100px' }}
+              />
+              <Button appearance="primary" onClick={handleAddSeguro}>
                 ➕ Agregar
-              </button>
+              </Button>
             </div>
 
             {seguros.length > 0 && (() => {
@@ -391,20 +389,14 @@ export default function Hipotecario() {
                             {seguro.moneda}
                           </td>
                           <td style={{ padding: '0.75rem', textAlign: 'center' }}>
-                            <button
+                            <Button
+                              color="red"
+                              appearance="primary"
+                              size="xs"
                               onClick={() => handleDeleteSeguro(seguro.nombre, parseInt(seguro.anio))}
-                              style={{
-                                background: '#ef4444',
-                                color: 'white',
-                                border: 'none',
-                                padding: '0.35rem 0.75rem',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '0.8rem'
-                              }}
                             >
                               🗑️
-                            </button>
+                            </Button>
                           </td>
                         </tr>
                       ))}

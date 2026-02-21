@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Button, Input } from 'rsuite';
 
 interface IngresoBase {
   id: number;
@@ -255,12 +256,12 @@ export default function TablaPresupuestoIngresos({ anio, onOpenCatalogo, onOpenB
     return (
       <div className="card" style={{ textAlign: 'center', padding: '2rem' }}>
         <p style={{ color: '#666', marginBottom: '1rem' }}>No tienes ingresos configurados.</p>
-        <button
+        <Button
           onClick={onOpenCatalogo}
-          className="btn btn-primary"
+          appearance="primary"
         >
           Agregar primer ingreso
-        </button>
+        </Button>
       </div>
     );
   }
@@ -272,9 +273,9 @@ export default function TablaPresupuestoIngresos({ anio, onOpenCatalogo, onOpenB
         <div className="card" style={{ marginBottom: '1rem', background: '#fef3c7' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
             <strong style={{ color: '#92400e' }}>💰 Bonos del año {anio}</strong>
-            <button onClick={onOpenBonos} className="btn btn-sm" style={{ fontSize: '0.875rem' }}>
+            <Button onClick={onOpenBonos} size="sm">
               Gestionar
-            </button>
+            </Button>
           </div>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
             {bonos.map(bono => (
@@ -323,13 +324,12 @@ export default function TablaPresupuestoIngresos({ anio, onOpenCatalogo, onOpenB
                       return (
                         <td key={idx} style={{ textAlign: 'right' }}>
                           {isEditando ? (
-                            <input
-                              type="text"
+                            <Input
                               autoFocus
                               defaultValue={valor || ''}
-                              className="input"
-                              style={{ width: '100%', padding: '0.25rem 0.5rem', textAlign: 'right' }}
-                              onBlur={(e) => guardarMonto(ingreso.id, mes, e.target.value)}
+                              style={{ width: '100%', textAlign: 'right' }}
+                              size="sm"
+                              onBlur={(e) => guardarMonto(ingreso.id, mes, (e.target as HTMLInputElement).value)}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                   guardarMonto(ingreso.id, mes, (e.target as HTMLInputElement).value);

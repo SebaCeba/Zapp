@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { SelectPicker, Button } from 'rsuite';
 import MainLayout from '../layout/MainLayout';
 import TablaPresupuestoIngresos from '../components/TablaPresupuestoIngresos';
 import GestionarIngresosModal from '../components/GestionarIngresosModal';
@@ -37,35 +38,32 @@ const Ingresos: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <label style={{ fontWeight: '500', color: '#374151' }}>Año:</label>
-              <select
+              <SelectPicker
+                data={aniosDisponibles.map(anio => ({ label: anio.toString(), value: anio }))}
                 value={anioSeleccionado}
-                onChange={(e) => setAnioSeleccionado(parseInt(e.target.value))}
-                className="select"
-                style={{ width: 'auto', minWidth: '100px' }}
-              >
-                {aniosDisponibles.map(anio => (
-                  <option key={anio} value={anio}>{anio}</option>
-                ))}
-              </select>
+                onChange={(value) => setAnioSeleccionado(value || new Date().getFullYear())}
+                cleanable={false}
+                searchable={false}
+                style={{ width: 120 }}
+              />
             </div>
 
-            <button
+            <Button
+              appearance="primary"
               onClick={() => setModalIngresosAbierto(true)}
-              className="btn btn-primary"
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
               <span>⚙️</span>
               <span>Gestionar Ingresos</span>
-            </button>
+            </Button>
 
-            <button
+            <Button
               onClick={() => setModalBonosAbierto(true)}
-              className="btn"
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#fbbf24', color: '#78350f' }}
             >
               <span>💰</span>
               <span>Gestionar Bonos</span>
-            </button>
+            </Button>
           </div>
         </div>
 

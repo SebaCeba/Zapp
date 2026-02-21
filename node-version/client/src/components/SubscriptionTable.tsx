@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Input, InputNumber, SelectPicker, DatePicker, Button } from 'rsuite';
 
 interface Subscription {
   id: number;
@@ -66,11 +67,6 @@ export default function SubscriptionTable({ refreshKey, onDelete }: Subscription
     setEditData({ ...sub, startDate: sub.startDate.split('T')[0] });
   };
 
-  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setEditData((prev) => ({ ...prev, [name]: value }));
-  };
-
   const handleEditSave = async (id: number) => {
     try {
       const response = await fetch(`/api/subscriptions/${id}`, {
@@ -115,47 +111,48 @@ export default function SubscriptionTable({ refreshKey, onDelete }: Subscription
                 {editId === sub.id ? (
                   <>
                     <td>
-                      <input
-                        className="input"
+                      <Input
                         name="name"
                         value={editData.name || ''}
-                        onChange={handleEditChange}
+                        onChange={(value) => setEditData(prev => ({ ...prev, name: value }))}
                       />
                     </td>
                     <td>
-                      <input
-                        className="input"
+                      <InputNumber
                         name="price"
-                        type="number"
-                        step="0.01"
-                        value={editData.price || ''}
-                        onChange={handleEditChange}
+                        step={0.01}
+                        min={0}
+                        value={editData.price || 0}
+                        onChange={(value) => setEditData(prev => ({ ...prev, price: Number(value) || 0 }))}
+                        prefix="$"
                       />
                     </td>
                     <td>
-                      <select
-                        className="select"
-                        name="periodicity"
+                      <SelectPicker
+                        data={PERIODICITY_OPTIONS}
                         value={editData.periodicity || ''}
-                        onChange={handleEditChange}
-                      >
-                        {PERIODICITY_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
-                    </td>
-                    <td>
-                      <input
-                        className="input"
-                        name="startDate"
-                        type="date"
-                        value={editData.startDate || ''}
-                        onChange={handleEditChange}
+                        onChange={(value) => setEditData(prev => ({ ...prev, periodicity: value || '' }))}
+                        cleanable={false}
+                        searchable={false}
+                        style={{ width: '100%' }}
                       />
                     </td>
                     <td>
-                      <button className="btn btn-primary" onClick={() => handleEditSave(sub.id)} style={{marginRight:4}}>Guardar</button>
-                      <button className="btn" onClick={handleEditCancel}>Cancelar</button>
+                      <DatePicker
+                        value={editData.startDate ? new Date(editData.startDate) : null}
+                        onChange={(date) => {
+                          if (date) {
+                            const formatted = date.toISOString().split('T')[0];
+                            setEditData(prev => ({ ...prev, startDate: formatted }));
+                          }
+                        }}
+                        format="yyyy-MM-dd"
+                        style={{ width: '100%' }}
+                      />
+                    </td>
+                    <td>
+                      <Button appearance="primary" onClick={() => handleEditSave(sub.id)} style={{marginRight:4}}>Guardar</Button>
+                      <Button appearance="default" onClick={handleEditCancel}>Cancelar</Button>
                     </td>
                   </>
                 ) : (
@@ -165,8 +162,8 @@ export default function SubscriptionTable({ refreshKey, onDelete }: Subscription
                     <td>{PERIODICITY_LABELS[sub.periodicity] || sub.periodicity}</td>
                     <td>{new Date(sub.startDate).toLocaleDateString('es-CL')}</td>
                     <td>
-                      <button className="btn btn-primary" onClick={() => handleEdit(sub)} style={{marginRight:4}}>Editar</button>
-                      <button className="btn btn-danger" onClick={() => handleDelete(sub.id)}>Eliminar</button>
+                      <Button appearance="primary" onClick={() => handleEdit(sub)} style={{marginRight:4}}>Editar</Button>
+                      <Button color="red" appearance="primary" onClick={() => handleDelete(sub.id)}>Eliminar</Button>
                     </td>
                   </>
                 )}
