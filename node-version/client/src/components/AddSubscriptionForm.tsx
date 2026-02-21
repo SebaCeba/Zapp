@@ -1,15 +1,24 @@
 import { useState, FormEvent } from 'react';
+import { Button, Input, InputNumber, SelectPicker, Panel, DatePicker } from 'rsuite';
 
 interface AddSubscriptionFormProps {
   onSuccess: () => void;
 }
 
+const periodicityData = [
+  { label: 'Semanal', value: 'weekly' },
+  { label: 'Mensual', value: 'monthly' },
+  { label: 'Trimestral', value: 'quarterly' },
+  { label: 'Semestral', value: 'semiannual' },
+  { label: 'Anual', value: 'annual' }
+];
+
 export default function AddSubscriptionForm({ onSuccess }: AddSubscriptionFormProps) {
   const [formData, setFormData] = useState({
     name: '',
-    price: '',
+    price: 0,
     periodicity: 'monthly',
-    startDate: new Date().toISOString().split('T')[0]
+    startDate: new Date()
   });
 
   const handleSubmit = async (e: FormEvent) => {
@@ -19,15 +28,18 @@ export default function AddSubscriptionForm({ onSuccess }: AddSubscriptionFormPr
       const response = await fetch('/api/subscriptions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          startDate: formData.startDate.toISOString().split('T')[0]
+        })
       });
 
       if (response.ok) {
         setFormData({
           name: '',
-          price: '',
+          price: 0,
           periodicity: 'monthly',
-          startDate: new Date().toISOString().split('T')[0]
+          startDate: new Date()
         });
         onSuccess();
       }
@@ -37,64 +49,58 @@ export default function AddSubscriptionForm({ onSuccess }: AddSubscriptionFormPr
   };
 
   return (
-    <div className="card">
-      <h2>➕ Nueva Suscripción</h2>
+    <Panel bordered header="➕ Nueva Suscripción" style={{ marginBottom: '1rem' }}>
       <form onSubmit={handleSubmit}>
         <div className="grid">
           <div>
             <label className="stat-label">Nombre</label>
-            <input
-              className="input"
-              type="text"
+            <Input
+              placeholder="Ej: Netflix"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(value) => setFormData({ ...formData, name: value })}
               required
             />
           </div>
 
           <div>
             <label className="stat-label">Precio</label>
-            <input
-              className="input"
-              type="number"
-              step="0.01"
+            <InputNumber
+              prefix="$"
+              step={0.01}
               value={formData.price}
-              onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+              onChange={(value) => setFormData({ ...formData, price: Number(value) || 0 })}
               required
+              min={0}
             />
           </div>
 
           <div>
             <label className="stat-label">Periodicidad</label>
-            <select
-              className="select"
+            <SelectPicker
+              data={periodicityData}
               value={formData.periodicity}
-              onChange={(e) => setFormData({ ...formData, periodicity: e.target.value })}
-            >
-              <option value="weekly">Semanal</option>
-              <option value="monthly">Mensual</option>
-              <option value="quarterly">Trimestral</option>
-              <option value="semiannual">Semestral</option>
-              <option value="annual">Anual</option>
-            </select>
+              onChange={(value) => setFormData({ ...formData, periodicity: value || 'monthly' })}
+              cleanable={false}
+              searchable={false}
+              block
+            />
           </div>
 
           <div>
             <label className="stat-label">Fecha de inicio</label>
-            <input
-              className="input"
-              type="date"
+            <DatePicker
+              format="yyyy-MM-dd"
               value={formData.startDate}
-              onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-              required
+              onChange={(value) => setFormData({ ...formData, startDate: value || new Date() })}
+              block
             />
           </div>
         </div>
 
-        <button type="submit" className="btn btn-primary" style={{ marginTop: '1rem' }}>
+        <Button type="submit" appearance="primary" style={{ marginTop: '1rem' }}>
           Agregar Suscripción
-        </button>
+        </Button>
       </form>
-    </div>
+    </Panel>
   );
 }

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Panel, Input, InputNumber, SelectPicker, Button, DatePicker } from 'rsuite';
 
 export interface ObligacionFormData {
   nombre: string;
@@ -16,7 +17,18 @@ interface Props {
   onPreview: (data: ObligacionFormData) => void;
 }
 
+const tipoData = [
+  { label: '💳 Consumo', value: 'consumo' },
+  { label: '🛡️ Seguro', value: 'seguro' }
+];
+
+const monedaData = [
+  { label: '💵 CLP (Pesos chilenos)', value: 'CLP' },
+  { label: '📈 UF (Unidad de Fomento)', value: 'UF' }
+];
+
 const ObligacionForm: React.FC<Props> = ({ onPreview }) => {
+  const currentYear = new Date().getFullYear();
   const [form, setForm] = useState<ObligacionFormData>({
     nombre: '',
     tipo: 'consumo',
@@ -24,113 +36,114 @@ const ObligacionForm: React.FC<Props> = ({ onPreview }) => {
     monto: 0,
     cuotas: 1,
     mesInicio: 1,
-    anioInicio: new Date().getFullYear(),
+    anioInicio: currentYear,
   });
 
-  const [montoInput, setMontoInput] = useState('');
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setForm(f => ({ ...f, [name]: name === 'monto' || name === 'cuotas' || name.startsWith('mes') || name.startsWith('anio') ? Number(value) : value }));
+  // Helper para convertir mes/año a Date y viceversa
+  const mesAnioToDate = (mes: number, anio: number): Date => {
+    return new Date(anio, mes - 1, 1);
   };
 
-  const handleMontoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value;
-    setMontoInput(value);
-    
-    const normalizedValue = value.replace(',', '.');
-    const numValue = parseFloat(normalizedValue);
-    
-    if (!isNaN(numValue)) {
-      setForm(f => ({ ...f, monto: numValue }));
-    } else if (normalizedValue === '' || normalizedValue === '-') {
-      setForm(f => ({ ...f, monto: 0 }));
-    }
+  const dateToMesAnio = (date: Date): { mes: number; anio: number } => {
+    return {
+      mes: date.getMonth() + 1,
+      anio: date.getFullYear()
+    };
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onPreview(form);
   };
 
   return (
-    <form className="card" onSubmit={e => { e.preventDefault(); onPreview(form); }} style={{ marginBottom: '1.5rem' }}>
-      <h3 style={{ marginBottom: '1rem', color: '#2d7a2d' }}>➕ Agregar Obligación</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
-        <label className="stat-label">
-          Nombre de la obligación
-          <input className="input" name="nombre" value={form.nombre} onChange={handleChange} required placeholder="Ej: Crédito hipotecario" style={{ marginTop: '0.5rem' }} />
-        </label>
-        <label className="stat-label">
-          Tipo de obligación
-          <select className="select" name="tipo" value={form.tipo} onChange={handleChange} style={{ marginTop: '0.5rem' }}>
-            <option value="consumo">💳 Consumo</option>
-            <option value="seguro">🛡️ Seguro</option>
-          </select>
-        </label>
-        <label className="stat-label">
-          Moneda
-          <select className="select" name="moneda" value={form.moneda} onChange={handleChange} style={{ marginTop: '0.5rem' }}>
-            <option value="CLP">💵 CLP (Pesos chilenos)</option>
-            <option value="UF">📈 UF (Unidad de Fomento)</option>
-          </select>
-        </label>
-        <label className="stat-label">
-          Monto de la cuota
-          <input 
-            className="input" 
-            name="monto" 
-            type="text" 
-            value={montoInput} 
-            onChange={handleMontoChange}
-            onBlur={(e) => {
-              const value = e.target.value.replace(',', '.');
-              const numValue = parseFloat(value);
-              if (isNaN(numValue) || value === '') {
-                setForm(f => ({ ...f, monto: 0 }));
-                setMontoInput('');
-              } else {
-                setMontoInput(numValue.toString().replace('.', ','));
-              }
-            }}
-            required 
-            placeholder="0,00" 
-            style={{ marginTop: '0.5rem' }} 
-          />
-        </label>
-        <label className="stat-label">
-          Cantidad total de cuotas
-          <input 
-            className="input" 
-            name="cuotas" 
-            type="text" 
-            value={form.cuotas === 1 ? '' : form.cuotas} 
-            onChange={(e) => {
-              const value = e.target.value.replace(/[^0-9]/g, '');
-              if (value === '') {
-                setForm(f => ({ ...f, cuotas: 1 }));
-              } else if (!isNaN(parseInt(value))) {
-                setForm(f => ({ ...f, cuotas: parseInt(value) }));
-              }
-            }}
-            required 
-            placeholder="1" 
-            style={{ marginTop: '0.5rem' }} 
-          />
-        </label>
-        <label className="stat-label">
-          Mes/Año de inicio
-          <input
-            className="input"
-            name="mesAnioInicio"
-            type="month"
-            value={`${form.anioInicio.toString().padStart(4, '0')}-${form.mesInicio.toString().padStart(2, '0')}`}
-            onChange={e => {
-              const [anio, mes] = e.target.value.split('-').map(Number);
-              setForm(f => ({ ...f, mesInicio: mes, anioInicio: anio }));
-            }}
-            required
-            style={{ marginTop: '0.5rem' }}
-          />
-        </label>
-      </div>
-      <button type="submit" className="btn" style={{ marginTop: '1.5rem', width: '100%', fontSize: '1rem' }}>🔍 Ver Vista Previa</button>
-    </form>
+    <Panel bordered header="➕ Agregar Obligación" style={{ marginBottom: '1.5rem' }}>
+      <form onSubmit={handleSubmit}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
+          <label className="stat-label">
+            Nombre de la obligación
+            <Input
+              name="nombre"
+              value={form.nombre}
+              onChange={(value) => setForm(f => ({ ...f, nombre: value }))}
+              required
+              placeholder="Ej: Crédito hipotecario"
+              style={{ marginTop: '0.5rem' }}
+            />
+          </label>
+          <label className="stat-label">
+            Tipo de obligación
+            <SelectPicker
+              data={tipoData}
+              value={form.tipo}
+              onChange={(value) => setForm(f => ({ ...f, tipo: value as 'consumo' | 'seguro' || 'consumo' }))}
+              cleanable={false}
+              searchable={false}
+              block
+              style={{ marginTop: '0.5rem' }}
+            />
+          </label>
+          <label className="stat-label">
+            Moneda
+            <SelectPicker
+              data={monedaData}
+              value={form.moneda}
+              onChange={(value) => setForm(f => ({ ...f, moneda: value as 'CLP' | 'UF' || 'CLP' }))}
+              cleanable={false}
+              searchable={false}
+              block
+              style={{ marginTop: '0.5rem' }}
+            />
+          </label>
+          <label className="stat-label">
+            Monto de la cuota
+            <InputNumber
+              name="monto"
+              value={form.monto}
+              onChange={(value) => setForm(f => ({ ...f, monto: Number(value) || 0 }))}
+              required
+              placeholder="0"
+              prefix={form.moneda === 'CLP' ? '$' : 'UF'}
+              step={form.moneda === 'CLP' ? 1000 : 0.01}
+              min={0}
+              style={{ marginTop: '0.5rem' }}
+            />
+          </label>
+          <label className="stat-label">
+            Cantidad total de cuotas
+            <InputNumber
+              name="cuotas"
+              value={form.cuotas}
+              onChange={(value) => setForm(f => ({ ...f, cuotas: Number(value) || 1 }))}
+              required
+              placeholder="1"
+              min={1}
+              max={999}
+              step={1}
+              style={{ marginTop: '0.5rem' }}
+            />
+          </label>
+          <label className="stat-label">
+            Mes/Año de inicio
+            <DatePicker
+              format="yyyy-MM"
+              value={mesAnioToDate(form.mesInicio, form.anioInicio)}
+              onChange={(value) => {
+                if (value) {
+                  const { mes, anio } = dateToMesAnio(value);
+                  setForm(f => ({ ...f, mesInicio: mes, anioInicio: anio }));
+                }
+              }}
+              block
+              style={{ marginTop: '0.5rem' }}
+            />
+          </label>
+        </div>
+        <Button type="submit" appearance="primary" style={{ marginTop: '1.5rem', width: '100%', fontSize: '1rem' }}>
+          🔍 Ver Vista Previa
+        </Button>
+      </form>
+    </Panel>
   );
 };
 
