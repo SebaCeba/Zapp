@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, Input, IconButton } from 'rsuite';
+import { Modal, Button, Input } from 'rsuite';
 
 interface Servicio {
   id: number;
@@ -233,32 +233,30 @@ export default function GestionarCatalogoModal({ isOpen, onClose, onServiciosUpd
                       )}
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <IconButton
+                      <Button
                         onClick={() => {
                           setEditandoId(servicio.id);
                           setEditandoNombre(servicio.nombre);
                         }}
                         size="xs"
-                        icon={<span>✏️</span>}
-                        circle
-                        appearance="subtle"
-                      />
-                      <IconButton
+                      >
+                        ✏️
+                      </Button>
+                      <Button
                         onClick={() => toggleActivo(servicio.id, servicio.nombre, servicio.activo)}
                         size="xs"
-                        icon={<span>🔻</span>}
-                        circle
-                        appearance="subtle"
-                      />
+                      >
+                        🔻
+                      </Button>
                       {!servicio.esBase && (!servicio.presupuestos || servicio.presupuestos.length === 0) && (
-                        <IconButton
+                        <Button
                           onClick={() => eliminarServicio(servicio.id, servicio.nombre)}
                           size="xs"
-                          icon={<span>🗑️</span>}
-                          circle
                           color="red"
                           appearance="primary"
-                        />
+                        >
+                          🗑️
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -305,13 +303,12 @@ export default function GestionarCatalogoModal({ isOpen, onClose, onServiciosUpd
                           {servicio.esBase ? '(Base)' : '(Personalizado)'}
                         </span>
                       </div>
-                      <IconButton
+                      <Button
                         onClick={() => toggleActivo(servicio.id, servicio.nombre, servicio.activo)}
                         size="xs"
-                        icon={<span>🔼</span>}
-                        circle
-                        appearance="subtle"
-                      />
+                      >
+                        🔼
+                      </Button>
                     </div>
                   ))}
                 </div>
