@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import MainLayout from '../layout/MainLayout';
+import PageTitleSection from '../layout/PageTitleSection';
 import { ActualCategory, ActualSummary, CategorySummary } from '../types/actual';
 import { fetchActualSummary } from '../api/actualApi';
 import ActualTable from '../components/actual/ActualTable';
@@ -119,52 +120,43 @@ export default function Actual() {
   return (
     <MainLayout>
       <div className="container">
-        <h1>Actual vs Presupuesto</h1>
-
-        <div className="filters" style={{ 
-          display: 'flex', 
-          gap: '1rem', 
-          marginBottom: '2rem',
-          alignItems: 'center'
-        }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontWeight: '600' }}>Año:</span>
-            <select 
-              value={year} 
-              onChange={e => setYear(+e.target.value)}
-              style={{
-                padding: '0.5rem',
-                borderRadius: '4px',
-                border: '1px solid var(--gray-300)',
-                fontSize: '1rem'
-              }}
-            >
-              {aniosDisponibles.map(y => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
-          </label>
-
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontWeight: '600' }}>Mes:</span>
-            <select 
-              value={month} 
-              onChange={e => setMonth(+e.target.value)}
-              style={{
-                padding: '0.5rem',
-                borderRadius: '4px',
-                border: '1px solid var(--gray-300)',
-                fontSize: '1rem'
-              }}
-            >
-              {MESES.map((mes, idx) => (
-                <option key={idx + 1} value={idx + 1}>
-                  {mes}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+        <PageTitleSection
+          title="Actual vs Presupuesto"
+          actions={
+            <>
+              <select 
+                value={year} 
+                onChange={e => setYear(+e.target.value)}
+                style={{
+                  padding: '0.5rem',
+                  borderRadius: '4px',
+                  border: '1px solid var(--gray-300)',
+                  fontSize: '1rem'
+                }}
+              >
+                {aniosDisponibles.map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+              <select 
+                value={month} 
+                onChange={e => setMonth(+e.target.value)}
+                style={{
+                  padding: '0.5rem',
+                  borderRadius: '4px',
+                  border: '1px solid var(--gray-300)',
+                  fontSize: '1rem'
+                }}
+              >
+                {MESES.map((mes, idx) => (
+                  <option key={idx + 1} value={idx + 1}>
+                    {mes}
+                  </option>
+                ))}
+              </select>
+            </>
+          }
+        />
 
         {loading && (
           <div style={{ textAlign: 'center', padding: '2rem' }}>

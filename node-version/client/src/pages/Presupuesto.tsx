@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SelectPicker } from 'rsuite';
-import MainLayout from '../layout/MainLayout';
-
+import MainLayout from '../layout/MainLayout';import PageTitleSection from '../layout/PageTitleSection';
 interface ResumenMensual {
   mes: string;
   ingresos: number;
@@ -318,39 +317,6 @@ const Presupuesto: React.FC = () => {
 
       setDetalleSupermercado({ valores: valoresSupermercado });
 
-      // Calcular suscripciones por mes
-      const calcularSuscripcionesMes = (mes: number): number => {
-        return subscriptionsData.reduce((sum: number, sub: any) => {
-          const startDate = new Date(sub.startDate);
-          const yearStart = new Date(anioSeleccionado, mes - 1, 1);
-          
-          if (startDate > yearStart) return sum;
-          
-          const monthsDiff = (anioSeleccionado - startDate.getFullYear()) * 12 + (mes - 1 - startDate.getMonth());
-          
-          let applies = false;
-          switch (sub.periodicity) {
-            case 'monthly':
-              applies = monthsDiff >= 0;
-              break;
-            case 'quarterly':
-              applies = monthsDiff >= 0 && monthsDiff % 3 === 0;
-              break;
-            case 'semiannual':
-              applies = monthsDiff >= 0 && monthsDiff % 6 === 0;
-              break;
-            case 'annual':
-              applies = monthsDiff >= 0 && monthsDiff % 12 === 0;
-              break;
-            case 'weekly':
-              applies = monthsDiff >= 0;
-              break;
-          }
-          
-          return sum + (applies ? sub.price : 0);
-        }, 0);
-      };
-
       // Calcular obligaciones por mes
       const calcularObligacionesMes = (mes: number): number => {
         return obligacionesData.reduce((sum: number, obl: any) => {
@@ -468,48 +434,22 @@ const Presupuesto: React.FC = () => {
   return (
     <MainLayout>
       <div className="container">
-        <h1 style={{ marginBottom: '1.5rem', color: '#1e40af' }}>📊 Presupuesto Anual</h1>
-        <p style={{ marginBottom: '1.5rem', color: '#666', fontSize: '1rem' }}>
-          Estado de resultados consolidado - Ingresos vs Egresos
-        </p>
+        <PageTitleSection
+          title="Presupuesto Anual"
+          description="Estado de resultados consolidado - Ingresos vs Egresos"
+          actions={
+            <SelectPicker
+              data={aniosDisponibles.map(anio => ({ label: anio.toString(), value: anio }))}
+              value={anioSeleccionado}
+              onChange={(value) => setAnioSeleccionado(value || new Date().getFullYear())}
+              cleanable={false}
+              searchable={false}
+              style={{ width: 120 }}
+            />
+          }
+        />
 
-        {/* Controles */}
-        <div className="card" style={{ marginBottom: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <label style={{ fontWeight: '500', color: '#374151' }}>Año:</label>
-              <SelectPicker
-                data={aniosDisponibles.map(anio => ({ label: anio.toString(), value: anio }))}
-                value={anioSeleccionado}
-                onChange={(value) => setAnioSeleccionado(value || new Date().getFullYear())}
-                cleanable={false}
-                searchable={false}
-                style={{ width: 120 }}
-              />
-            </div>
-
-            <div style={{ 
-              marginLeft: 'auto', 
-              display: 'flex', 
-              gap: '1rem', 
-              fontSize: '0.875rem',
-              color: '#666'
-            }}>
-              <span>
-                Balance Anual: 
-                <strong style={{ 
-                  marginLeft: '0.5rem',
-                  color: calcularTotalAnual('balance') >= 0 ? '#16a34a' : '#dc2626',
-                  fontSize: '1.125rem'
-                }}>
-                  {formatearMonto(calcularTotalAnual('balance'))}
-                </strong>
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabla de resumen */}
+        {/* Dashboard de resumen */}
         <div className="card">
           <div className="table-container" style={{ overflowX: 'auto' }}>
             <table className="monthly-table" style={{ minWidth: '1600px' }}>

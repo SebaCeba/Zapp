@@ -47,6 +47,41 @@ h2 {
   color: var(--gray-700);
 }
 
+/* Page Title Section */
+.page-title-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  gap: 1.5rem;
+}
+
+.page-title-content {
+  flex: 1;
+}
+
+.page-title {
+  font-size: 2rem;
+  font-weight: 500;
+  margin: 0 0 0.5rem 0;
+  color: var(--gray-900);
+  line-height: 1.2;
+}
+
+.page-description {
+  font-size: 0.95rem;
+  color: var(--gray-700);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.page-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .card {
   background: white;
   border-radius: 8px;
@@ -280,4 +315,15 @@ input[type=number]::-webkit-outer-spin-button {
 
 input[type=number] {
   -moz-appearance: textfield;
+}
+
+/* Estilo global para headers de RSuite Table */
+.rs-table .app-table-header.rs-table-cell-header,
+.rs-table .app-table-header .rs-table-cell,
+.rs-table .app-table-header .rs-table-cell-content {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #52525b !important;
+  background-color: #fafafa !important;
+  letter-spacing: 0.02em !important;
 }

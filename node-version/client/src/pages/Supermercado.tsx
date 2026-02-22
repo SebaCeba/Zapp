@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { SelectPicker } from 'rsuite';
 import MainLayout from '../layout/MainLayout';
+import PageTitleSection from '../layout/PageTitleSection';
 import TablaPresupuestoSupermercado from '../components/TablaPresupuestoSupermercado';
 
 export default function Supermercado() {
@@ -15,15 +16,10 @@ export default function Supermercado() {
   return (
     <MainLayout>
       <div className="container">
-        <h1 style={{ marginBottom: '1.5rem', color: '#2d7a2d' }}>🛒 Supermercado</h1>
-        <p style={{ marginBottom: '1.5rem', color: '#666', fontSize: '1rem' }}>
-          Planifica el presupuesto mensual de compras de supermercado
-        </p>
-
-        {/* Controles */}
-        <div className="card" style={{ marginBottom: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <label style={{ fontWeight: '500', color: '#374151' }}>Año:</label>
+        <PageTitleSection
+          title="Supermercado"
+          description="Planifica el presupuesto mensual de compras de supermercado"
+          actions={
             <SelectPicker
               data={aniosDisponibles.map(anio => ({ label: anio.toString(), value: anio }))}
               value={anioSeleccionado}
@@ -32,8 +28,8 @@ export default function Supermercado() {
               searchable={false}
               style={{ width: 120 }}
             />
-          </div>
-        </div>
+          }
+        />
 
         <TablaPresupuestoSupermercado anio={anioSeleccionado} />
       </div>

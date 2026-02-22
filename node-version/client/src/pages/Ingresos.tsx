@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { SelectPicker, Button } from 'rsuite';
 import MainLayout from '../layout/MainLayout';
+import PageTitleSection from '../layout/PageTitleSection';
 import TablaPresupuestoIngresos from '../components/TablaPresupuestoIngresos';
 import GestionarIngresosModal from '../components/GestionarIngresosModal';
 import GestionarBonosModal from '../components/GestionarBonosModal';
@@ -28,16 +29,11 @@ const Ingresos: React.FC = () => {
   return (
     <MainLayout>
       <div className="container">
-        <h1 style={{ marginBottom: '1.5rem', color: '#16a34a' }}>💰 Ingresos</h1>
-        <p style={{ marginBottom: '1.5rem', color: '#666', fontSize: '1rem' }}>
-          Planifica tus ingresos mensuales, bonos y distribución anual
-        </p>
-
-        {/* Controles */}
-        <div className="card" style={{ marginBottom: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <label style={{ fontWeight: '500', color: '#374151' }}>Año:</label>
+        <PageTitleSection
+          title="Ingresos"
+          description="Planifica tus ingresos mensuales, bonos y distribución anual"
+          actions={
+            <>
               <SelectPicker
                 data={aniosDisponibles.map(anio => ({ label: anio.toString(), value: anio }))}
                 value={anioSeleccionado}
@@ -46,26 +42,22 @@ const Ingresos: React.FC = () => {
                 searchable={false}
                 style={{ width: 120 }}
               />
-            </div>
-
-            <Button
-              appearance="primary"
-              onClick={() => setModalIngresosAbierto(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-            >
-              <span>⚙️</span>
-              <span>Gestionar Ingresos</span>
-            </Button>
-
-            <Button
-              onClick={() => setModalBonosAbierto(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#fbbf24', color: '#78350f' }}
-            >
-              <span>💰</span>
-              <span>Gestionar Bonos</span>
-            </Button>
-          </div>
-        </div>
+              <Button
+                appearance="primary"
+                onClick={() => setModalIngresosAbierto(true)}
+              >
+                💼 Gestionar Ingresos
+              </Button>
+              <Button
+                appearance="primary"
+                color="yellow"
+                onClick={() => setModalBonosAbierto(true)}
+              >
+                💰 Gestionar Bonos
+              </Button>
+            </>
+          }
+        />
 
         {/* Tabla principal */}
         <TablaPresupuestoIngresos 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Input, InputNumber, SelectPicker, Button } from 'rsuite';
 import MainLayout from '../layout/MainLayout';
+import PageTitleSection from '../layout/PageTitleSection';
 import YearAndUFSelector from '../components/YearAndUFSelector';
 
 interface MortgagePayment {
@@ -262,10 +263,10 @@ export default function Hipotecario() {
   return (
     <MainLayout>
       <div className="container">
-        <h1 style={{ marginBottom: '1.5rem', color: '#2d7a2d' }}>🏠 Presupuesto Hipotecario</h1>
-        <p style={{ marginBottom: '1.5rem', color: '#666', fontSize: '1rem' }}>
-          Proyección anual del crédito hipotecario en CLP. Importa la tabla de amortización y define el año a presupuestar.
-        </p>
+        <PageTitleSection
+          title="Presupuesto Hipotecario"
+          description="Proyección anual del crédito hipotecario en CLP. Importa la tabla de amortización y define el año a presupuestar."
+        />
 
         {/* A) Supuestos Anuales UF + Año a Proyectar */}
         <YearAndUFSelector

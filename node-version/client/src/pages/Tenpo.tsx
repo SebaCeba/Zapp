@@ -4,6 +4,7 @@ import { es } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { SelectPicker, Input, InputNumber, DatePicker } from 'rsuite';
 import MainLayout from '../layout/MainLayout';
+import PageTitleSection from '../layout/PageTitleSection';
 import { showToast } from '../components/Toast';
 
 interface Purchase {
@@ -532,7 +533,7 @@ export default function Tenpo() {
     return (
       <MainLayout>
         <div className="container">
-          <h1 style={{ marginBottom: '1.5rem', color: '#1e40af' }}>💳 Tenpo - TC Prepago</h1>
+          <PageTitleSection title="Tenpo - TC Prepago" />
           <div className="card" style={{ backgroundColor: '#fef3c7', borderColor: '#fbbf24' }}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem' }}>
               {tokenExpired ? '⚠️ Token expirado' : '🔐 Autenticación requerida'}
@@ -576,46 +577,44 @@ export default function Tenpo() {
   return (
     <MainLayout>
       <div className="container">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <div>
-            <h1 style={{ marginBottom: '0.5rem', color: '#1e40af' }}>💳 Tenpo - TC Prepago</h1>
-            <p style={{ marginBottom: '0', color: '#666', fontSize: '1rem' }}>
-              Gestión de compras con tarjeta de crédito Tenpo - Proyección de cuotas
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <button
-              onClick={() => navigate('/presupuesto/tenpo/config')}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#3b82f6',
-                color: '#fff',
-                borderRadius: '6px',
-                border: 'none',
-                fontSize: '0.875rem',
-                fontWeight: '500',
-                cursor: 'pointer'
-              }}
-            >
-              ⚙️ Configurar Tasa
-            </button>
-            <button
-              onClick={() => navigate('/configuracion-tc/TENPO')}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#10b981',
-                color: '#fff',
-                borderRadius: '6px',
-                border: 'none',
-                fontSize: '0.875rem',
-                fontWeight: '500',
-                cursor: 'pointer'
-              }}
-            >
-              📅 Configuración TC
-            </button>
-          </div>
-        </div>
+        <PageTitleSection
+          title="Tenpo - TC Prepago"
+          description="Gestión de compras con tarjeta de crédito Tenpo - Proyección de cuotas"
+          actions={
+            <>
+              <button
+                onClick={() => navigate('/presupuesto/tenpo/config')}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#3b82f6',
+                  color: '#fff',
+                  borderRadius: '6px',
+                  border: 'none',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
+                ⚙️ Configurar Tasa
+              </button>
+              <button
+                onClick={() => navigate('/configuracion-tc/TENPO')}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#10b981',
+                  color: '#fff',
+                  borderRadius: '6px',
+                  border: 'none',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
+                📅 Configuración TC
+              </button>
+            </>
+          }
+        />
 
         {/* Controles */}
         <div className="card" style={{ marginBottom: '1.5rem' }}>

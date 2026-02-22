@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../layout/MainLayout';
+import PageTitleSection from '../layout/PageTitleSection';
 import YearAndUFSelector from '../components/YearAndUFSelector';
 import ObligacionForm, { ObligacionFormData } from '../components/ObligacionForm';
 import VistaPreviaObligacion from '../components/VistaPreviaObligacion';
@@ -84,10 +85,10 @@ export default function Creditos() {
   return (
     <MainLayout>
       <div className="container">
-        <h1 style={{ marginBottom: '1.5rem', color: '#2d7a2d' }}>💳 Créditos y Seguros</h1>
-        <p style={{ marginBottom: '1.5rem', color: '#666', fontSize: '1rem' }}>
-          Gestiona obligaciones de cuota conocida (consumo y seguros) y visualiza el impacto anual proyectado en CLP.
-        </p>
+        <PageTitleSection
+          title="Créditos y Seguros"
+          description="Gestiona obligaciones de cuota conocida (consumo y seguros) y visualiza el impacto anual proyectado en CLP."
+        />
         <YearAndUFSelector
           year={year}
           setYear={setYear}

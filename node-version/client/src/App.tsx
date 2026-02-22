@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { SelectPicker } from 'rsuite';
 import MainLayout from './layout/MainLayout';
+import PageTitleSection from './layout/PageTitleSection';
 import Dashboard from './components/Dashboard';
 import AddSubscriptionForm from './components/AddSubscriptionForm';
 import SubscriptionTable from './components/SubscriptionTable';
@@ -16,19 +17,19 @@ function App() {
   return (
     <MainLayout>
       <div className="container">
-        <h1>💳 Zapps - Planificador de Suscripciones</h1>
-        
-        <div className="year-selector">
-          <label className="stat-label">Año:</label>
-          <SelectPicker
-            data={[2025, 2026, 2027, 2028].map(year => ({ label: year.toString(), value: year }))}
-            value={currentYear}
-            onChange={(value) => setCurrentYear(value || new Date().getFullYear())}
-            cleanable={false}
-            searchable={false}
-            style={{ width: 120 }}
-          />
-        </div>
+        <PageTitleSection
+          title="Zapps - Planificador de Suscripciones"
+          actions={
+            <SelectPicker
+              data={[2025, 2026, 2027, 2028].map(year => ({ label: year.toString(), value: year }))}
+              value={currentYear}
+              onChange={(value) => setCurrentYear(value || new Date().getFullYear())}
+              cleanable={false}
+              searchable={false}
+              style={{ width: 120 }}
+            />
+          }
+        />
 
         <Dashboard year={currentYear} refreshKey={refreshKey} />
 
