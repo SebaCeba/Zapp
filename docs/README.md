@@ -1,6 +1,6 @@
 # Documentación Zapps
 
-**Última actualización:** 21 de Febrero, 2026  
+**Última actualización:** 27 de Febrero, 2026  
 Índice de toda la documentación técnica del proyecto.
 
 ---
@@ -27,7 +27,31 @@
 | **[ARQUITECTURA.md](ARQUITECTURA.md)** ⭐ | Documento maestro: arquitectura completa del sistema |
 | **[DESARROLLO.md](DESARROLLO.md)** | Comandos útiles, variables de entorno, debugging |
 | **[CREDENCIALES_GOOGLE.md](CREDENCIALES_GOOGLE.md)** | Configuración OAuth2 y Gmail API |
-| **[ANALISIS_DOCUMENTACION.md](ANALISIS_DOCUMENTACION.md)** | Análisis y reorganización de documentación |
+| **[PAGE_TITLE_STANDARD.md](PAGE_TITLE_STANDARD.md)** | Estándar de títulos de página y componentes |
+
+---
+
+### 📝 Diseño y Análisis Activos
+
+| Documento | Descripción |
+|-----------|-------------|
+| **[ANALISIS_CATEGORIAS_PRESUPUESTO.md](ANALISIS_CATEGORIAS_PRESUPUESTO.md)** | Análisis de categorías de presupuesto |
+| **[panel_pago_mes_tempo_tc.md](panel_pago_mes_tempo_tc.md)** | Diseño panel mensual de pagos TC |
+| **[registro_pagos_tc_diseno.md](registro_pagos_tc_diseno.md)** | Diseño registro de pagos TC |
+
+---
+
+### 📋 Registro de Cambios
+
+**📁 [changes/](changes/)** - Registro histórico de cambios e implementaciones
+
+Documentos recientes (2026-02-27):
+- Vista consolidada de pagos actual
+- Implementación Tenpo v2 con cuotas
+- Refactor panel mensual de pagos
+- Mejoras UX (scroll sticky, sidebar)
+- Endpoint lista de pagos TC
+- Ajustes financieros consolidados
 
 ---
 
@@ -79,6 +103,7 @@
 
 Los siguientes documentos fueron movidos a `archive/` por estar obsoletos o completamente implementados:
 
+**Implementaciones completadas:**
 | Documento | Razón |
 |-----------|-------|
 | [IMPLEMENTACION_ACTUAL.md](archive/IMPLEMENTACION_ACTUAL.md) | ✅ Implementado, info migrada a ARQUITECTURA.md |
@@ -88,6 +113,19 @@ Los siguientes documentos fueron movidos a `archive/` por estar obsoletos o comp
 | [MEJORAS_ACTUAL_BACKEND.md](archive/MEJORAS_ACTUAL_BACKEND.md) | Propuestas antiguas, algunas implementadas |
 | [PULIR_FRONTEND_ACTUAL.md](archive/PULIR_FRONTEND_ACTUAL.md) | Obsoleto por plan RSuite |
 | [PRESUPUESTO_RESUMEN_TECNICO.md](archive/PRESUPUESTO_RESUMEN_TECNICO.md) | Info consolidada en ARQUITECTURA.md |
+
+**Auditorías y análisis puntuales (archivados 27/02/2026):**
+| Documento | Razón |
+|-----------|-------|
+| [PAGE_TITLE_AUDIT.md](archive/PAGE_TITLE_AUDIT.md) | ✅ Auditoría de migración de títulos completada |
+| [RSUITE_CURRENT_STATE_AUDIT.md](archive/RSUITE_CURRENT_STATE_AUDIT.md) | Auditoría del 21 feb, superada por cambios del 27 |
+| [MONTH_TABLES_INVENTORY.md](archive/MONTH_TABLES_INVENTORY.md) | Inventario para estandarización ya completado |
+| [auditoria_grafico_categoria_tempo_tc.md](archive/auditoria_grafico_categoria_tempo_tc.md) | Auditoría puntual, implementación completada |
+| [modelo_datos_bar_chart_categoria_tempo_tc.md](archive/modelo_datos_bar_chart_categoria_tempo_tc.md) | Modelo específico ya implementado |
+| [RSUITE_PHASE3_SUBSCRIPTIONTABLE_NOTES.md](archive/RSUITE_PHASE3_SUBSCRIPTIONTABLE_NOTES.md) | Notas de fase 3 completada |
+| [RSUITE_PHASE3_SUPERMERCADO_NOTES.md](archive/RSUITE_PHASE3_SUPERMERCADO_NOTES.md) | Notas de fase 3 completada |
+| [ANALISIS_DOCUMENTACION.md](archive/ANALISIS_DOCUMENTACION.md) | Análisis del 21 feb, superado por limpieza del 27 |
+| [analisis-detallado-pagina-actual.md](archive/analisis-detallado-pagina-actual.md) | Análisis pre-implementación, vista consolidada ya implementada |
 
 ---
 
@@ -105,27 +143,37 @@ Los siguientes documentos fueron movidos a `archive/` por estar obsoletos o comp
 docs/
 ├── README.md                          # Este archivo - Índice principal
 ├── ARQUITECTURA.md                    # ⭐ Documento maestro
-├── ANALISIS_DOCUMENTACION.md          # Análisis de documentación
 ├── DESARROLLO.md                      # Comandos y desarrollo
 ├── CREDENCIALES_GOOGLE.md            # Setup Gmail OAuth
+├── PAGE_TITLE_STANDARD.md            # Estándar de títulos
+│
+├── 📝 Diseño y Análisis
+│   ├── ANALISIS_CATEGORIAS_PRESUPUESTO.md
+│   ├── panel_pago_mes_tempo_tc.md
+│   └── registro_pagos_tc_diseno.md
+│
+├── 📋 changes/                        # Registro histórico de cambios
+│   ├── 2026-02-27-*.md               # Cambios recientes (11 docs)
+│   └── 2026-02-22-*.md               # Cambios anteriores
 │
 ├── 🎨 implementacion_rsuite/          # Migración a RSuite
 │   ├── README.md
 │   ├── PLAN_IMPLEMENTACION_RSUITE.md
-│   └── FASE_0_RSUITE_PREPARACION.md
+│   └── fase-*/                        # Fases 0-3
 │
 ├── 💳 tenpo/                          # 17 documentos Tenpo
 │   ├── README.md                      # ⭐ Índice completo
 │   ├── TENPO_INTEGRATION.md
-│   └── ... (16 documentos más)
+│   └── ...
 │
 ├── 🏦 tc-billing/                     # 5 documentos TC Billing
 │   ├── README.md
 │   ├── tc-billing-cycle-design.md
-│   └── ... (4 documentos más)
+│   └── ...
 │
-└── 🗄️ archive/                        # 7 documentos obsoletos
+└── 🗄️ archive/                        # 16 documentos obsoletos
     ├── FRONTEND_ACTUAL_IMPLEMENTACION.md
+    ├── PAGE_TITLE_AUDIT.md
     └── ...
 ```
 
@@ -142,6 +190,7 @@ docs/
 | Implementar RSuite | [PLAN_IMPLEMENTACION_RSUITE.md](implementacion_rsuite/PLAN_IMPLEMENTACION_RSUITE.md) |
 | Entender Tenpo | [tenpo/TENPO_INTEGRATION.md](tenpo/TENPO_INTEGRATION.md) → [tenpo/README.md](tenpo/README.md) |
 | Entender TC Billing | [tc-billing/tc-billing-cycle-design.md](tc-billing/tc-billing-cycle-design.md) → [tc-billing/README.md](tc-billing/README.md) |
+| Ver cambios recientes | [changes/](changes/) - últimas implementaciones |
 | Configurar Gmail | [CREDENCIALES_GOOGLE.md](CREDENCIALES_GOOGLE.md) |
 | Ver docs antiguas | [archive/](archive/) |
 
@@ -158,4 +207,4 @@ docs/
 
 **Mantenedor:** Sistema Zapps  
 **Contacto:** Ver README principal  
-**Versión docs:** 2.0 (reorganizado 21/02/2026)
+**Versión docs:** 3.0 (limpieza y reorganización 27/02/2026)
