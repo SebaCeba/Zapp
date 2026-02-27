@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../layout/MainLayout';
 import PageTitleSection from '../layout/PageTitleSection';
 import { showToast } from '../components/Toast';
 import ActualTenpoTable from '../components/actual/ActualTenpoTable';
 import DashboardTenpo from '../components/actual/DashboardTenpo';
+import CategoryBarChart from '../components/actual/CategoryBarChart';
 
 interface Purchase {
   id: number;
@@ -75,6 +76,7 @@ export default function ActualTenpo() {
   const [authUrl, setAuthUrl] = useState('');
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const aniosDisponibles = Array.from(
     { length: 11 },
@@ -84,6 +86,11 @@ export default function ActualTenpo() {
   // Guardar año/mes en localStorage cuando cambien
   useEffect(() => {
     localStorage.setItem('actualTenpoPeriod', JSON.stringify({ year, month }));
+  }, [year, month]);
+
+  // Reset category filter when month/year changes
+  useEffect(() => {
+    setSelectedCategory(null);
   }, [year, month]);
 
   useEffect(() => {
@@ -138,6 +145,14 @@ export default function ActualTenpo() {
       setLoading(false);
     }
   };
+
+  const filteredPurchases = useMemo(() => {
+    if (!selectedCategory) return purchases;
+    return purchases.filter(p => {
+      const catName = p.category?.name || 'Sin Categoría';
+      return catName === selectedCategory;
+    });
+  }, [purchases, selectedCategory]);
 
   if (!isAuthenticated && !loading) {
     return (
@@ -253,7 +268,19 @@ export default function ActualTenpo() {
         {!loading && (
           <>
             <DashboardTenpo purchases={purchases} year={year} month={month} />
-            <ActualTenpoTable purchases={purchases} year={year} month={month} onDataChange={loadData} />
+            <CategoryBarChart 
+              purchases={purchases}
+              selectedYear={year}
+              selectedMonth={month}
+              selectedCategory={selectedCategory}
+              onSelectCategory={setSelectedCategory}
+            />
+            <ActualTenpoTable 
+              purchases={filteredPurchases} 
+              year={year} 
+              month={month} 
+              onDataChange={loadData} 
+            />
           </>
         )}
       </div>
