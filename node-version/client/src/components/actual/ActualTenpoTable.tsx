@@ -64,8 +64,23 @@ interface Category {
 }
 
 export default function ActualTenpoTable({ purchases, year, month, onDataChange }: ActualTenpoTableProps) {
-  const [sortColumn, setSortColumn] = useState<SortColumn>('purchaseDate');
-  const [sortType, setSortType] = useState<SortType>('desc');
+  // Restaurar sorting desde localStorage
+  const getSavedSort = () => {
+    try {
+      const saved = localStorage.getItem('actualTenpoTableSort');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return { column: parsed.column as SortColumn, type: parsed.type as SortType };
+      }
+    } catch (e) {
+      console.error('Error loading sort from localStorage:', e);
+    }
+    return { column: 'purchaseDate' as SortColumn, type: 'desc' as SortType };
+  };
+
+  const savedSort = getSavedSort();
+  const [sortColumn, setSortColumn] = useState<SortColumn>(savedSort.column);
+  const [sortType, setSortType] = useState<SortType>(savedSort.type);
   const [selectedMerchants, setSelectedMerchants] = useState<Set<string>>(new Set());
   const [showBatchAssignModal, setShowBatchAssignModal] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
@@ -73,6 +88,11 @@ export default function ActualTenpoTable({ purchases, year, month, onDataChange 
   const [assigningBatch, setAssigningBatch] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Guardar sorting en localStorage cuando cambie
+  useEffect(() => {
+    localStorage.setItem('actualTenpoTableSort', JSON.stringify({ column: sortColumn, type: sortType }));
+  }, [sortColumn, sortType]);
   
   // Atajo de teclado para enfocar el buscador
   useEffect(() => {
