@@ -53,8 +53,23 @@ export default function ActualTenpo() {
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
 
-  const [year, setYear] = useState(currentYear);
-  const [month, setMonth] = useState(currentMonth);
+  // Restaurar año/mes desde localStorage o usar valores actuales
+  const getSavedPeriod = () => {
+    try {
+      const saved = localStorage.getItem('actualTenpoPeriod');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return { year: parsed.year, month: parsed.month };
+      }
+    } catch (e) {
+      console.error('Error loading period from localStorage:', e);
+    }
+    return { year: currentYear, month: currentMonth };
+  };
+
+  const savedPeriod = getSavedPeriod();
+  const [year, setYear] = useState(savedPeriod.year);
+  const [month, setMonth] = useState(savedPeriod.month);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [tokenExpired, setTokenExpired] = useState(false);
   const [authUrl, setAuthUrl] = useState('');
@@ -65,6 +80,11 @@ export default function ActualTenpo() {
     { length: 11 },
     (_, i) => currentYear - 5 + i
   );
+
+  // Guardar año/mes en localStorage cuando cambien
+  useEffect(() => {
+    localStorage.setItem('actualTenpoPeriod', JSON.stringify({ year, month }));
+  }, [year, month]);
 
   useEffect(() => {
     checkAuthStatus();
