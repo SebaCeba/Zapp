@@ -5,6 +5,7 @@ import Hipotecario from './pages/Hipotecario';
 import Home from './pages/Home';
 import ServiciosBasicos from './pages/ServiciosBasicos';
 import Ingresos from './pages/Ingresos';
+import Gastos from './pages/Gastos';
 import Presupuesto from './pages/Presupuesto';
 import Supermercado from './pages/Supermercado';
 import Tenpo from './pages/Tenpo';
@@ -28,6 +29,7 @@ export default function Router() {
         <Route path="/hipotecario" element={<Hipotecario />} />
         <Route path="/servicios-basicos" element={<ServiciosBasicos />} />
         <Route path="/ingresos" element={<Ingresos />} />
+        <Route path="/gastos" element={<Gastos />} />
         <Route path="/supermercado" element={<Supermercado />} />
         <Route path="/presupuesto/tenpo" element={<Tenpo />} />
         <Route path="/presupuesto/tenpo/config" element={<TenpoConfig />} />

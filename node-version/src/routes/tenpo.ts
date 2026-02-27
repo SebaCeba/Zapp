@@ -9,6 +9,133 @@ import { startOfMonth, endOfMonth, addMonths } from 'date-fns';
 const router = express.Router();
 
 /**
+ * GET /api/tenpo/admin/monthly
+ * Obtiene las compras que tienen cuotas en un mes específico
+ */
+router.get('/admin/monthly', async (req, res) => {
+  try {
+    const { year, month } = req.query;
+
+    if (!year || !month) {
+      return res.status(400).json({ error: 'Faltan parámetros year y month' });
+    }
+
+    const yearNum = parseInt(year as string);
+    const monthNum = parseInt(month as string);
+    
+    // Crear fecha inicio y fin del mes
+    const startDate = new Date(yearNum, monthNum - 1, 1);
+    const endDate = endOfMonth(startDate);
+
+    console.log(`🔍 Buscando cuotas entre ${startDate.toISOString()} y ${endDate.toISOString()}`);
+
+    // Buscar compras donde alguna cuota venza en este rango
+    const purchases = await prisma.tenpoPurchase.findMany({
+      where: {
+        installments: {
+          some: {
+            dueDate: {
+              gte: startDate,
+              lte: endDate
+            }
+          }
+        }
+      },
+      include: {
+        installments: {
+          orderBy: {
+            installmentNumber: 'asc'
+          }
+        },
+        email: true
+      },
+      orderBy: {
+        purchaseDate: 'desc'
+      }
+    });
+
+    // Enriquecimiento de categorías y fees
+    const merchantNames = [...new Set(purchases.map(p => p.merchant))];
+    const mappings = await prisma.merchantMapping.findMany({
+      where: {
+        merchantName: { in: merchantNames }
+      },
+      include: {
+        category: {
+          select: {
+            id: true,
+            name: true,
+            icon: true,
+            color: true
+          }
+        }
+      }
+    });
+
+    const categoryMap = new Map();
+    mappings.forEach(m => {
+      categoryMap.set(m.merchantName, m.category);
+      const normalized = m.merchantName.replace(/\s+/g, ' ').trim();
+      if (normalized !== m.merchantName) {
+        categoryMap.set(normalized, m.category);
+      }
+    });
+
+    const enrichedPurchases = purchases.map((purchase: any) => {
+      let feePct: number | null = null;
+      let feeAmountClp: number | null = null;
+      let financedBaseClp = purchase.amountTotalClp;
+      let feeMissing = false;
+
+      let category = categoryMap.get(purchase.merchant);
+      
+      if (!category) {
+        const normalized = purchase.merchant.replace(/\s+/g, ' ').trim();
+        category = categoryMap.get(normalized) || null;
+      }
+
+      if (purchase.metadata) {
+        try {
+          const metadata = JSON.parse(purchase.metadata);
+          feePct = metadata.feePct ?? null;
+        } catch (error) {
+          // ignore
+        }
+      }
+
+      if (purchase.modoMonto === 'ESTIMADO') {
+        if (feePct !== null && feePct !== undefined) {
+          feeAmountClp = Math.round(purchase.amountTotalClp * feePct);
+          financedBaseClp = purchase.amountTotalClp + feeAmountClp;
+          feeMissing = false;
+        } else {
+          // Si no tiene feePct pero debería (compra antigua), marcamos como faltante o asumimos 0?
+          // Asumiremos que si no hay metadata, no podemos calcular fee
+          feeMissing = true;
+          feeAmountClp = null;
+          financedBaseClp = purchase.amountTotalClp;
+        }
+      }
+
+      return {
+        ...purchase,
+        category,
+        feePct,
+        feeAmountClp,
+        financedBaseClp,
+        feeMissing
+      };
+    });
+
+    res.json({ purchases: enrichedPurchases });
+
+  } catch (error: any) {
+    console.error('Error en admin/monthly:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
  * GET /api/tenpo/debug/labels
  * Lista todas las etiquetas de Gmail para debug
  */

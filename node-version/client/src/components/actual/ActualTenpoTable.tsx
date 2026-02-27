@@ -45,6 +45,7 @@ interface ActualTenpoTableProps {
   year: number;
   month: number;
   onDataChange?: () => void;
+  onSelectionChange?: (count: number, amount: number) => void;
 }
 
 type SortColumn = 'merchant' | 'purchaseDate' | 'amountTotalClp' | 'installmentsCount' | 'monthTotal';
@@ -63,7 +64,7 @@ interface Category {
   children?: Category[];
 }
 
-export default function ActualTenpoTable({ purchases, year, month, onDataChange }: ActualTenpoTableProps) {
+export default function ActualTenpoTable({ purchases, year, month, onDataChange, onSelectionChange }: ActualTenpoTableProps) {
   // Restaurar sorting desde localStorage
   const getSavedSort = () => {
     try {
@@ -155,6 +156,9 @@ export default function ActualTenpoTable({ purchases, year, month, onDataChange 
       setSelectedMerchants(prev => {
         const newSet = new Set(prev);
         filteredMerchants.forEach(m => newSet.delete(m));
+        
+        // Notificar cambio de selección (simplificado: recalcular todo el set es costoso, 
+        // idealmente usar useEffect para esto, ver abajo)
         return newSet;
       });
     } else {
@@ -174,6 +178,22 @@ export default function ActualTenpoTable({ purchases, year, month, onDataChange 
       return newSet;
     });
   };
+
+  // Efecto para notificar al padre sobre cambios en la selección y montos
+  useEffect(() => {
+    if (onSelectionChange) {
+      // Calcular monto seleccionado
+      let totalSelected = 0;
+      purchases.forEach(p => {
+        if (selectedMerchants.has(p.merchant)) {
+          const monthInstallments = getInstallmentsForMonth(p);
+          const amount = monthInstallments.reduce((s, inst) => s + inst.finalMonthlyAmountClp, 0);
+          totalSelected += amount;
+        }
+      });
+      onSelectionChange(selectedMerchants.size, totalSelected);
+    }
+  }, [selectedMerchants, purchases, year, month, onSelectionChange]);
 
   const handleBatchAssign = async () => {
     if (!selectedCategoryId || selectedMerchants.size === 0) return;

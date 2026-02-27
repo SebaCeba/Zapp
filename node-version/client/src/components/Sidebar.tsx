@@ -18,12 +18,13 @@ const menuItems = [
     children: [
       { key: '/presupuesto/resumen', label: 'Resumen' },
       { key: '/ingresos', label: 'Ingresos' },
-      { key: '/app', label: 'Suscripciones' },
-      { key: '/creditos', label: 'Créditos y Seguros' },
-      { key: '/hipotecario', label: 'Hipotecario' },
-      { key: '/servicios-basicos', label: 'Servicios Básicos' },
-      { key: '/supermercado', label: 'Supermercado' },
-      { key: '/presupuesto/tenpo', label: 'Tenpo TC' },
+      { key: 'gastos-header', label: 'Gastos', disabled: true },
+      { key: '/app', label: '  • Suscripciones' },
+      { key: '/creditos', label: '  • Créditos y Seguros' },
+      { key: '/hipotecario', label: '  • Hipotecario' },
+      { key: '/servicios-basicos', label: '  • Servicios Básicos' },
+      { key: '/supermercado', label: '  • Supermercado' },
+      { key: '/presupuesto/tenpo', label: '  • Tenpo TC' },
     ],
   },
   {
@@ -86,7 +87,17 @@ export default function Sidebar() {
                     icon={item.icon}
                   >
                     {item.children.map((child) => (
-                      <Nav.Item key={child.key} eventKey={child.key}>
+                      <Nav.Item 
+                        key={child.key} 
+                        eventKey={child.key}
+                        disabled={(child as any).disabled}
+                        style={(child as any).disabled ? { 
+                          fontWeight: 600, 
+                          color: 'var(--rs-text-secondary)',
+                          cursor: 'default',
+                          marginTop: '8px'
+                        } : {}}
+                      >
                         {child.label}
                       </Nav.Item>
                     ))}

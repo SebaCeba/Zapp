@@ -12,6 +12,7 @@ const VALID_CATEGORIES = [
   'HIPOTECARIO',
   'SERVICIOS_BASICOS',
   'SUPERMERCADO',
+  'PAGO_TC',
   'AJUSTES'
 ];
 
@@ -86,6 +87,54 @@ router.put('/entry', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Error en PUT /entry:', error);
     res.status(500).json({ error: 'Error al guardar entry' });
+  }
+});
+
+// POST /api/actual/entry - Crear/Actualizar entry (alias de PUT para semántica de creación)
+router.post('/entry', async (req: Request, res: Response) => {
+  try {
+    const { year, month, category, itemKey, label, amountClp } = req.body;
+
+    // Reutilizamos la validación y lógica de upsert del PUT
+    // Podríamos refactorizar en una función común, pero por ahora duplico la validación básica
+    // o simplemente hago un redirect interno a la lógica, pero Express no permite eso fácilmente sin middleware.
+    // Voy a copiar la lógica esencial ya que es un requerimiento específico tener POST.
+
+    if (!year || year < 2000 || year > 2100) return res.status(400).json({ error: 'Año inválido' });
+    if (!month || month < 1 || month > 12) return res.status(400).json({ error: 'Mes inválido' });
+    if (!category || !VALID_CATEGORIES.includes(category)) return res.status(400).json({ error: 'Categoría inválida' });
+    if (!itemKey) return res.status(400).json({ error: 'itemKey requerido' });
+    
+    // Upsert para garantizar idempotencia (si pago varias veces el mismo mes, actualiza)
+    const entry = await prisma.actualEntry.upsert({
+      where: {
+        year_month_category_itemKey: {
+          year,
+          month,
+          category,
+          itemKey
+        }
+      },
+      update: {
+        label: label,
+        amountClp,
+        isPaid: true // Asumimos que si viene de POST /entry (pago explicito) es pagado
+      },
+      create: {
+        year,
+        month,
+        category,
+        itemKey,
+        label,
+        amountClp,
+        isPaid: true
+      }
+    });
+
+    res.json(entry);
+  } catch (error: any) {
+    console.error('Error en POST /entry:', error);
+    res.status(500).json({ error: 'Error al registrar pago' });
   }
 });
 
@@ -202,7 +251,7 @@ router.get('/summary', async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/actual/entries - Listar entries (opcional)
+// GET /api/actual/entries - Listar entries
 router.get('/entries', async (req: Request, res: Response) => {
   try {
     const year = req.query.year ? parseInt(req.query.year as string) : undefined;
@@ -212,11 +261,20 @@ router.get('/entries', async (req: Request, res: Response) => {
     const where: any = {};
     if (year) where.year = year;
     if (month) where.month = month;
-    if (category && VALID_CATEGORIES.includes(category)) where.category = category;
+    if (category && VALID_CATEGORIES.includes(category)) {
+      where.category = category;
+    }
 
-    const entries = await prisma.actualEntry.findMany({ where });
+    const entries = await prisma.actualEntry.findMany({
+      where,
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+    
     res.json(entries);
   } catch (error) {
+    console.error('Error al listar entries:', error);
     res.status(500).json({ error: 'Error al listar entries' });
   }
 });

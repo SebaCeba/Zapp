@@ -11,6 +11,7 @@
   --gray-100: #f3f4f6;
   --gray-200: #e5e7eb;
   --gray-300: #d1d5db;
+  --gray-500: #6b7280;
   --gray-700: #374151;
   --gray-900: #111827;
   --success: #10b981;
@@ -327,4 +328,141 @@ input[type=number] {
   color: #52525b !important;
   background-color: #fafafa !important;
   letter-spacing: 0.02em !important;
+}
+
+/* === Vista Consolidada - Actual === */
+.tabla-consolidada {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.tabla-consolidada thead {
+  background: var(--gray-50);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.tabla-consolidada th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: var(--gray-700);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid var(--gray-200);
+  background: var(--gray-50);
+}
+
+.tabla-consolidada td {
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--gray-100);
+  font-size: 0.875rem;
+  vertical-align: middle;
+}
+
+.tabla-consolidada tbody tr {
+  transition: background-color 0.15s;
+}
+
+.tabla-consolidada tbody tr:hover {
+  background: var(--gray-50);
+}
+
+.tabla-consolidada tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Fila de grupo (categoría) */
+.tabla-consolidada .group-row {
+  background: var(--gray-100);
+  font-weight: 600;
+  border-top: 1px solid var(--gray-200);
+  border-bottom: 2px solid var(--gray-200);
+}
+
+.tabla-consolidada .group-row:hover {
+  background: var(--gray-200);
+}
+
+/* Fila de sub-item */
+.tabla-consolidada .sub-row {
+  background: white;
+}
+
+/* Fila totalizador */
+.tabla-consolidada .total-row {
+  font-weight: 700;
+  border-top: 2px solid var(--gray-300);
+  background: var(--gray-50);
+}
+
+/* Columnas numéricas */
+.tabla-consolidada .monto {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.tabla-consolidada .percent {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.tabla-consolidada .percent-income {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Colores para delta */
+.delta--good {
+  color: #15803d;
+  font-weight: 600;
+}
+
+.delta--bad {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.delta--neutral {
+  color: var(--gray-500);
+}
+
+/* Celda editable */
+.tabla-consolidada .actual-cell {
+  position: relative;
+}
+
+.tabla-consolidada .actual-cell button {
+  opacity: 0.3;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.tabla-consolidada tr:hover .actual-cell button {
+  opacity: 1;
+}
+
+.tabla-consolidada .actual-cell button:hover {
+  transform: scale(1.15);
+}
+
+/* Responsive para tabla consolidada */
+@media (max-width: 768px) {
+  .tabla-consolidada {
+    font-size: 0.8125rem;
+  }
+  .tabla-consolidada th,
+  .tabla-consolidada td {
+    padding: 0.5rem 0.75rem;
+  }
+  .tabla-consolidada .sub-row td:first-child {
+    padding-left: 1.5rem;
+  }
 }

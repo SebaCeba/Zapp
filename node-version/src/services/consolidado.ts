@@ -15,6 +15,7 @@ interface MonthlyBudget {
   HIPOTECARIO: MonthlyBudgetLine[];
   SERVICIOS_BASICOS: MonthlyBudgetLine[];
   SUPERMERCADO: MonthlyBudgetLine[];
+  PAGO_TC: MonthlyBudgetLine[];
   AJUSTES: MonthlyBudgetLine[];
 }
 
@@ -225,6 +226,9 @@ export async function getMonthlyBudget(year: number, month: number): Promise<Mon
   // 7. AJUSTES (vacío por default, usuario agrega manual)
   const ajustesLines: MonthlyBudgetLine[] = [];
 
+  // 8. PAGO_TC (vacío por default, se llena con ActualEntry)
+  const pagoTcLines: MonthlyBudgetLine[] = [];
+
   return {
     INGRESOS: ingresosLines,
     SUSCRIPCIONES: suscripcionesLines,
@@ -232,6 +236,7 @@ export async function getMonthlyBudget(year: number, month: number): Promise<Mon
     HIPOTECARIO: hipotecarioLines,
     SERVICIOS_BASICOS: serviciosLines,
     SUPERMERCADO: supermercadoLines,
+    PAGO_TC: pagoTcLines,
     AJUSTES: ajustesLines
   };
 }

@@ -1,39 +1,17 @@
 import { useState, useEffect } from 'react';
 import MainLayout from '../layout/MainLayout';
 import PageTitleSection from '../layout/PageTitleSection';
-import { ActualCategory, ActualSummary, CategorySummary } from '../types/actual';
+import { ActualSummary } from '../types/actual';
 import { fetchActualSummary } from '../api/actualApi';
-import ActualTable from '../components/actual/ActualTable';
-
-const CATEGORY_ORDER: ActualCategory[] = [
-  ActualCategory.INGRESOS,
-  ActualCategory.SUSCRIPCIONES,
-  ActualCategory.OBLIGACIONES,
-  ActualCategory.HIPOTECARIO,
-  ActualCategory.SERVICIOS_BASICOS,
-  ActualCategory.SUPERMERCADO,
-  ActualCategory.AJUSTES
-];
-
-const MESES = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-];
+import ActualConsolidatedTable from '../components/actual/ActualConsolidatedTable';
+import { useYearMonth } from '../hooks/useYearMonth';
+import YearMonthPicker from '../components/common/YearMonthPicker';
 
 export default function Actual() {
-  const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().getMonth() + 1;
-
-  const [year, setYear] = useState(currentYear);
-  const [month, setMonth] = useState(currentMonth);
+  const { year, month, setYear, setMonth } = useYearMonth();
   const [summary, setSummary] = useState<ActualSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  const aniosDisponibles = Array.from(
-    { length: 11 },
-    (_, i) => currentYear - 5 + i
-  );
 
   const loadSummary = async () => {
     setLoading(true);
@@ -52,13 +30,6 @@ export default function Actual() {
   useEffect(() => {
     loadSummary();
   }, [year, month]);
-
-  const getSortedCategories = (categories: CategorySummary[]) => {
-    const categoryMap = new Map(categories.map(c => [c.name, c]));
-    return CATEGORY_ORDER
-      .map(name => categoryMap.get(name))
-      .filter((c): c is CategorySummary => c !== undefined);
-  };
 
   const handleEntryUpdated = (categoryName: string, itemKey: string, newAmount: number) => {
     if (!summary) return;
@@ -123,38 +94,12 @@ export default function Actual() {
         <PageTitleSection
           title="Actual vs Presupuesto"
           actions={
-            <>
-              <select 
-                value={year} 
-                onChange={e => setYear(+e.target.value)}
-                style={{
-                  padding: '0.5rem',
-                  borderRadius: '4px',
-                  border: '1px solid var(--gray-300)',
-                  fontSize: '1rem'
-                }}
-              >
-                {aniosDisponibles.map(y => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-              <select 
-                value={month} 
-                onChange={e => setMonth(+e.target.value)}
-                style={{
-                  padding: '0.5rem',
-                  borderRadius: '4px',
-                  border: '1px solid var(--gray-300)',
-                  fontSize: '1rem'
-                }}
-              >
-                {MESES.map((mes, idx) => (
-                  <option key={idx + 1} value={idx + 1}>
-                    {mes}
-                  </option>
-                ))}
-              </select>
-            </>
+            <YearMonthPicker 
+              year={year} 
+              month={month} 
+              onChangeYear={setYear} 
+              onChangeMonth={setMonth} 
+            />
           }
         />
 
@@ -217,15 +162,12 @@ export default function Actual() {
               </div>
             </div>
 
-            {getSortedCategories(summary.categories).map(cat => (
-              <ActualTable
-                key={cat.name}
-                category={cat}
-                year={year}
-                month={month}
-                onEntryUpdated={handleEntryUpdated}
-              />
-            ))}
+            <ActualConsolidatedTable
+              summary={summary}
+              year={year}
+              month={month}
+              onEntryUpdated={handleEntryUpdated}
+            />
           </>
         )}
       </div>

@@ -48,6 +48,7 @@ const Presupuesto: React.FC = () => {
   const [resumen, setResumen] = useState<ResumenMensual[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandido, setExpandido] = useState<string | null>(null);
+  const [gastosExpanded, setGastosExpanded] = useState(true);
   
   // Detalles por categoría
   const [detalleIngresos, setDetalleIngresos] = useState<DetalleIngreso[]>([]);
@@ -507,10 +508,32 @@ const Presupuesto: React.FC = () => {
                   </tr>
                 ))}
 
-                {/* EGRESOS */}
+                {/* GRUPO GASTOS */}
+                <tr 
+                  style={{ background: '#fee2e2', fontWeight: '700', cursor: 'pointer' }}
+                  onClick={() => setGastosExpanded(!gastosExpanded)}
+                >
+                  <td style={{ position: 'sticky', left: 0, background: '#fee2e2', zIndex: 1 }}>
+                    <span style={{ marginRight: '0.5rem' }}>
+                      {gastosExpanded ? '▼' : '▶'}
+                    </span>
+                    Gastos
+                  </td>
+                  {resumen.map((mes) => (
+                    <td key={mes.mes} style={{ textAlign: 'right' }}>
+                      {formatearMonto(mes.total)}
+                    </td>
+                  ))}
+                  <td style={{ textAlign: 'right', background: '#fecaca', fontWeight: '700' }}>
+                    {formatearMonto(calcularTotalAnual('total'))}
+                  </td>
+                </tr>
+
+                {/* EGRESOS (indentados dentro de GASTOS) */}
+                {gastosExpanded && <>
                 <tr style={{ background: '#fee2e2', cursor: 'pointer' }}
                     onClick={() => setExpandido(expandido === 'suscripciones' ? null : 'suscripciones')}>
-                  <td style={{ position: 'sticky', left: 0, background: '#fee2e2', fontWeight: '500', zIndex: 1 }}>
+                  <td style={{ position: 'sticky', left: 0, background: '#fee2e2', fontWeight: '500', zIndex: 1, paddingLeft: '2rem' }}>
                     <span style={{ marginRight: '0.5rem' }}>
                       {expandido === 'suscripciones' ? '▼' : '▶'}
                     </span>
@@ -529,7 +552,7 @@ const Presupuesto: React.FC = () => {
                 {/* Detalle de suscripciones */}
                 {expandido === 'suscripciones' && detalleSuscripciones.map((detalle, idx) => (
                   <tr key={idx} style={{ background: '#fef2f2' }}>
-                    <td style={{ position: 'sticky', left: 0, background: '#fef2f2', paddingLeft: '2rem', fontSize: '0.875rem', zIndex: 1 }}>
+                    <td style={{ position: 'sticky', left: 0, background: '#fef2f2', paddingLeft: '3.5rem', fontSize: '0.875rem', zIndex: 1 }}>
                       {detalle.nombre}
                     </td>
                     {detalle.valores.map((valor, mesIdx) => (
@@ -545,7 +568,7 @@ const Presupuesto: React.FC = () => {
 
                 <tr style={{ background: '#fee2e2', cursor: 'pointer' }}
                     onClick={() => setExpandido(expandido === 'creditos' ? null : 'creditos')}>
-                  <td style={{ position: 'sticky', left: 0, background: '#fee2e2', fontWeight: '500', zIndex: 1 }}>
+                  <td style={{ position: 'sticky', left: 0, background: '#fee2e2', fontWeight: '500', zIndex: 1, paddingLeft: '2rem' }}>
                     <span style={{ marginRight: '0.5rem' }}>
                       {expandido === 'creditos' ? '▼' : '▶'}
                     </span>
@@ -564,7 +587,7 @@ const Presupuesto: React.FC = () => {
                 {/* Detalle de obligaciones (créditos + seguros) */}
                 {expandido === 'creditos' && detalleObligaciones.map((detalle, idx) => (
                   <tr key={idx} style={{ background: '#fef2f2' }}>
-                    <td style={{ position: 'sticky', left: 0, background: '#fef2f2', paddingLeft: '2rem', fontSize: '0.875rem', zIndex: 1 }}>
+                    <td style={{ position: 'sticky', left: 0, background: '#fef2f2', paddingLeft: '3.5rem', fontSize: '0.875rem', zIndex: 1 }}>
                       {detalle.nombre}
                     </td>
                     {detalle.valores.map((valor, mesIdx) => (
@@ -580,7 +603,7 @@ const Presupuesto: React.FC = () => {
 
                 <tr style={{ background: '#fee2e2', cursor: 'pointer' }}
                     onClick={() => setExpandido(expandido === 'hipotecario' ? null : 'hipotecario')}>
-                  <td style={{ position: 'sticky', left: 0, background: '#fee2e2', fontWeight: '500', zIndex: 1 }}>
+                  <td style={{ position: 'sticky', left: 0, background: '#fee2e2', fontWeight: '500', zIndex: 1, paddingLeft: '2rem' }}>
                     <span style={{ marginRight: '0.5rem' }}>
                       {expandido === 'hipotecario' ? '▼' : '▶'}
                     </span>
@@ -599,7 +622,7 @@ const Presupuesto: React.FC = () => {
                 {/* Detalle de hipotecario */}
                 {expandido === 'hipotecario' && detalleHipotecario.map((detalle, idx) => (
                   <tr key={idx} style={{ background: '#fef2f2' }}>
-                    <td style={{ position: 'sticky', left: 0, background: '#fef2f2', paddingLeft: '2rem', fontSize: '0.875rem', zIndex: 1 }}>
+                    <td style={{ position: 'sticky', left: 0, background: '#fef2f2', paddingLeft: '3.5rem', fontSize: '0.875rem', zIndex: 1 }}>
                       {detalle.nombre}
                     </td>
                     {detalle.valores.map((valor, mesIdx) => (
@@ -617,7 +640,7 @@ const Presupuesto: React.FC = () => {
                   style={{ background: '#fee2e2', cursor: 'pointer' }}
                   onClick={() => setExpandido(expandido === 'servicios' ? null : 'servicios')}
                 >
-                  <td style={{ position: 'sticky', left: 0, background: '#fee2e2', fontWeight: '500', zIndex: 1 }}>
+                  <td style={{ position: 'sticky', left: 0, background: '#fee2e2', fontWeight: '500', zIndex: 1, paddingLeft: '2rem' }}>
                     <span style={{ marginRight: '0.5rem' }}>
                       {expandido === 'servicios' ? '▼' : '▶'}
                     </span>
@@ -636,7 +659,7 @@ const Presupuesto: React.FC = () => {
                 {/* Detalle de servicios */}
                 {expandido === 'servicios' && detalleServicios.map((detalle, idx) => (
                   <tr key={idx} style={{ background: '#fef2f2' }}>
-                    <td style={{ position: 'sticky', left: 0, background: '#fef2f2', paddingLeft: '2rem', fontSize: '0.875rem', zIndex: 1 }}>
+                    <td style={{ position: 'sticky', left: 0, background: '#fef2f2', paddingLeft: '3.5rem', fontSize: '0.875rem', zIndex: 1 }}>
                       {detalle.nombre}
                     </td>
                     {detalle.valores.map((valor, mesIdx) => (
@@ -655,7 +678,7 @@ const Presupuesto: React.FC = () => {
                   style={{ background: '#fee2e2', cursor: 'pointer' }}
                   onClick={() => setExpandido(expandido === 'supermercado' ? null : 'supermercado')}
                 >
-                  <td style={{ position: 'sticky', left: 0, background: '#fee2e2', fontWeight: '500', zIndex: 1 }}>
+                  <td style={{ position: 'sticky', left: 0, background: '#fee2e2', fontWeight: '500', zIndex: 1, paddingLeft: '2rem' }}>
                     <span style={{ marginRight: '0.5rem' }}>
                       {expandido === 'supermercado' ? '▼' : '▶'}
                     </span>
@@ -674,7 +697,7 @@ const Presupuesto: React.FC = () => {
                 {/* Detalle de supermercado */}
                 {expandido === 'supermercado' && detalleSupermercado && (
                   <tr style={{ background: '#fef2f2' }}>
-                    <td style={{ position: 'sticky', left: 0, background: '#fef2f2', paddingLeft: '2rem', fontSize: '0.875rem', zIndex: 1 }}>
+                    <td style={{ position: 'sticky', left: 0, background: '#fef2f2', paddingLeft: '3.5rem', fontSize: '0.875rem', zIndex: 1 }}>
                       Compras
                     </td>
                     {detalleSupermercado.valores.map((valor, mesIdx) => (
@@ -689,8 +712,8 @@ const Presupuesto: React.FC = () => {
                 )}
 
                 <tr style={{ background: '#fca5a5', fontWeight: '600' }}>
-                  <td style={{ position: 'sticky', left: 0, background: '#fca5a5', zIndex: 1 }}>
-                    TOTAL EGRESOS
+                  <td style={{ position: 'sticky', left: 0, background: '#fca5a5', zIndex: 1, paddingLeft: '2rem' }}>
+                    Total Egresos
                   </td>
                   {resumen.map((mes) => (
                     <td key={mes.mes} style={{ textAlign: 'right' }}>
@@ -701,6 +724,7 @@ const Presupuesto: React.FC = () => {
                     {formatearMonto(calcularTotalAnual('total'))}
                   </td>
                 </tr>
+                </> /* Fin de gastosExpanded */}
 
                 {/* BALANCE */}
                 <tr style={{ background: '#dbeafe', fontWeight: '600', fontSize: '1.125rem' }}>
