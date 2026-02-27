@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Input } from 'rsuite';
+import { Button, Input, Table } from 'rsuite';
+
+const { Column, HeaderCell, Cell } = Table;
 
 interface Servicio {
   id: number;
@@ -156,6 +158,105 @@ export default function TablaPresupuestoServicios({ anio, onOpenCatalogo }: Prop
     }
   };
 
+  // Wrappers compactos siguiendo TABLE_STANDARD_V1
+  const CompactCell = (props: any) => (
+    <Cell
+      {...props}
+      style={{
+        padding: '4px',
+        fontSize: '12px',
+        ...props.style
+      }}
+    />
+  );
+
+  const CompactHeaderCell = (props: any) => (
+    <HeaderCell
+      {...props}
+      style={{
+        padding: '4px',
+        ...props.style
+      }}
+    />
+  );
+
+  // Preparar datos para la tabla
+  interface TableRow {
+    id: string;
+    rowType: 'servicio' | 'total';
+    nombre: string;
+    servicioId?: number;
+    enero: number;
+    febrero: number;
+    marzo: number;
+    abril: number;
+    mayo: number;
+    junio: number;
+    julio: number;
+    agosto: number;
+    septiembre: number;
+    octubre: number;
+    noviembre: number;
+    diciembre: number;
+    total: number;
+    background?: string;
+  }
+
+  const prepararDatosTabla = (): TableRow[] => {
+    const rows: TableRow[] = [];
+
+    // Filas de servicios
+    servicios.forEach((servicio) => {
+      const presupuesto = obtenerPresupuesto(servicio);
+      const total = calcularTotalServicio(presupuesto);
+      
+      rows.push({
+        id: `servicio-${servicio.id}`,
+        rowType: 'servicio',
+        nombre: servicio.nombre,
+        servicioId: servicio.id,
+        enero: presupuesto.enero,
+        febrero: presupuesto.febrero,
+        marzo: presupuesto.marzo,
+        abril: presupuesto.abril,
+        mayo: presupuesto.mayo,
+        junio: presupuesto.junio,
+        julio: presupuesto.julio,
+        agosto: presupuesto.agosto,
+        septiembre: presupuesto.septiembre,
+        octubre: presupuesto.octubre,
+        noviembre: presupuesto.noviembre,
+        diciembre: presupuesto.diciembre,
+        total
+      });
+    });
+
+    // Fila de total
+    rows.push({
+      id: 'total',
+      rowType: 'total',
+      nombre: 'TOTAL',
+      enero: calcularTotalMes('enero'),
+      febrero: calcularTotalMes('febrero'),
+      marzo: calcularTotalMes('marzo'),
+      abril: calcularTotalMes('abril'),
+      mayo: calcularTotalMes('mayo'),
+      junio: calcularTotalMes('junio'),
+      julio: calcularTotalMes('julio'),
+      agosto: calcularTotalMes('agosto'),
+      septiembre: calcularTotalMes('septiembre'),
+      octubre: calcularTotalMes('octubre'),
+      noviembre: calcularTotalMes('noviembre'),
+      diciembre: calcularTotalMes('diciembre'),
+      total: calcularTotalAnual(),
+      background: '#e0f2fe'
+    });
+
+    return rows;
+  };
+
+  const tableData = prepararDatosTabla();
+
   if (loading) {
     return (
       <div className="loading" style={{ textAlign: 'center', padding: '3rem' }}>
@@ -180,101 +281,125 @@ export default function TablaPresupuestoServicios({ anio, onOpenCatalogo }: Prop
 
   return (
     <div className="card">
-      <div className="table-container">
-        <table className="monthly-table">
-          <thead>
-            <tr>
-              <th style={{ position: 'sticky', left: 0, background: 'var(--gray-50)', zIndex: 1 }}>
-                Servicio
-              </th>
-              {MESES_DISPLAY.map((mesDisplay, idx) => (
-                <th key={idx} style={{ textAlign: 'right' }}>
-                  {mesDisplay}
-                </th>
-              ))}
-              <th style={{ textAlign: 'right', background: 'var(--gray-100)' }}>
-                Total
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {servicios.map((servicio) => {
-              const presupuesto = obtenerPresupuesto(servicio);
-              const total = calcularTotalServicio(presupuesto);
+      <Table
+        data={tableData}
+        autoHeight
+        bordered={true}
+        cellBordered={true}
+        showHeader={true}
+        hover={true}
+        rowHeight={30}
+        headerHeight={30}
+        affixHeader
+        affixHorizontalScrollbar
+        rowClassName={(rowData: any) => rowData?.rowType === 'total' ? 'total-row' : ''}
+      >
+        {/* Columna Nombre (fija izquierda) */}
+        <Column width={160} fixed align="left">
+          <CompactHeaderCell className="app-table-header" style={{ textAlign: 'left' }}>
+            Servicio
+          </CompactHeaderCell>
+          <CompactCell>
+            {(rowData: TableRow) => (
+              <div style={{ 
+                fontWeight: rowData.rowType === 'total' ? '700' : '500',
+                background: rowData.background || 'transparent'
+              }}>
+                {rowData.nombre}
+              </div>
+            )}
+          </CompactCell>
+        </Column>
 
-              return (
-                <tr key={servicio.id} style={{ cursor: 'default' }}>
-                  <td style={{ position: 'sticky', left: 0, background: 'white', fontWeight: '500' }}>
-                    {servicio.nombre}
-                  </td>
-                  {MESES.map((mes, idx) => {
-                    const valor = presupuesto[mes as keyof Presupuesto] as number;
-                    const isEditando = editando?.servicioId === servicio.id && editando?.mes === mes;
-                    const isGuardando = guardando?.servicioId === servicio.id && guardando?.mes === mes;
+        {/* Columnas de meses */}
+        {MESES.map((mes, index) => (
+          <Column key={mes} width={90} align="right">
+            <CompactHeaderCell className="app-table-header" style={{ textAlign: 'center' }}>
+              {MESES_DISPLAY[index]}
+            </CompactHeaderCell>
+            <CompactCell>
+              {(rowData: TableRow) => {
+                const valor = rowData[mes as keyof TableRow] as number;
+                
+                // Si es fila de total, solo mostrar valor
+                if (rowData.rowType === 'total') {
+                  return (
+                    <div style={{ 
+                      fontWeight: '600',
+                      background: rowData.background || 'transparent',
+                      textAlign: 'right'
+                    }}>
+                      {formatearMontoTotal(valor)}
+                    </div>
+                  );
+                }
 
-                    return (
-                      <td key={idx} style={{ textAlign: 'right' }}>
-                        {isEditando ? (
-                          <Input
-                            autoFocus
-                            defaultValue={valor || ''}
-                            style={{ width: '100%', textAlign: 'right' }}
-                            size="sm"
-                            onBlur={(e) => guardarMonto(servicio.id, mes, (e.target as HTMLInputElement).value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                guardarMonto(servicio.id, mes, (e.target as HTMLInputElement).value);
-                              }
-                            }}
-                          />
-                        ) : (
-                          <div
-                            style={{
-                              cursor: 'pointer',
-                              padding: '0.25rem 0.5rem',
-                              borderRadius: '4px',
-                              color: valor === 0 ? '#9ca3af' : 'inherit',
-                              transition: 'background 0.2s'
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--gray-100)'}
-                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                            onClick={() => setEditando({ servicioId: servicio.id, mes })}
-                          >
-                            {isGuardando ? (
-                              <span style={{ color: 'var(--primary)' }}>...</span>
-                            ) : (
-                              formatearMonto(valor) || '0'
-                            )}
-                          </div>
-                        )}
-                      </td>
-                    );
-                  })}
-                  <td style={{ textAlign: 'right', fontWeight: '600', background: 'var(--gray-50)' }}>
-                    {formatearMontoTotal(total)}
-                  </td>
-                </tr>
-              );
-            })}
-            <tr style={{ background: '#e0f2fe', fontWeight: '600' }}>
-              <td style={{ position: 'sticky', left: 0, background: '#e0f2fe' }}>
-                TOTAL
-              </td>
-              {MESES.map((mes, idx) => {
-                const total = calcularTotalMes(mes);
+                // Fila de servicio editable
+                const isEditando = editando?.servicioId === rowData.servicioId && editando?.mes === mes;
+                const isGuardando = guardando?.servicioId === rowData.servicioId && guardando?.mes === mes;
+
+                if (isEditando) {
+                  return (
+                    <Input
+                      autoFocus
+                      defaultValue={valor || ''}
+                      style={{ width: '100%', textAlign: 'right', fontSize: '12px' }}
+                      size="sm"
+                      onBlur={(e) => guardarMonto(rowData.servicioId!, mes, (e.target as HTMLInputElement).value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          guardarMonto(rowData.servicioId!, mes, (e.target as HTMLInputElement).value);
+                        }
+                      }}
+                    />
+                  );
+                }
+
                 return (
-                  <td key={idx} style={{ textAlign: 'right' }}>
-                    {formatearMontoTotal(total)}
-                  </td>
+                  <div
+                    style={{
+                      cursor: 'pointer',
+                      padding: '0.25rem 0.5rem',
+                      borderRadius: '4px',
+                      color: valor === 0 ? '#9ca3af' : 'inherit',
+                      textAlign: 'right'
+                    }}
+                    onClick={() => setEditando({ servicioId: rowData.servicioId!, mes })}
+                  >
+                    {isGuardando ? (
+                      <span style={{ color: 'var(--primary)' }}>...</span>
+                    ) : (
+                      formatearMonto(valor) || '0'
+                    )}
+                  </div>
                 );
-              })}
-              <td style={{ textAlign: 'right', fontSize: '1.125rem', background: '#bae6fd', fontWeight: '700' }}>
-                ${Math.round(calcularTotalAnual()).toLocaleString('es-CL')}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              }}
+            </CompactCell>
+          </Column>
+        ))}
+
+        {/* Columna Total (fija derecha) */}
+        <Column width={120} align="right" fixed="right">
+          <CompactHeaderCell className="app-table-header" style={{ textAlign: 'right' }}>
+            Total
+          </CompactHeaderCell>
+          <CompactCell>
+            {(rowData: TableRow) => (
+              <div style={{ 
+                fontWeight: rowData.rowType === 'total' ? '700' : '600',
+                background: rowData.rowType === 'total' ? '#bae6fd' : 'var(--gray-50)',
+                fontSize: rowData.rowType === 'total' ? '1.125rem' : 'inherit',
+                textAlign: 'right'
+              }}>
+                {rowData.rowType === 'total' 
+                  ? `$${Math.round(rowData.total).toLocaleString('es-CL')}`
+                  : formatearMontoTotal(rowData.total)
+                }
+              </div>
+            )}
+          </CompactCell>
+        </Column>
+      </Table>
     </div>
   );
 }

@@ -27,9 +27,13 @@ const menuItems = [
     ],
   },
   {
-    key: '/actual',
+    key: 'actual',
     label: 'Actual',
     icon: <PageIcon />,
+    children: [
+      { key: '/actual', label: 'Resumen' },
+      { key: '/actual/tenpo', label: 'Tenpo TC' },
+    ],
   },
 ];
 

@@ -462,12 +462,54 @@ router.get('/purchases', async (req, res) => {
       }
     });
 
-    // Agregar campos computed para fee (server-side)
+    // Obtener mapeos con categorías para las compras
+    const merchantNames = [...new Set(purchases.map(p => p.merchant))];
+    const mappings = await prisma.merchantMapping.findMany({
+      where: {
+        merchantName: { in: merchantNames }
+      },
+      include: {
+        category: {
+          select: {
+            id: true,
+            name: true,
+            icon: true,
+            color: true
+          }
+        }
+      }
+    });
+
+    const categoryMap = new Map();
+    mappings.forEach(m => {
+      // Guardar mapeo exacto
+      categoryMap.set(m.merchantName, m.category);
+      // Guardar también mapeo normalizado (sin espacios extra) por si acaso
+      const normalized = m.merchantName.replace(/\s+/g, ' ').trim();
+      if (normalized !== m.merchantName) {
+        categoryMap.set(normalized, m.category);
+      }
+    });
+
+    // Agregar campos computed para fee (server-side) y categoría
     const purchasesWithFee = purchases.map((purchase: any) => {
       let feePct: number | null = null;
       let feeAmountClp: number | null = null;
       let financedBaseClp = purchase.amountTotalClp;
       let feeMissing = false;
+
+      // Obtener categoría (intento exacto o normalizado)
+      // Normalizamos la key de búsqueda reduciendo múltiples espacios a uno
+      // Esto ayuda porque el HTML/Frontend a veces normaliza los strings visualmente
+      // y la asignación podría haber guardado una versión normalizada
+      let category = categoryMap.get(purchase.merchant);
+      
+      if (!category) {
+        // Si no hay match exacto, probamos normalizando espacios
+        const normalized = purchase.merchant.replace(/\s+/g, ' ').trim();
+        category = categoryMap.get(normalized) || null;
+      }
+
 
       // Parsear metadata JSON si existe
       if (purchase.metadata) {
@@ -496,6 +538,7 @@ router.get('/purchases', async (req, res) => {
 
       return {
         ...purchase,
+        category,
         feePct,
         feeAmountClp,
         financedBaseClp,

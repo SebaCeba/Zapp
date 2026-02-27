@@ -455,11 +455,11 @@ const Presupuesto: React.FC = () => {
             <table className="monthly-table" style={{ minWidth: '1600px' }}>
               <thead>
                 <tr>
-                  <th style={{ position: 'sticky', left: 0, background: 'var(--gray-50)', zIndex: 2, minWidth: '180px' }}>
+                  <th style={{ position: 'sticky', left: 0, background: 'var(--gray-50)', zIndex: 2, minWidth: '160px' }}>
                     Concepto
                   </th>
                   {MESES.map((mes) => (
-                    <th key={mes} style={{ textAlign: 'right', minWidth: '110px' }}>
+                    <th key={mes} style={{ textAlign: 'right', minWidth: 'var(--month-column-width)' }}>
                       {mes.substring(0, 3)}
                     </th>
                   ))}

@@ -15,6 +15,7 @@
   --gray-900: #111827;
   --success: #10b981;
   --danger: #ef4444;
+  --month-column-width: 90px;
 }
 
 body {
@@ -162,12 +163,12 @@ h2 {
 .monthly-table th,
 .monthly-table td {
   white-space: nowrap;
-  min-width: 80px;
+  min-width: var(--month-column-width);
 }
 
 .monthly-table th:first-child,
 .monthly-table td:first-child {
-  min-width: 150px;
+  min-width: 160px;
 }
 
 table {

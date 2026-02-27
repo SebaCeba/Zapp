@@ -1,6 +1,8 @@
 import React from 'react';
-import { Panel, Button } from 'rsuite';
+import { Panel, Button, Table } from 'rsuite';
 import { ObligacionFormData } from './ObligacionForm';
+
+const { Column, HeaderCell, Cell } = Table;
 
 interface Props {
   data: ObligacionFormData;
@@ -61,6 +63,35 @@ const VistaPreviaObligacion: React.FC<Props> = ({ data, year, uf, ufVariation, o
   const { mensualCLP, totalAnual, promedioMensual, cuotas } = calcularProyeccion(data, year, uf, ufVariation);
   const mesesNombre = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
   
+  // Wrappers compactos siguiendo TABLE_STANDARD_V1
+  const CompactCell = (props: any) => (
+    <Cell
+      {...props}
+      style={{
+        padding: '4px',
+        fontSize: '12px',
+        ...props.style
+      }}
+    />
+  );
+
+  const CompactHeaderCell = (props: any) => (
+    <HeaderCell
+      {...props}
+      style={{
+        padding: '4px',
+        ...props.style
+      }}
+    />
+  );
+
+  // Preparar datos para la tabla
+  const tableData = [{
+    id: 'monto-clp',
+    label: 'Monto CLP',
+    ...mesesNombre.reduce((acc, _, i) => ({ ...acc, [`mes${i}`]: mensualCLP[i] }), {})
+  }];
+  
   return (
     <Panel header="👁️ Vista Previa del Impacto Anual" bordered style={{ marginBottom: '1.5rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
@@ -86,35 +117,55 @@ const VistaPreviaObligacion: React.FC<Props> = ({ data, year, uf, ufVariation, o
         </div>
       </div>
 
-      <div style={{ overflowX: 'auto', marginBottom: '1.5rem' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-          <thead>
-            <tr style={{ background: '#f5f5f5' }}>
-              <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Mes</th>
-              {mesesNombre.map((mes, i) => (
-                <th key={i} style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '2px solid #ddd', fontSize: '0.85rem' }}>{mes}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style={{ padding: '0.75rem', fontWeight: 'bold', borderBottom: '1px solid #eee' }}>Monto CLP</td>
-              {mensualCLP.map((monto, i) => (
-                <td key={i} style={{ 
-                  padding: '0.75rem', 
-                  textAlign: 'center',
-                  fontWeight: monto > 0 ? 'bold' : 'normal', 
-                  color: monto > 0 ? '#2d7a2d' : '#ccc',
-                  background: monto > 0 ? '#f0f9f0' : 'transparent',
-                  borderBottom: '1px solid #eee'
-                }}>
-                  {monto > 0 ? `$${Math.round(monto).toLocaleString('es-CL')}` : '-'}
-                </td>
-              ))}
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <Table
+        data={tableData}
+        autoHeight
+        bordered={true}
+        cellBordered={true}
+        showHeader={true}
+        hover={false}
+        rowHeight={30}
+        headerHeight={30}
+        style={{ marginBottom: '1.5rem' }}
+      >
+        {/* Columna Label (fija izquierda) */}
+        <Column width={160} fixed align="left">
+          <CompactHeaderCell className="app-table-header" style={{ textAlign: 'left' }}>
+            Mes
+          </CompactHeaderCell>
+          <CompactCell>
+            {(rowData: any) => (
+              <div style={{ fontWeight: '500' }}>
+                {rowData.label}
+              </div>
+            )}
+          </CompactCell>
+        </Column>
+
+        {/* Columnas de meses */}
+        {mesesNombre.map((mes, index) => (
+          <Column key={mes} width={90} align="center">
+            <CompactHeaderCell className="app-table-header" style={{ textAlign: 'center' }}>
+              {mes}
+            </CompactHeaderCell>
+            <CompactCell>
+              {(rowData: any) => {
+                const monto = rowData[`mes${index}`];
+                return (
+                  <div style={{ 
+                    textAlign: 'center',
+                    fontWeight: monto > 0 ? 'bold' : 'normal',
+                    color: monto > 0 ? '#2d7a2d' : '#ccc',
+                    background: monto > 0 ? '#f0f9f0' : 'transparent'
+                  }}>
+                    {monto > 0 ? `$${Math.round(monto).toLocaleString('es-CL')}` : '-'}
+                  </div>
+                );
+              }}
+            </CompactCell>
+          </Column>
+        ))}
+      </Table>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
         <div style={{ padding: '1.25rem', background: '#e8f5e9', borderRadius: '8px', border: '2px solid #2d7a2d' }}>

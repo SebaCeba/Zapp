@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Button } from 'rsuite';
+import { Button, Table } from 'rsuite';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+
+const { Column, HeaderCell, Cell } = Table;
 
 interface DashboardProps {
   year: number;
@@ -40,6 +42,28 @@ export default function Dashboard({ year, refreshKey }: DashboardProps) {
   const downloadCSV = () => {
     window.location.href = `/api/analytics/download-csv?year=${year}`;
   };
+
+  // Wrappers compactos siguiendo TABLE_STANDARD_V1  
+  const CompactCell = (props: any) => (
+    <Cell
+      {...props}
+      style={{
+        padding: '4px',
+        fontSize: '12px',
+        ...props.style
+      }}
+    />
+  );
+
+  const CompactHeaderCell = (props: any) => (
+    <HeaderCell
+      {...props}
+      style={{
+        padding: '4px',
+        ...props.style
+      }}
+    />
+  );
 
   if (loading) return <div className="loading">Cargando datos...</div>;
   if (!data) return <div className="loading">No hay datos disponibles</div>;
@@ -95,45 +119,77 @@ export default function Dashboard({ year, refreshKey }: DashboardProps) {
 
       <div className="card">
         <h2>💰 Por Suscripción</h2>
-        <div className="table-container" style={{ overflowX: 'auto' }}>
-          <table className="monthly-table">
-            <thead>
-              <tr>
-                <th style={{ position: 'sticky', left: 0, background: 'var(--gray-50)', zIndex: 1 }}>Suscripción</th>
-                {MONTHS.map((m) => (
-                  <th key={m}>{m}</th>
-                ))}
-                <th style={{ fontWeight: 700 }}>Total {year}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.perSubscriptionMonthly
-                ?.sort((a, b) => {
-                  const totalA = a.monthly.reduce((sum, val) => sum + val, 0);
-                  const totalB = b.monthly.reduce((sum, val) => sum + val, 0);
-                  return totalB - totalA;
-                })
-                .map((sub) => {
-                  const total = sub.monthly.reduce((sum, val) => sum + val, 0);
+        <Table
+          data={data.perSubscriptionMonthly
+            ?.sort((a, b) => {
+              const totalA = a.monthly.reduce((sum, val) => sum + val, 0);
+              const totalB = b.monthly.reduce((sum, val) => sum + val, 0);
+              return totalB - totalA;
+            }) || []}
+          autoHeight
+          bordered={true}
+          cellBordered={true}
+          showHeader={true}
+          hover={true}
+          rowHeight={30}
+          headerHeight={30}
+          affixHeader
+          affixHorizontalScrollbar
+        >
+          {/* Columna Suscripción (fija izquierda) */}
+          <Column width={160} fixed align="left">
+            <CompactHeaderCell className="app-table-header" style={{ textAlign: 'left' }}>
+              Suscripción
+            </CompactHeaderCell>
+            <CompactCell>
+              {(rowData: any) => (
+                <div style={{ fontWeight: '500' }}>
+                  {rowData.name}
+                </div>
+              )}
+            </CompactCell>
+          </Column>
+
+          {/* Columnas de meses */}
+          {MONTHS.map((mes, index) => (
+            <Column key={mes} width={90} align="right">
+              <CompactHeaderCell className="app-table-header" style={{ textAlign: 'center' }}>
+                {mes}
+              </CompactHeaderCell>
+              <CompactCell>
+                {(rowData: any) => {
+                  const val = rowData.monthly[index];
                   return (
-                    <tr key={sub.id}>
-                      <td style={{ position: 'sticky', left: 0, background: 'white', fontWeight: 500, zIndex: 1 }}>
-                        {sub.name}
-                      </td>
-                      {sub.monthly.map((val, idx) => (
-                        <td key={idx} style={{ textAlign: 'right' }}>
-                          {val > 0 ? `$${val.toLocaleString('es-CL')}` : '-'}
-                        </td>
-                      ))}
-                      <td style={{ textAlign: 'right', fontWeight: 700, background: 'var(--gray-50)' }}>
-                        ${total.toLocaleString('es-CL')}
-                      </td>
-                    </tr>
+                    <div style={{ textAlign: 'right' }}>
+                      {val > 0 ? `$${val.toLocaleString('es-CL')}` : '-'}
+                    </div>
                   );
-                })}
-            </tbody>
-          </table>
-        </div>
+                }}
+              </CompactCell>
+            </Column>
+          ))}
+
+          {/* Columna Total (fija derecha) */}
+          <Column width={120} align="right" fixed="right">
+            <CompactHeaderCell className="app-table-header" style={{ textAlign: 'right' }}>
+              Total {year}
+            </CompactHeaderCell>
+            <CompactCell>
+              {(rowData: any) => {
+                const total = rowData.monthly.reduce((sum: number, val: number) => sum + val, 0);
+                return (
+                  <div style={{ 
+                    fontWeight: '700',
+                    background: 'var(--gray-50)',
+                    textAlign: 'right'
+                  }}>
+                    ${total.toLocaleString('es-CL')}
+                  </div>
+                );
+              }}
+            </CompactCell>
+          </Column>
+        </Table>
       </div>
     </>
   );

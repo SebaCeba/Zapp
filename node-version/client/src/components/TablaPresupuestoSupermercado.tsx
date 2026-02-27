@@ -125,14 +125,27 @@ export default function TablaPresupuestoSupermercado({ anio }: Props) {
     return <div className="text-center py-8">Cargando...</div>;
   }
 
+  // Wrappers compactos para Cell y HeaderCell
+  const CompactCell = (props: any) => (
+    <Cell
+      {...props}
+      style={{
+        padding: '4px',
+        fontSize: '12px',
+        ...props.style
+      }}
+    />
+  );
+  const CompactHeaderCell = (props: any) => <HeaderCell {...props} style={{ padding: '4px', ...props.style }} />;
+
   // Crear custom cell editable para cada mes
   const EditableMonthCell = ({ rowData, dataKey, ...props }: any) => {
     // Si es la fila de totales (rowData.isTotal), solo mostrar el valor
     if (rowData.isTotal) {
       return (
-        <Cell {...props} className="font-bold bg-gray-100">
+        <CompactCell {...props} className="font-bold bg-gray-100">
           {formatearMontoTotal(calcularTotalMes(dataKey))}
-        </Cell>
+        </CompactCell>
       );
     }
 
@@ -143,7 +156,7 @@ export default function TablaPresupuestoSupermercado({ anio }: Props) {
     const estaGuardando = guardando === mes;
 
     return (
-      <Cell {...props} className="cursor-pointer hover:bg-blue-50">
+      <CompactCell {...props} className="cursor-pointer hover:bg-blue-50">
         <div onClick={() => !estaGuardando && iniciarEdicion(mes)}>
           {estaEditando ? (
             <input
@@ -163,7 +176,7 @@ export default function TablaPresupuestoSupermercado({ anio }: Props) {
             </span>
           )}
         </div>
-      </Cell>
+      </CompactCell>
     );
   };
 
@@ -178,31 +191,39 @@ export default function TablaPresupuestoSupermercado({ anio }: Props) {
       <Table
         data={tableData}
         autoHeight
+        bordered={true}
+        cellBordered={true}
+        showHeader={true}
+        hover={true}
+        rowHeight={30}
+        headerHeight={30}
+        affixHeader
+        affixHorizontalScrollbar
         rowClassName={(rowData) => rowData?.isTotal ? 'bg-gray-100 font-bold' : 'hover:bg-gray-50'}
       >
-        <Column width={150} fixed>
-          <HeaderCell className="app-table-header">
+        <Column width={160} fixed align="left">
+          <CompactHeaderCell className="app-table-header" style={{ textAlign: 'left' }}>
             Categoría
-          </HeaderCell>
-          <Cell dataKey="categoria" className="text-sm font-medium text-gray-900" />
+          </CompactHeaderCell>
+          <CompactCell dataKey="categoria" className="text-sm font-medium text-gray-900" />
         </Column>
 
         {MESES.map((mes, index) => (
-          <Column key={mes} width={100} align="right">
-            <HeaderCell className="app-table-header">
+          <Column key={mes} width={90} align="right">
+            <CompactHeaderCell className="app-table-header" style={{ textAlign: 'center' }}>
               {MESES_DISPLAY[index]}
-            </HeaderCell>
+            </CompactHeaderCell>
             <EditableMonthCell dataKey={mes} />
           </Column>
         ))}
 
         <Column width={120} align="right" fixed="right">
-          <HeaderCell className="app-table-header">
+          <CompactHeaderCell className="app-table-header" style={{ textAlign: 'right' }}>
             Total Anual
-          </HeaderCell>
-          <Cell className="text-sm font-bold text-gray-900 bg-gray-50">
+          </CompactHeaderCell>
+          <CompactCell className="text-sm font-bold text-gray-900 bg-gray-50">
             {() => formatearMontoTotal(calcularTotalAnual())}
-          </Cell>
+          </CompactCell>
         </Column>
       </Table>
     </div>

@@ -10,6 +10,8 @@ import ingresosRoutes from './routes/ingresos';
 import supermercadoRoutes from './routes/supermercado';
 import googleIntegrationRoutes from './routes/google-integration';
 import tenpoRoutes from './routes/tenpo';
+import merchantCategoriesRoutes from './routes/merchant-categories';
+import merchantMappingsRoutes from './routes/merchant-mappings';
 import actualRoutes from './routes/actual';
 import tcBillingRoutes from './routes/tc-billing';
 import { tenpoConfigService } from './services/tenpo-config.service';
@@ -32,6 +34,8 @@ app.use('/api/ingresos', ingresosRoutes);
 app.use('/api/supermercado', supermercadoRoutes);
 app.use('/api/integrations/google', googleIntegrationRoutes);
 app.use('/api/tenpo', tenpoRoutes);
+app.use('/api/tenpo', merchantCategoriesRoutes);
+app.use('/api/tenpo', merchantMappingsRoutes);
 app.use('/api/actual', actualRoutes);
 app.use('/api/tc-billing', tcBillingRoutes);
 

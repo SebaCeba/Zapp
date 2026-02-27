@@ -612,6 +612,21 @@ export default function Tenpo() {
               >
                 📅 Configuración TC
               </button>
+              <button
+                onClick={() => navigate('/tenpo/categorias', { state: { from: '/presupuesto/tenpo' } })}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#8b5cf6',
+                  color: '#fff',
+                  borderRadius: '6px',
+                  border: 'none',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
+                🏷️ Categorías
+              </button>
             </>
           }
         />
@@ -743,7 +758,7 @@ export default function Tenpo() {
                 <th rowSpan={2} style={{ minWidth: '100px' }}>Cuotas</th>
                 <th rowSpan={2} style={{ minWidth: '120px' }}>Total Compra</th>
                 {MESES.map((mes, idx) => (
-                  <th key={`header-${idx}`} colSpan={1} style={{ minWidth: '100px', textAlign: 'center' }}>
+                  <th key={`header-${idx}`} colSpan={1} style={{ minWidth: 'var(--month-column-width)', textAlign: 'center' }}>
                     {mes}
                   </th>
                 ))}

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Input } from 'rsuite';
+import { Button, Input, Table } from 'rsuite';
+
+const { Column, HeaderCell, Cell } = Table;
 
 interface IngresoBase {
   id: number;
@@ -244,6 +246,129 @@ export default function TablaPresupuestoIngresos({ anio, onOpenCatalogo, onOpenB
     }
   };
 
+  // Wrappers compactos siguiendo TABLE_STANDARD_V1
+  const CompactCell = (props: any) => (
+    <Cell
+      {...props}
+      style={{
+        padding: '4px',
+        fontSize: '12px',
+        ...props.style
+      }}
+    />
+  );
+
+  const CompactHeaderCell = (props: any) => (
+    <HeaderCell
+      {...props}
+      style={{
+        padding: '4px',
+        ...props.style
+      }}
+    />
+  );
+
+  // Preparar datos para la tabla
+  interface TableRow {
+    id: string;
+    rowType: 'ingreso' | 'bonos' | 'total';
+    nombre: string;
+    ingresoId?: number;
+    enero: number;
+    febrero: number;
+    marzo: number;
+    abril: number;
+    mayo: number;
+    junio: number;
+    julio: number;
+    agosto: number;
+    septiembre: number;
+    octubre: number;
+    noviembre: number;
+    diciembre: number;
+    total: number;
+    background?: string;
+  }
+
+  const prepararDatosTabla = (): TableRow[] => {
+    const rows: TableRow[] = [];
+
+    // Filas de ingresos
+    ingresos.forEach((ingreso) => {
+      const presupuesto = obtenerPresupuesto(ingreso);
+      const total = calcularTotalIngreso(presupuesto);
+      
+      rows.push({
+        id: `ingreso-${ingreso.id}`,
+        rowType: 'ingreso',
+        nombre: ingreso.nombre,
+        ingresoId: ingreso.id,
+        enero: presupuesto.enero,
+        febrero: presupuesto.febrero,
+        marzo: presupuesto.marzo,
+        abril: presupuesto.abril,
+        mayo: presupuesto.mayo,
+        junio: presupuesto.junio,
+        julio: presupuesto.julio,
+        agosto: presupuesto.agosto,
+        septiembre: presupuesto.septiembre,
+        octubre: presupuesto.octubre,
+        noviembre: presupuesto.noviembre,
+        diciembre: presupuesto.diciembre,
+        total
+      });
+    });
+
+    // Fila de bonos (si hay)
+    if (bonos.length > 0) {
+      const bonosRow: TableRow = {
+        id: 'bonos',
+        rowType: 'bonos',
+        nombre: 'Bonos + Apoyo Mensual',
+        enero: calcularBonosMes(0),
+        febrero: calcularBonosMes(1),
+        marzo: calcularBonosMes(2),
+        abril: calcularBonosMes(3),
+        mayo: calcularBonosMes(4),
+        junio: calcularBonosMes(5),
+        julio: calcularBonosMes(6),
+        agosto: calcularBonosMes(7),
+        septiembre: calcularBonosMes(8),
+        octubre: calcularBonosMes(9),
+        noviembre: calcularBonosMes(10),
+        diciembre: calcularBonosMes(11),
+        total: bonos.reduce((sum, b) => sum + b.monto, 0),
+        background: '#fef9e7'
+      };
+      rows.push(bonosRow);
+    }
+
+    // Fila de total
+    rows.push({
+      id: 'total',
+      rowType: 'total',
+      nombre: 'TOTAL INGRESOS',
+      enero: calcularTotalMes(0),
+      febrero: calcularTotalMes(1),
+      marzo: calcularTotalMes(2),
+      abril: calcularTotalMes(3),
+      mayo: calcularTotalMes(4),
+      junio: calcularTotalMes(5),
+      julio: calcularTotalMes(6),
+      agosto: calcularTotalMes(7),
+      septiembre: calcularTotalMes(8),
+      octubre: calcularTotalMes(9),
+      noviembre: calcularTotalMes(10),
+      diciembre: calcularTotalMes(11),
+      total: calcularTotalAnual(),
+      background: '#d1fae5'
+    });
+
+    return rows;
+  };
+
+  const tableData = prepararDatosTabla();
+
   if (loading) {
     return (
       <div className="loading" style={{ textAlign: 'center', padding: '3rem' }}>
@@ -288,124 +413,140 @@ export default function TablaPresupuestoIngresos({ anio, onOpenCatalogo, onOpenB
       )}
 
       <div className="card">
-        <div className="table-container">
-          <table className="monthly-table">
-            <thead>
-              <tr>
-                <th style={{ position: 'sticky', left: 0, background: 'var(--gray-50)', zIndex: 1 }}>
-                  Ingreso
-                </th>
-                {MESES_DISPLAY.map((mesDisplay, idx) => (
-                  <th key={idx} style={{ textAlign: 'right' }}>
-                    {mesDisplay}
-                  </th>
-                ))}
-                <th style={{ textAlign: 'right', background: 'var(--gray-100)' }}>
-                  Total
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* Ingresos base */}
-              {ingresos.map((ingreso) => {
-                const presupuesto = obtenerPresupuesto(ingreso);
-                const total = calcularTotalIngreso(presupuesto);
-
-                return (
-                  <tr key={ingreso.id} style={{ cursor: 'default' }}>
-                    <td style={{ position: 'sticky', left: 0, background: 'white', fontWeight: '500' }}>
-                      {ingreso.nombre}
-                    </td>
-                    {MESES.map((mes, idx) => {
-                      const valor = presupuesto[mes as keyof Presupuesto] as number;
-                      const isEditando = editando?.ingresoId === ingreso.id && editando?.mes === mes;
-                      const isGuardando = guardando?.ingresoId === ingreso.id && guardando?.mes === mes;
-
-                      return (
-                        <td key={idx} style={{ textAlign: 'right' }}>
-                          {isEditando ? (
-                            <Input
-                              autoFocus
-                              defaultValue={valor || ''}
-                              style={{ width: '100%', textAlign: 'right' }}
-                              size="sm"
-                              onBlur={(e) => guardarMonto(ingreso.id, mes, (e.target as HTMLInputElement).value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  guardarMonto(ingreso.id, mes, (e.target as HTMLInputElement).value);
-                                }
-                              }}
-                            />
-                          ) : (
-                            <div
-                              style={{
-                                cursor: 'pointer',
-                                padding: '0.25rem 0.5rem',
-                                borderRadius: '4px',
-                                color: valor === 0 ? '#9ca3af' : 'inherit',
-                                transition: 'background 0.2s'
-                              }}
-                              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--gray-100)'}
-                              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                              onClick={() => setEditando({ ingresoId: ingreso.id, mes })}
-                            >
-                              {isGuardando ? (
-                                <span style={{ color: 'var(--primary)' }}>...</span>
-                              ) : (
-                                formatearMonto(valor) || '0'
-                              )}
-                            </div>
-                          )}
-                        </td>
-                      );
-                    })}
-                    <td style={{ textAlign: 'right', fontWeight: '600', background: 'var(--gray-50)' }}>
-                      {formatearMontoTotal(total)}
-                    </td>
-                  </tr>
-                );
-              })}
-
-              {/* Fila de bonos (si hay) */}
-              {bonos.length > 0 && (
-                <tr style={{ background: '#fef9e7', fontWeight: '500' }}>
-                  <td style={{ position: 'sticky', left: 0, background: '#fef9e7' }}>
-                    Bonos + Apoyo Mensual
-                  </td>
-                  {MESES.map((_, idx) => {
-                    const totalBonos = calcularBonosMes(idx);
-                    return (
-                      <td key={idx} style={{ textAlign: 'right', color: totalBonos > 0 ? '#92400e' : '#9ca3af' }}>
-                        {totalBonos > 0 ? formatearMonto(totalBonos) : '0'}
-                      </td>
-                    );
-                  })}
-                  <td style={{ textAlign: 'right', background: '#fef3c7', color: '#92400e' }}>
-                    {formatearMontoTotal(bonos.reduce((sum, b) => sum + b.monto, 0))}
-                  </td>
-                </tr>
+        <Table
+          data={tableData}
+          autoHeight
+          bordered={true}
+          cellBordered={true}
+          showHeader={true}
+          hover={true}
+          rowHeight={30}
+          headerHeight={30}
+          affixHeader
+          affixHorizontalScrollbar
+          rowClassName={(rowData: any) => {
+            if (rowData?.rowType === 'total') return 'total-row';
+            if (rowData?.rowType === 'bonos') return 'bonos-row';
+            return '';
+          }}
+        >
+          {/* Columna Nombre (fija izquierda) */}
+          <Column width={160} fixed align="left">
+            <CompactHeaderCell className="app-table-header" style={{ textAlign: 'left' }}>
+              Ingreso
+            </CompactHeaderCell>
+            <CompactCell>
+              {(rowData: TableRow) => (
+                <div style={{ 
+                  fontWeight: rowData.rowType === 'total' ? '700' : rowData.rowType === 'bonos' ? '500' : '500',
+                  background: rowData.background || 'transparent'
+                }}>
+                  {rowData.nombre}
+                </div>
               )}
+            </CompactCell>
+          </Column>
 
-              {/* Total */}
-              <tr style={{ background: '#d1fae5', fontWeight: '600' }}>
-                <td style={{ position: 'sticky', left: 0, background: '#d1fae5' }}>
-                  TOTAL INGRESOS
-                </td>
-                {MESES.map((_, idx) => {
-                  const total = calcularTotalMes(idx);
+          {/* Columnas de meses */}
+          {MESES.map((mes, index) => (
+            <Column key={mes} width={90} align="right">
+              <CompactHeaderCell className="app-table-header" style={{ textAlign: 'center' }}>
+                {MESES_DISPLAY[index]}
+              </CompactHeaderCell>
+              <CompactCell>
+                {(rowData: TableRow) => {
+                  const valor = rowData[mes as keyof TableRow] as number;
+                  
+                  // Si es fila de total o bonos, solo mostrar valor
+                  if (rowData.rowType === 'total') {
+                    return (
+                      <div style={{ 
+                        fontWeight: '600',
+                        background: rowData.background || 'transparent',
+                        textAlign: 'right'
+                      }}>
+                        {formatearMontoTotal(valor)}
+                      </div>
+                    );
+                  }
+
+                  if (rowData.rowType === 'bonos') {
+                    return (
+                      <div style={{ 
+                        fontWeight: '500',
+                        background: rowData.background || 'transparent',
+                        color: valor > 0 ? '#92400e' : '#9ca3af',
+                        textAlign: 'right'
+                      }}>
+                        {valor > 0 ? formatearMonto(valor) : '0'}
+                      </div>
+                    );
+                  }
+
+                  // Fila de ingreso editable
+                  const isEditando = editando?.ingresoId === rowData.ingresoId && editando?.mes === mes;
+                  const isGuardando = guardando?.ingresoId === rowData.ingresoId && guardando?.mes === mes;
+
+                  if (isEditando) {
+                    return (
+                      <Input
+                        autoFocus
+                        defaultValue={valor || ''}
+                        style={{ width: '100%', textAlign: 'right', fontSize: '12px' }}
+                        size="sm"
+                        onBlur={(e) => guardarMonto(rowData.ingresoId!, mes, (e.target as HTMLInputElement).value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            guardarMonto(rowData.ingresoId!, mes, (e.target as HTMLInputElement).value);
+                          }
+                        }}
+                      />
+                    );
+                  }
+
                   return (
-                    <td key={idx} style={{ textAlign: 'right' }}>
-                      {formatearMontoTotal(total)}
-                    </td>
+                    <div
+                      style={{
+                        cursor: 'pointer',
+                        padding: '0.25rem 0.5rem',
+                        borderRadius: '4px',
+                        color: valor === 0 ? '#9ca3af' : 'inherit',
+                        textAlign: 'right'
+                      }}
+                      onClick={() => setEditando({ ingresoId: rowData.ingresoId!, mes })}
+                    >
+                      {isGuardando ? (
+                        <span style={{ color: 'var(--primary)' }}>...</span>
+                      ) : (
+                        formatearMonto(valor) || '0'
+                      )}
+                    </div>
                   );
-                })}
-                <td style={{ textAlign: 'right', fontSize: '1.125rem', background: '#6ee7b7', fontWeight: '700' }}>
-                  {formatearMontoTotal(calcularTotalAnual())}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                }}
+              </CompactCell>
+            </Column>
+          ))}
+
+          {/* Columna Total (fija derecha) */}
+          <Column width={120} align="right" fixed="right">
+            <CompactHeaderCell className="app-table-header" style={{ textAlign: 'right' }}>
+              Total
+            </CompactHeaderCell>
+            <CompactCell>
+              {(rowData: TableRow) => (
+                <div style={{ 
+                  fontWeight: rowData.rowType === 'total' ? '700' : '600',
+                  background: rowData.rowType === 'total' ? '#6ee7b7' : rowData.rowType === 'bonos' ? '#fef3c7' : 'var(--gray-50)',
+                  color: rowData.rowType === 'bonos' ? '#92400e' : 'inherit',
+                  fontSize: rowData.rowType === 'total' ? '1.125rem' : 'inherit',
+                  textAlign: 'right'
+                }}>
+                  {formatearMontoTotal(rowData.total)}
+                </div>
+              )}
+            </CompactCell>
+          </Column>
+        </Table>
       </div>
     </>
   );

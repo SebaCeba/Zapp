@@ -302,6 +302,42 @@ model TenpoPayment {
 
   @@map("tenpo_payments")
 }
+
+// Sistema de categorización de comercios (3 niveles jerárquicos)
+model MerchantCategory {
+  id              Int                  @id @default(autoincrement())
+  name            String
+  parentId        Int?                 @map("parent_id")
+  parent          MerchantCategory?    @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children        MerchantCategory[]   @relation("CategoryHierarchy")
+  level           Int                  @default(1) // 1 (principal), 2 (subcategoría), 3 (comercio)
+  order           Int                  @default(0) // Orden visual en UI
+  color           String?              // Hex color para UI (#FF5733)
+  icon            String?              // Emoji o icon name
+  isSystem        Boolean              @default(false) @map("is_system") // true para "Sin Categorizar"
+  merchants       MerchantMapping[]
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+
+  @@map("merchant_categories")
+}
+
+// Asignación de comercios a categorías
+model MerchantMapping {
+  id              Int                  @id @default(autoincrement())
+  merchantName    String               @unique @map("merchant_name") // Nombre del comercio de TenpoPurchase
+  categoryId      Int                  @map("category_id")
+  category        MerchantCategory     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  matchPattern    String?              @map("match_pattern") // Para futuro auto-matching (regex)
+  confidence      Float?               // Para futuro ML (0.0 - 1.0)
+  assignedBy      String               @default("MANUAL") @map("assigned_by") // MANUAL | AUTO | ML
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+
+  @@index([categoryId])
+  @@map("merchant_mappings")
+}
+
 // Configuración de Tasa Global de Cuotas (historial de cambios)
 model TenpoTasaCuotas {
   id              Int       @id @default(autoincrement())
