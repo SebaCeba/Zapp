@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button, Modal, TreePicker } from 'rsuite';
+import { showToast } from '../Toast';
 import ActualTenpoRow from './ActualTenpoRow';
 
 interface Installment {
@@ -181,14 +182,17 @@ export default function ActualTenpoTable({ purchases, year, month, onDataChange 
       setShowBatchAssignModal(false);
 
       // Notificar éxito
-      alert(`✅ ${result.assigned} comercio(s) asignado(s) correctamente`);
+      showToast(
+        `${result.count || result.assigned} comercio(s) asignado(s) correctamente`,
+        'success'
+      );
       
       // Recargar datos si es posible
       if (onDataChange) {
         onDataChange();
       }
     } catch (error: any) {
-      alert(error.message);
+      showToast(error.message, 'error', 5000);
     } finally {
       setAssigningBatch(false);
     }
