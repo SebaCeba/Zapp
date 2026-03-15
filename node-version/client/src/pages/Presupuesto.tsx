@@ -9,6 +9,7 @@ interface ResumenMensual {
   hipotecario: number;
   serviciosBasicos: number;
   supermercado: number;
+  ahorros: number;
   total: number;
   balance: number;
 }
@@ -42,6 +43,11 @@ interface DetalleSupermercado {
   valores: number[];
 }
 
+interface DetalleAhorros {
+  nombre: string;
+  valores: number[];
+}
+
 const Presupuesto: React.FC = () => {
   const [anioActual] = useState(new Date().getFullYear());
   const [anioSeleccionado, setAnioSeleccionado] = useState(anioActual);
@@ -57,6 +63,7 @@ const Presupuesto: React.FC = () => {
   const [detalleSuscripciones, setDetalleSuscripciones] = useState<DetalleSuscripcion[]>([]);
   const [detalleObligaciones, setDetalleObligaciones] = useState<DetalleObligacion[]>([]);
   const [detalleSupermercado, setDetalleSupermercado] = useState<DetalleSupermercado | null>(null);
+  const [detalleAhorros, setDetalleAhorros] = useState<DetalleAhorros[]>([]);
 
   const aniosDisponibles = Array.from(
     { length: 11 },
@@ -82,7 +89,7 @@ const Presupuesto: React.FC = () => {
       setLoading(true);
       
       // Cargar datos de todas las fuentes
-      const [ingresosRes, serviciosRes, bonosRes, subscriptionsRes, obligacionesRes, paymentsRes, segurosRes, supuestoRes, supermercadoRes] = await Promise.all([
+      const [ingresosRes, serviciosRes, bonosRes, subscriptionsRes, obligacionesRes, paymentsRes, segurosRes, supuestoRes, supermercadoRes, ahorrosRes] = await Promise.all([
         fetch(`http://localhost:3000/api/ingresos/presupuesto/${anioSeleccionado}`),
         fetch(`http://localhost:3000/api/servicios-basicos/presupuesto/${anioSeleccionado}`),
         fetch(`http://localhost:3000/api/ingresos/bonos/${anioSeleccionado}`),
@@ -91,7 +98,8 @@ const Presupuesto: React.FC = () => {
         fetch(`http://localhost:3000/api/hipotecario/payments`),
         fetch(`http://localhost:3000/api/hipotecario/seguros`),
         fetch(`http://localhost:3000/api/obligaciones/supuestos/${anioSeleccionado}`),
-        fetch(`http://localhost:3000/api/supermercado/presupuesto/${anioSeleccionado}`)
+        fetch(`http://localhost:3000/api/supermercado/presupuesto/${anioSeleccionado}`),
+        fetch(`http://localhost:3000/api/ahorros/presupuesto/${anioSeleccionado}`)
       ]);
 
       const ingresosData = await ingresosRes.json();
@@ -103,6 +111,7 @@ const Presupuesto: React.FC = () => {
       const segurosData = await segurosRes.json();
       const supuestoData = await supuestoRes.json();
       const supermercadoData = await supermercadoRes.json();
+      const ahorrosData = await ahorrosRes.json();
       
       const valorUF = supuestoData.valorUfBase || 37000;
 
@@ -318,6 +327,17 @@ const Presupuesto: React.FC = () => {
 
       setDetalleSupermercado({ valores: valoresSupermercado });
 
+      // Preparar detalles de ahorros
+      const detallesAhorro: DetalleAhorros[] = ahorrosData.map((ahorro: any) => {
+        const presupuesto = ahorro.presupuestos?.[0] || {};
+        return {
+          nombre: ahorro.nombre,
+          valores: MESES_KEYS.map(mes => Number(presupuesto[mes]) || 0)
+        };
+      });
+
+      setDetalleAhorros(detallesAhorro);
+
       // Calcular obligaciones por mes
       const calcularObligacionesMes = (mes: number): number => {
         return obligacionesData.reduce((sum: number, obl: any) => {
@@ -389,6 +409,9 @@ const Presupuesto: React.FC = () => {
         // Calcular supermercado
         const totalSupermercado = valoresSupermercado[idx];
 
+        // Calcular ahorros
+        const totalAhorros = detallesAhorro.reduce((sum, ahorro) => sum + ahorro.valores[idx], 0);
+
         const totalEgresos = totalSuscripciones + totalCreditos + totalHipotecario + totalServicios + totalSupermercado;
         const balance = totalIngresos - totalEgresos;
 
@@ -400,6 +423,7 @@ const Presupuesto: React.FC = () => {
           hipotecario: totalHipotecario,
           serviciosBasicos: totalServicios,
           supermercado: totalSupermercado,
+          ahorros: totalAhorros,
           total: totalEgresos,
           balance
         };
@@ -725,6 +749,44 @@ const Presupuesto: React.FC = () => {
                   </td>
                 </tr>
                 </> /* Fin de gastosExpanded */}
+
+                {/* AHORROS */}
+                <tr 
+                  style={{ background: '#dbeafe', fontWeight: '600', cursor: 'pointer' }}
+                  onClick={() => setExpandido(expandido === 'ahorros' ? null : 'ahorros')}
+                >
+                  <td style={{ position: 'sticky', left: 0, background: '#dbeafe', zIndex: 1 }}>
+                    <span style={{ marginRight: '0.5rem' }}>
+                      {expandido === 'ahorros' ? '▼' : '▶'}
+                    </span>
+                    Ahorros
+                  </td>
+                  {resumen.map((mes) => (
+                    <td key={mes.mes} style={{ textAlign: 'right' }}>
+                      {formatearMonto(mes.ahorros)}
+                    </td>
+                  ))}
+                  <td style={{ textAlign: 'right', background: '#93c5fd', fontWeight: '700' }}>
+                    {formatearMonto(calcularTotalAnual('ahorros'))}
+                  </td>
+                </tr>
+
+                {/* Detalle de ahorros */}
+                {expandido === 'ahorros' && detalleAhorros.map((detalle, idx) => (
+                  <tr key={idx} style={{ background: '#eff6ff' }}>
+                    <td style={{ position: 'sticky', left: 0, background: '#eff6ff', paddingLeft: '2rem', fontSize: '0.875rem', zIndex: 1 }}>
+                      {detalle.nombre}
+                    </td>
+                    {detalle.valores.map((valor, mesIdx) => (
+                      <td key={mesIdx} style={{ textAlign: 'right', fontSize: '0.875rem' }}>
+                        {formatearMonto(valor)}
+                      </td>
+                    ))}
+                    <td style={{ textAlign: 'right', background: '#dbeafe', fontSize: '0.875rem' }}>
+                      {formatearMonto(detalle.valores.reduce((sum, v) => sum + v, 0))}
+                    </td>
+                  </tr>
+                ))}
 
                 {/* BALANCE */}
                 <tr style={{ background: '#dbeafe', fontWeight: '600', fontSize: '1.125rem' }}>

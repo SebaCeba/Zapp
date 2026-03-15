@@ -17,7 +17,8 @@ const CATEGORY_LABELS: Record<ActualCategory, string> = {
   [ActualCategory.SERVICIOS_BASICOS]: 'Servicios Básicos',
   [ActualCategory.SUPERMERCADO]: 'Supermercado',
   [ActualCategory.PAGO_TC]: 'Pagos TC',
-  [ActualCategory.AJUSTES]: 'Ajustes'
+  [ActualCategory.AJUSTES]: 'Ajustes',
+  [ActualCategory.AHORROS]: 'Ahorros'
 };
 
 const CATEGORY_ORDER: ActualCategory[] = [
@@ -28,7 +29,8 @@ const CATEGORY_ORDER: ActualCategory[] = [
   ActualCategory.SERVICIOS_BASICOS,
   ActualCategory.SUPERMERCADO,
   ActualCategory.PAGO_TC,
-  ActualCategory.AJUSTES
+  ActualCategory.AJUSTES,
+  ActualCategory.AHORROS
 ];
 
 export default function ActualConsolidatedTable({
@@ -91,9 +93,12 @@ export default function ActualConsolidatedTable({
 
   const sortedCategories = getSortedCategories();
 
-  // Separar INGRESOS de GASTOS
+  // Separar INGRESOS, AHORROS y GASTOS
   const ingresosCategory = sortedCategories.find(c => c.name === ActualCategory.INGRESOS);
-  const expenseCategories = sortedCategories.filter(c => c.name !== ActualCategory.INGRESOS);
+  const ahorrosCategory = sortedCategories.find(c => c.name === ActualCategory.AHORROS);
+  const expenseCategories = sortedCategories.filter(
+    c => c.name !== ActualCategory.INGRESOS && c.name !== ActualCategory.AHORROS
+  );
   
   // Cálculo de totales de gastos
   const totalExpensesBudget = expenseCategories.reduce((sum, c) => sum + c.budgetClp, 0);
@@ -279,6 +284,69 @@ export default function ActualConsolidatedTable({
               {formatPctIncome(totalExpensesActual)}
             </td>
           </tr>}
+
+          {/* AHORROS */}
+          {ahorrosCategory && (() => {
+            const isExpanded = expandedCategories.has(ahorrosCategory.name);
+            const categoryLabel = CATEGORY_LABELS[ahorrosCategory.name as ActualCategory];
+            
+            return (
+              <>
+                {/* Fila de grupo AHORROS */}
+                <tr 
+                  key={`group-${ahorrosCategory.name}`} 
+                  className="group-row"
+                  onClick={() => toggleCategory(ahorrosCategory.name)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <td>
+                    <span style={{ marginRight: '0.5rem', fontSize: '0.75rem' }}>
+                      {isExpanded ? '▼' : '▶'}
+                    </span>
+                    {categoryLabel}
+                  </td>
+                  <td className="monto">{formatMonto(ahorrosCategory.budgetClp)}</td>
+                  <td className="monto">{formatMonto(ahorrosCategory.actualClp)}</td>
+                  <td className={`monto ${getDeltaClass(ahorrosCategory.deltaClp, false)}`}>
+                    {formatMonto(ahorrosCategory.deltaClp)}
+                  </td>
+                  <td className="percent">{formatPctExec(ahorrosCategory.pctExec)}</td>
+                  <td className="percent-income">
+                    {formatPctIncome(ahorrosCategory.actualClp)}
+                  </td>
+                </tr>
+
+                {/* Filas hijas de AHORROS */}
+                {isExpanded && ahorrosCategory.lines.map(line => (
+                  <tr 
+                    key={`line-${ahorrosCategory.name}-${line.itemKey}`}
+                    className="sub-row"
+                  >
+                    <td style={{ paddingLeft: '2.5rem' }}>{line.itemName}</td>
+                    <td className="monto">{formatMonto(line.budgetClp)}</td>
+                    <td className="monto actual-cell">
+                      <ActualEditableCell
+                        value={line.actualClp}
+                        year={year}
+                        month={month}
+                        category={ahorrosCategory.name}
+                        itemKey={line.itemKey}
+                        itemName={line.itemName}
+                        onSaved={(newAmount) => onEntryUpdated(ahorrosCategory.name, line.itemKey, newAmount)}
+                      />
+                    </td>
+                    <td className={`monto ${getDeltaClass(line.deltaClp, false)}`}>
+                      {formatMonto(line.deltaClp)}
+                    </td>
+                    <td className="percent">{formatPctExec(line.pctExec)}</td>
+                    <td className="percent-income">
+                      {formatPctIncome(line.actualClp)}
+                    </td>
+                  </tr>
+                ))}
+              </>
+            );
+          })()}
         </tbody>
       </table>
     </div>

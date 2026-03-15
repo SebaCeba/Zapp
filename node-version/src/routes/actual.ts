@@ -13,7 +13,8 @@ const VALID_CATEGORIES = [
   'SERVICIOS_BASICOS',
   'SUPERMERCADO',
   'PAGO_TC',
-  'AJUSTES'
+  'AJUSTES',
+  'AHORROS'
 ];
 
 // PUT /api/actual/entry - Upsert entry
@@ -233,7 +234,7 @@ router.get('/summary', async (req: Request, res: Response) => {
     // Calcular totales globales
     const totalIngresos = categories.find(c => c.name === 'INGRESOS')?.actualClp || 0;
     const totalGastos = categories
-      .filter(c => c.name !== 'INGRESOS')
+      .filter(c => c.name !== 'INGRESOS' && c.name !== 'AHORROS')
       .reduce((sum, c) => sum + c.actualClp, 0);
     const balance = totalIngresos - totalGastos;
 

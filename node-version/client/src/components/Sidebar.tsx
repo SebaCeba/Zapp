@@ -4,39 +4,14 @@ import { Sidenav, Nav } from 'rsuite';
 import DashboardIcon from '@rsuite/icons/Dashboard';
 import FunnelIcon from '@rsuite/icons/Funnel';
 import PageIcon from '@rsuite/icons/Page';
+import { menuConfig } from '../navigation/menuConfig';
 
-const menuItems = [
-  {
-    key: '/',
-    label: 'Inicio',
-    icon: <DashboardIcon />,
-  },
-  {
-    key: 'presupuesto',
-    label: 'Presupuesto',
-    icon: <FunnelIcon />,
-    children: [
-      { key: '/presupuesto/resumen', label: 'Resumen' },
-      { key: '/ingresos', label: 'Ingresos' },
-      { key: 'gastos-header', label: 'Gastos', disabled: true },
-      { key: '/app', label: '  • Suscripciones' },
-      { key: '/creditos', label: '  • Créditos y Seguros' },
-      { key: '/hipotecario', label: '  • Hipotecario' },
-      { key: '/servicios-basicos', label: '  • Servicios Básicos' },
-      { key: '/supermercado', label: '  • Supermercado' },
-      { key: '/presupuesto/tenpo', label: '  • Tenpo TC' },
-    ],
-  },
-  {
-    key: 'actual',
-    label: 'Actual',
-    icon: <PageIcon />,
-    children: [
-      { key: '/actual', label: 'Resumen' },
-      { key: '/actual/tenpo', label: 'Tenpo TC' },
-    ],
-  },
-];
+// Icon mapping: convierte string names a componentes RSuite
+const iconMap = {
+  dashboard: <DashboardIcon />,
+  funnel: <FunnelIcon />,
+  page: <PageIcon />,
+};
 
 export default function Sidebar() {
   const [openKeys, setOpenKeys] = useState<string[]>(() => {
@@ -77,25 +52,29 @@ export default function Sidebar() {
         </Sidenav.Header>
         <Sidenav.Body>
           <Nav activeKey={location.pathname} onSelect={(key) => navigate(key)}>
-            {menuItems.map((item) => {
+            {menuConfig.map((item) => {
+              const icon = item.iconName ? iconMap[item.iconName] : undefined;
+              
               if (item.children) {
                 return (
                   <Nav.Menu
                     key={item.key}
                     eventKey={item.key}
                     title={item.label}
-                    icon={item.icon}
+                    icon={icon}
                   >
                     {item.children.map((child) => (
                       <Nav.Item 
                         key={child.key} 
                         eventKey={child.key}
-                        disabled={(child as any).disabled}
-                        style={(child as any).disabled ? { 
+                        disabled={child.disabled}
+                        style={child.disabled ? { 
                           fontWeight: 600, 
                           color: 'var(--rs-text-secondary)',
                           cursor: 'default',
-                          marginTop: '8px'
+                          marginTop: '12px',
+                          paddingTop: '12px',
+                          borderTop: '1px solid var(--rs-border-primary)',
                         } : {}}
                       >
                         {child.label}
@@ -105,7 +84,7 @@ export default function Sidebar() {
                 );
               }
               return (
-                <Nav.Item key={item.key} eventKey={item.key} icon={item.icon}>
+                <Nav.Item key={item.key} eventKey={item.key} icon={icon}>
                   {item.label}
                 </Nav.Item>
               );

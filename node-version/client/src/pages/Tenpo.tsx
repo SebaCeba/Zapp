@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
@@ -6,6 +6,12 @@ import { SelectPicker, Input, InputNumber, DatePicker } from 'rsuite';
 import MainLayout from '../layout/MainLayout';
 import PageTitleSection from '../layout/PageTitleSection';
 import { showToast } from '../components/Toast';
+import GmailSyncStatusBanner from '../components/common/GmailSyncStatusBanner';
+import { mapLegacyAuthState } from '../types/gmailIntegration';
+import MonthlyBarChart from '../components/presupuesto/MonthlyBarChart';
+import CategoryParetoChart from '../components/presupuesto/CategoryParetoChart';
+import AnnualTenpoTable from '../components/presupuesto/AnnualTenpoTable';
+import PurchaseDetailModal from '../components/presupuesto/PurchaseDetailModal';
 
 interface Purchase {
   id: number;
@@ -46,32 +52,23 @@ interface Payment {
   transactionCode: string;
 }
 
-interface MonthlyData {
-  estimated: number;
-  paid: number;
-  gap: number;
-}
-
 export default function Tenpo() {
   const navigate = useNavigate();
   const anioActual = new Date().getFullYear();
   const [anioSeleccionado, setAnioSeleccionado] = useState(anioActual);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [tokenExpired, setTokenExpired] = useState(false);
   const [authUrl, setAuthUrl] = useState('');
   const [syncing, setSyncing] = useState(false);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
-  const [expandido, setExpandido] = useState<number | null>(null);
   const [lastSync, setLastSync] = useState<Date | null>(null);
   
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searching, setSearching] = useState(false);
-  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
-  const [selectedPurchaseId, setSelectedPurchaseId] = useState<number | null>(null);
-  const [cuotaRealInput, setCuotaRealInput] = useState('');
-  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
-  const [scheduleDateInput, setScheduleDateInput] = useState('');
+  // Nuevos estados para filtros y modal
+  const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  
   const [manualModalOpen, setManualModalOpen] = useState(false);
   const [manualForm, setManualForm] = useState({
     purchaseDate: new Date().toISOString().split('T')[0],
@@ -114,26 +111,18 @@ export default function Tenpo() {
   
   const adjustedDueDate = adjustForWeekend(new Date(dueDate));
 
-  const MESES = [
-    'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
-    'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
-  ];
-
   useEffect(() => {
     checkAuthStatus();
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      loadData();
-    }
-  }, [anioSeleccionado, isAuthenticated]);
+    loadData();
+  }, [anioSeleccionado]);
 
   const checkAuthStatus = async () => {
     try {
       const response = await fetch('http://localhost:3000/api/integrations/google/status');
       const data = await response.json();
-      setIsAuthenticated(data.authenticated && !data.tokenExpired);
       setTokenExpired(data.tokenExpired || false);
 
       if (!data.authenticated || data.tokenExpired) {
@@ -179,65 +168,27 @@ export default function Tenpo() {
     }
   };
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) {
-      showToast('Ingresa un texto para buscar', 'info');
-      return;
-    }
-
-    setSearching(true);
-    try {
-      const response = await fetch(`http://localhost:3000/api/tenpo/debug/search?q=${encodeURIComponent(searchQuery)}`);
-      const data = await response.json();
-
-      console.log('🔍 Resultados de búsqueda:', data);
-
-      if (data.emailsFound === 0 && data.purchasesFound === 0) {
-        showToast(`No se encontró "${searchQuery}" en emails ni compras`, 'info');
-      } else {
-        showToast(`Encontrado: ${data.emailsFound} emails, ${data.purchasesFound} compras. Ver consola (F12) para detalles.`, 'success');
-      }
-    } catch (error) {
-      console.error('Error buscando:', error);
-      showToast('Error al buscar', 'error');
-    } finally {
-      setSearching(false);
-    }
+  const handleSelectMonth = (month: number | null) => {
+    setSelectedMonth(month);
   };
 
-  const handleToggleInteres = async (purchaseId: number, currentValue: boolean) => {
-    try {
-      const response = await fetch(`http://localhost:3000/api/tenpo/purchases/${purchaseId}/interes`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tieneInteres: !currentValue })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al cambiar interés');
-      }
-
-      showToast(`Interés ${!currentValue ? 'activado' : 'desactivado'} y cuotas recalculadas`, 'success');
-      
-      await loadData();
-    } catch (error: any) {
-      console.error('Error toggling interés:', error);
-      showToast(error.message || 'Error al cambiar interés', 'error');
-    }
+  const handleSelectCategory = (category: string | null) => {
+    setSelectedCategory(category);
   };
 
-  const handleAdjustSchedule = (purchaseId: number) => {
-    const purchase = purchases.find(p => p.id === purchaseId);
-    if (!purchase) return;
+  const handleClearFilters = () => {
+    setSelectedMonth(null);
+    setSelectedCategory(null);
+  };
 
-    const currentOverride = purchase.firstDueDateOverride 
-      ? new Date(purchase.firstDueDateOverride).toISOString().split('T')[0]
-      : '';
+  const handlePurchaseClick = (purchase: Purchase) => {
+    setSelectedPurchase(purchase);
+    setDetailModalOpen(true);
+  };
 
-    setSelectedPurchaseId(purchaseId);
-    setScheduleDateInput(currentOverride);
-    setScheduleModalOpen(true);
+  const handleDetailModalClose = () => {
+    setDetailModalOpen(false);
+    setSelectedPurchase(null);
   };
 
   const handleCreateManualPurchase = async () => {
@@ -302,114 +253,6 @@ export default function Tenpo() {
     }
   };
 
-  const handleApplySchedule = async () => {
-    if (!selectedPurchaseId) return;
-
-    // Usuario quiere volver a AUTO (string vacío)
-    if (!scheduleDateInput || scheduleDateInput.trim() === '') {
-      try {
-        const response = await fetch(`http://localhost:3000/api/tenpo/purchases/${selectedPurchaseId}/schedule`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ scheduleMode: 'AUTO' })
-        });
-
-        if (!response.ok) {
-          let errorMessage = 'Error al cambiar calendario';
-          try {
-            const errorData = await response.json();
-            errorMessage = errorData.error || errorMessage;
-          } catch {
-            errorMessage = `Error del servidor (${response.status}): Endpoint no disponible`;
-          }
-          throw new Error(errorMessage);
-        }
-
-        showToast('Calendario vuelto a modo automático', 'success');
-        
-        setScheduleModalOpen(false);
-        setScheduleDateInput('');
-        setSelectedPurchaseId(null);
-        await loadData();
-        return;
-      } catch (error: any) {
-        console.error('Error:', error);
-        showToast(error.message || 'Error al cambiar calendario', 'error');
-        return;
-      }
-    }
-
-    // Usuario ingresó nueva fecha
-    try {
-      const response = await fetch(`http://localhost:3000/api/tenpo/purchases/${selectedPurchaseId}/schedule`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          scheduleMode: 'MANUAL',
-          firstDueDateOverride: scheduleDateInput
-        })
-      });
-
-      if (!response.ok) {
-        let errorMessage = 'Error al cambiar calendario';
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-        } catch {
-          // Si no es JSON, puede ser HTML (404 o error del servidor)
-          errorMessage = `Error del servidor (${response.status}): Endpoint no disponible`;
-        }
-        throw new Error(errorMessage);
-      }
-
-      showToast('Calendario ajustado - Las cuotas se recalcularon con la nueva fecha', 'success');
-      
-      setScheduleModalOpen(false);
-      setScheduleDateInput('');
-      setSelectedPurchaseId(null);
-      await loadData();
-    } catch (error: any) {
-      console.error('Error:', error);
-      showToast(error.message || 'Error al cambiar calendario', 'error');
-    }
-  };
-
-  const handleConfirmarReal = async () => {
-    if (!selectedPurchaseId || !cuotaRealInput) {
-      showToast('Ingresa el monto de la cuota', 'error');
-      return;
-    }
-
-    const cuotaReal = parseInt(cuotaRealInput);
-    if (isNaN(cuotaReal) || cuotaReal <= 0) {
-      showToast('Monto inválido', 'error');
-      return;
-    }
-
-    try {
-      const response = await fetch(`http://localhost:3000/api/tenpo/purchases/${selectedPurchaseId}/confirmar-real`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cuotaReal })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al confirmar');
-      }
-
-      showToast('Valor real confirmado - Las cuotas ya no se recalcularán automáticamente', 'success');
-      
-      setConfirmModalOpen(false);
-      setCuotaRealInput('');
-      setSelectedPurchaseId(null);
-      await loadData();
-    } catch (error: any) {
-      console.error('Error confirmando:', error);
-      showToast(error.message || 'Error al confirmar valor real', 'error');
-    }
-  };
-
   const loadData = async () => {
     try {
       console.log('🔍 Cargando compras con cuotas del año:', anioSeleccionado);
@@ -459,68 +302,6 @@ export default function Tenpo() {
     }
   };
 
-  const getMonthlyData = (purchaseId: number, month: number): MonthlyData => {
-    const purchase = purchases.find(p => p.id === purchaseId);
-    if (!purchase) return { estimated: 0, paid: 0, gap: 0 };
-
-    // Calcular estimado: suma de cuotas que vencen en este mes DEL AÑO SELECCIONADO
-    const estimated = purchase.installments
-      .filter(inst => {
-        const dueDate = new Date(inst.dueDate);
-        return dueDate.getFullYear() === anioSeleccionado && 
-               dueDate.getMonth() + 1 === month;
-      })
-      .reduce((sum, inst) => sum + inst.finalMonthlyAmountClp, 0);
-
-    // Calcular pagado: pagos asociados a este mes
-    // (En Tenpo no hay relación directa purchase-payment, así que calculamos proporcionalmente)
-    const paid = 0; // Por ahora, necesitaríamos más lógica para asociar pagos
-
-    const gap = estimated - paid;
-
-    return { estimated, paid, gap };
-  };
-
-  const getMonthlyTotal = (month: number): MonthlyData => {
-    const totals = purchases.reduce(
-      (acc, purchase) => {
-        const monthData = getMonthlyData(purchase.id, month);
-        acc.estimated += monthData.estimated;
-        acc.paid += monthData.paid;
-        acc.gap += monthData.gap;
-        return acc;
-      },
-      { estimated: 0, paid: 0, gap: 0 }
-    );
-
-    return totals;
-  };
-
-  const getPurchaseTotal = (purchaseId: number): number => {
-    const purchase = purchases.find(p => p.id === purchaseId);
-    if (!purchase) return 0;
-    
-    // Solo sumar cuotas que vencen en el año seleccionado
-    return purchase.installments
-      .filter(inst => {
-        const dueYear = new Date(inst.dueDate).getFullYear();
-        return dueYear === anioSeleccionado;
-      })
-      .reduce((sum, inst) => sum + inst.finalMonthlyAmountClp, 0);
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), 'dd/MM/yyyy', { locale: es });
-  };
-
   const formatDateTime = (date: Date) => {
     return format(date, "dd/MM/yyyy HH:mm", { locale: es });
   };
@@ -529,61 +310,16 @@ export default function Tenpo() {
     return format(date, "EEEE dd 'de' MMMM", { locale: es });
   };
 
-  if (!isAuthenticated) {
-    return (
-      <MainLayout>
-        <div className="container">
-          <PageTitleSection title="Tenpo - TC Prepago" />
-          <div className="card" style={{ backgroundColor: '#fef3c7', borderColor: '#fbbf24' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem' }}>
-              {tokenExpired ? '⚠️ Token expirado' : '🔐 Autenticación requerida'}
-            </h2>
-            <p style={{ marginBottom: '1rem', color: '#666' }}>
-              {tokenExpired 
-                ? 'Tu sesión con Gmail ha expirado. Debes autorizar nuevamente el acceso para continuar sincronizando.'
-                : 'Para sincronizar con Gmail, debes autorizar el acceso a tu cuenta.'}
-            </p>
-            <a
-              href={authUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="button"
-              style={{ display: 'inline-block', padding: '0.5rem 1.5rem', backgroundColor: '#3b82f6', color: 'white', textDecoration: 'none' }}
-              onClick={(e) => {
-                // Asegurar que se abre en ventana nueva
-                e.preventDefault();
-                window.open(authUrl, '_blank', 'width=600,height=700');
-              }}
-            >
-              {tokenExpired ? '🔄 Re-autorizar con Google' : '✅ Autorizar con Google'}
-            </a>
-            <p style={{ marginTop: '1rem', fontSize: '0.875rem', color: '#666' }}>
-              💡 Se abrirá una ventana emergente. Si no aparece, verifica que tu navegador no esté bloqueando pop-ups.
-            </p>
-          </div>
-        </div>
-      </MainLayout>
-    );
-  }
-
-  const totalAnualEstimado = MESES.reduce((sum, _, idx) => {
-    return sum + getMonthlyTotal(idx + 1).estimated;
-  }, 0);
-
-  const totalAnualPagado = MESES.reduce((sum, _, idx) => {
-    return sum + getMonthlyTotal(idx + 1).paid;
-  }, 0);
-
   return (
     <MainLayout>
       <div className="container">
         <PageTitleSection
           title="Tenpo - TC Prepago"
-          description="Gestión de compras con tarjeta de crédito Tenpo - Proyección de cuotas"
+          description="Gestión de compras con tarjeta de crédito Tenpo - Vista analítica anual"
           actions={
             <>
               <button
-                onClick={() => navigate('/presupuesto/tenpo/config')}
+                onClick={() => navigate('/actual/tenpo')}
                 style={{
                   padding: '0.5rem 1rem',
                   backgroundColor: '#3b82f6',
@@ -595,13 +331,13 @@ export default function Tenpo() {
                   cursor: 'pointer'
                 }}
               >
-                ⚙️ Configurar Tasa
+                📊 Vista Mensual
               </button>
               <button
-                onClick={() => navigate('/configuracion-tc/TENPO')}
+                onClick={() => navigate('/presupuesto/tenpo/config')}
                 style={{
                   padding: '0.5rem 1rem',
-                  backgroundColor: '#10b981',
+                  backgroundColor: '#6b7280',
                   color: '#fff',
                   borderRadius: '6px',
                   border: 'none',
@@ -610,7 +346,7 @@ export default function Tenpo() {
                   cursor: 'pointer'
                 }}
               >
-                📅 Configuración TC
+                ⚙️ Configurar Tasa
               </button>
               <button
                 onClick={() => navigate('/tenpo/categorias', { state: { from: '/presupuesto/tenpo' } })}
@@ -631,6 +367,14 @@ export default function Tenpo() {
           }
         />
 
+        {/* Banner de estado de sincronización Gmail */}
+        <GmailSyncStatusBanner
+          status={mapLegacyAuthState(tokenExpired, !!authUrl, lastSync).status}
+          serviceName="Tenpo TC"
+          lastSync={lastSync}
+          onReauthorize={() => window.open(authUrl, '_blank', 'width=600,height=700')}
+        />
+
         {/* Controles */}
         <div className="card" style={{ marginBottom: '1.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
@@ -648,14 +392,15 @@ export default function Tenpo() {
 
             <button
               onClick={handleSync}
-              disabled={syncing}
+              disabled={syncing || tokenExpired}
               className="button"
               style={{ 
-                opacity: syncing ? 0.5 : 1,
-                cursor: syncing ? 'not-allowed' : 'pointer'
+                opacity: (syncing || tokenExpired) ? 0.5 : 1,
+                cursor: (syncing || tokenExpired) ? 'not-allowed' : 'pointer'
               }}
+              title={tokenExpired ? 'Token expirado. Re-autoriza con Google para sincronizar.' : ''}
             >
-              {syncing ? '🔄 Sincronizando...' : '🔄 Actualizar desde Gmail'}
+              {syncing ? '🔄 Sincronizando...' : tokenExpired ? '🔒 Sincronizar (bloqueado)' : '🔄 Actualizar desde Gmail'}
             </button>
 
             <button
@@ -668,46 +413,10 @@ export default function Tenpo() {
             >
               ➕ Agregar compra manual
             </button>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '1rem' }}>
-              <Input
-                value={searchQuery}
-                onChange={(value) => setSearchQuery(value)}
-                onKeyPress={(e: any) => e.key === 'Enter' && handleSearch()}
-                placeholder="Buscar compra..."
-                style={{ width: '250px' }}
-              />
-              <button
-                onClick={handleSearch}
-                disabled={searching}
-                className="button"
-                style={{ 
-                  opacity: searching ? 0.5 : 1,
-                  cursor: searching ? 'not-allowed' : 'pointer'
-                }}
-              >
-                {searching ? '🔍 Buscando...' : '🔍 Buscar'}
-              </button>
-            </div>
-
-            <div style={{ 
-              marginLeft: 'auto', 
-              display: 'flex', 
-              gap: '1rem', 
-              fontSize: '0.875rem',
-              color: '#666'
-            }}>
-              <span>
-                Total Estimado: <strong style={{ color: '#ef4444' }}>{formatCurrency(totalAnualEstimado)}</strong>
-              </span>
-              <span>
-                Total Pagado: <strong style={{ color: '#10b981' }}>{formatCurrency(totalAnualPagado)}</strong>
-              </span>
-            </div>
           </div>
         </div>
 
-        {/* Información del ciclo de facturación */}
+        {/* Información resumida */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
           <div className="card" style={{ backgroundColor: '#eff6ff', borderLeft: '4px solid #3b82f6' }}>
             <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem' }}>
@@ -746,513 +455,140 @@ export default function Tenpo() {
           </div>
         </div>
 
-        {/* Tabla principal */}
-        <div className="card" style={{ overflowX: 'auto' }}>
-          <table className="table" style={{ minWidth: '100%' }}>
-            <thead>
-              <tr>
-                <th rowSpan={2} style={{ minWidth: '250px', position: 'sticky', left: 0, backgroundColor: '#f9fafb', zIndex: 10 }}>
-                  Compra
-                </th>
-                <th rowSpan={2} style={{ minWidth: '100px' }}>Fecha</th>
-                <th rowSpan={2} style={{ minWidth: '100px' }}>Cuotas</th>
-                <th rowSpan={2} style={{ minWidth: '120px' }}>Total Compra</th>
-                {MESES.map((mes, idx) => (
-                  <th key={`header-${idx}`} colSpan={1} style={{ minWidth: 'var(--month-column-width)', textAlign: 'center' }}>
-                    {mes}
-                  </th>
-                ))}
-                <th rowSpan={2} style={{ minWidth: '120px' }}>Total Año</th>
-              </tr>
-            </thead>
-            <tbody>
-              {purchases.length === 0 ? (
-                <tr>
-                  <td colSpan={MESES.length + 5} style={{ textAlign: 'center', padding: '3rem', color: '#666' }}>
-                    No hay compras registradas para {anioSeleccionado}
-                  </td>
-                </tr>
-              ) : (
-                <>
-                  {purchases.map((purchase) => (
-                    <React.Fragment key={purchase.id}>
-                      <tr
-                        style={{ cursor: 'pointer', backgroundColor: expandido === purchase.id ? '#eff6ff' : undefined }}
-                        onClick={() => setExpandido(expandido === purchase.id ? null : purchase.id)}
-                      >
-                        <td style={{ position: 'sticky', left: 0, backgroundColor: expandido === purchase.id ? '#eff6ff' : '#fff', zIndex: 9 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span>{expandido === purchase.id ? '▼' : '▶'}</span>
-                            <div>
-                              <div style={{ fontWeight: '500' }}>{purchase.merchant}</div>
-                              <div style={{ fontSize: '0.75rem', color: '#666', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <span>{purchase.installments.length} cuotas</span>
-                                {purchase.modoMonto === 'REAL' ? (
-                                  <span style={{ 
-                                    backgroundColor: '#10b981', 
-                                    color: '#fff', 
-                                    padding: '2px 6px', 
-                                    borderRadius: '4px',
-                                    fontSize: '0.65rem',
-                                    fontWeight: '600'
-                                  }}>
-                                    CONFIRMADO
-                                  </span>
-                                ) : (
-                                  <span style={{ 
-                                    backgroundColor: '#fbbf24', 
-                                    color: '#78350f', 
-                                    padding: '2px 6px', 
-                                    borderRadius: '4px',
-                                    fontSize: '0.65rem',
-                                    fontWeight: '600'
-                                  }}>
-                                    ESTIMADO
-                                  </span>
-                                )}
-                                {purchase.tieneInteres && purchase.interesTotalEstimado && (
-                                  <span style={{ color: '#ef4444', fontSize: '0.7rem' }}>
-                                    +${Math.round(purchase.interesTotalEstimado).toLocaleString('es-CL')} interés
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td>{formatDate(purchase.purchaseDate)}</td>
-                        <td style={{ textAlign: 'center' }}>{purchase.installmentsCount}</td>
-                        <td style={{ textAlign: 'right' }}>
-                          <div style={{ fontWeight: '600' }}>
-                            {formatCurrency(purchase.amountTotalClp)}
-                          </div>
-                          {purchase.tieneInteres && purchase.totalFinanciadoEstimado && (
-                            <div style={{ fontSize: '0.75rem', color: purchase.modoMonto === 'REAL' ? '#059669' : '#666' }}>
-                              {purchase.modoMonto === 'REAL' && '✓ '}
-                              Total: ${Math.round(purchase.totalFinanciadoEstimado).toLocaleString('es-CL')}
-                              {purchase.modoMonto === 'ESTIMADO' && ' (est.)'}
-                            </div>
-                          )}
-                        </td>
-                        {MESES.map((_, idx) => {
-                          const monthData = getMonthlyData(purchase.id, idx + 1);
-                          return (
-                            <td key={`purchase-${purchase.id}-month-${idx}`} style={{ textAlign: 'right', backgroundColor: monthData.estimated > 0 ? '#fef3c7' : undefined }}>
-                              {monthData.estimated > 0 ? formatCurrency(monthData.estimated) : '-'}
-                            </td>
-                          );
-                        })}
-                        <td style={{ textAlign: 'right', fontWeight: '600' }}>
-                          {formatCurrency(getPurchaseTotal(purchase.id))}
-                        </td>
-                      </tr>
-
-                      {/* Detalle de cuotas */}
-                      {expandido === purchase.id && (
-                        <React.Fragment>
-                          {/* Fila de controles */}
-                          <tr style={{ backgroundColor: '#f3f4f6' }}>
-                            <td colSpan={MESES.length + 5} style={{ padding: '1rem' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                  <input
-                                    type="checkbox"
-                                    checked={purchase.tieneInteres}
-                                    onChange={(e) => {
-                                      e.stopPropagation();
-                                      handleToggleInteres(purchase.id, purchase.tieneInteres);
-                                    }}
-                                    disabled={purchase.modoMonto === 'REAL'}
-                                    style={{ 
-                                      width: '18px', 
-                                      height: '18px',
-                                      cursor: purchase.modoMonto === 'REAL' ? 'not-allowed' : 'pointer'
-                                    }}
-                                  />
-                                  <span style={{ fontWeight: '500' }}>Con interés (2.11% mensual)</span>
-                                </label>
-
-                                {purchase.modoMonto === 'ESTIMADO' && (
-                                  <>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedPurchaseId(purchase.id);
-                                        setConfirmModalOpen(true);
-                                      }}
-                                      className="button"
-                                      style={{ 
-                                        fontSize: '0.875rem',
-                                        padding: '0.5rem 1rem',
-                                        backgroundColor: '#10b981',
-                                        color: '#fff'
-                                      }}
-                                    >
-                                      ✓ Confirmar valor real
-                                    </button>
-
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleAdjustSchedule(purchase.id);
-                                      }}
-                                      className="button"
-                                      style={{ 
-                                        fontSize: '0.875rem',
-                                        padding: '0.5rem 1rem',
-                                        backgroundColor: '#6366f1',
-                                        color: '#fff'
-                                      }}
-                                    >
-                                      📅 Ajustar mes de pago
-                                    </button>
-
-                                    {purchase.scheduleMode === 'MANUAL' && purchase.firstDueDateOverride && (
-                                      <span style={{
-                                        fontSize: '0.75rem',
-                                        padding: '0.375rem 0.625rem',
-                                        backgroundColor: '#dbeafe',
-                                        color: '#1e40af',
-                                        borderRadius: '0.375rem',
-                                        fontWeight: '600',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.25rem'
-                                      }}>
-                                        📅 Calendario manual (desde {format(new Date(purchase.firstDueDateOverride), 'MMM yyyy', { locale: es })})
-                                      </span>
-                                    )}
-                                  </>
-                                )}
-
-                                {purchase.tieneInteres && (
-                                  <div style={{ 
-                                    fontSize: '0.875rem', 
-                                    color: '#374151',
-                                    backgroundColor: '#f9fafb',
-                                    padding: '0.75rem',
-                                    borderRadius: '0.375rem',
-                                    border: '1px solid #e5e7eb',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '0.375rem'
-                                  }}>
-                                    <div style={{ 
-                                      fontWeight: '600', 
-                                      marginBottom: '0.25rem',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: '0.5rem'
-                                    }}>
-                                      {purchase.modoMonto === 'REAL' ? (
-                                        <>
-                                          <span style={{ color: '#059669' }}>✓ Confirmado</span>
-                                          <span style={{ 
-                                            backgroundColor: '#d1fae5', 
-                                            color: '#065f46',
-                                            padding: '0.125rem 0.5rem',
-                                            borderRadius: '0.25rem',
-                                            fontSize: '0.75rem',
-                                            fontWeight: '600'
-                                          }}>
-                                            REAL
-                                          </span>
-                                        </>
-                                      ) : (
-                                        <>
-                                          <span style={{ color: '#6b7280' }}>Proyección</span>
-                                          <span style={{ 
-                                            backgroundColor: '#f3f4f6', 
-                                            color: '#6b7280',
-                                            padding: '0.125rem 0.5rem',
-                                            borderRadius: '0.25rem',
-                                            fontSize: '0.75rem',
-                                            fontWeight: '600'
-                                          }}>
-                                            ESTIMADO
-                                          </span>
-                                        </>
-                                      )}
-                                    </div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.5rem 1rem', fontSize: '0.875rem' }}>
-                                      <span style={{ color: '#6b7280' }}>Capital:</span>
-                                      <span style={{ fontWeight: '500' }}>${Math.round(purchase.amountTotalClp).toLocaleString('es-CL')}</span>
-                                      
-                                      {/* Caso 1: Fee definido y presente */}
-                                      {purchase.feePct !== null && purchase.feePct !== undefined && purchase.feeAmountClp !== null && purchase.feeAmountClp !== undefined && (
-                                        <>
-                                          <span style={{ color: '#6b7280' }}>
-                                            Comisión ({(purchase.feePct * 100).toFixed(2)}%):
-                                          </span>
-                                          <span style={{ fontWeight: '500', color: '#dc2626' }}>
-                                            +${Math.round(purchase.feeAmountClp).toLocaleString('es-CL')}
-                                          </span>
-                                        </>
-                                      )}
-                                      
-                                      {/* Caso 2: Fee faltante (compra antigua sin metadata.feePct) */}
-                                      {purchase.feeMissing && (
-                                        <>
-                                          <span style={{ color: '#9ca3af', fontStyle: 'italic' }}>Comisión:</span>
-                                          <span style={{ fontStyle: 'italic', color: '#9ca3af', fontSize: '0.8125rem' }}>
-                                            pendiente (se confirmará con estado de cuenta)
-                                          </span>
-                                        </>
-                                      )}
-                                      
-                                      {purchase.financedBaseClp && purchase.financedBaseClp !== purchase.amountTotalClp && (
-                                        <>
-                                          <span style={{ color: '#6b7280' }}>Base financiada:</span>
-                                          <span style={{ fontWeight: '600', color: '#1f2937' }}>
-                                            ${Math.round(purchase.financedBaseClp).toLocaleString('es-CL')}
-                                          </span>
-                                        </>
-                                      )}
-                                      
-                                      {purchase.installmentsCount > 1 && (
-                                        <>
-                                          <span style={{ color: '#6b7280' }}>Interés por cuotas:</span>
-                                          <span style={{ fontWeight: '500', color: '#dc2626' }}>
-                                            +${Math.round(purchase.interesTotalEstimado || 0).toLocaleString('es-CL')}
-                                          </span>
-                                        </>
-                                      )}
-                                      
-                                      <span style={{ color: '#6b7280', fontWeight: '600' }}>Total financiado:</span>
-                                      <span style={{ fontWeight: '700', fontSize: '0.9375rem', color: '#1f2937' }}>
-                                        ${Math.round(purchase.totalFinanciadoEstimado || 0).toLocaleString('es-CL')}
-                                      </span>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-
-                          {/* Cuotas individuales */}
-                          {purchase.installments.map((inst) => {
-                          const dueDate = new Date(inst.dueDate);
-                          const dueMonth = dueDate.getMonth();
-                          
-                          return (
-                            <tr key={`inst-${inst.id}`} style={{ backgroundColor: '#f9fafb', fontSize: '0.875rem' }}>
-                              <td style={{ paddingLeft: '3rem', position: 'sticky', left: 0, backgroundColor: '#f9fafb', zIndex: 9 }}>
-                                Cuota {inst.installmentNumber}/{purchase.installmentsCount}
-                                {inst.overrideInterestRate && inst.overrideInterestRate > 0 && (
-                                  <span style={{ marginLeft: '0.5rem', color: '#ef4444', fontSize: '0.75rem' }}>
-                                    (+{inst.overrideInterestRate.toFixed(1)}%)
-                                  </span>
-                                )}
-                              </td>
-                              <td>{formatDate(inst.dueDate)}</td>
-                              <td style={{ textAlign: 'center' }}>-</td>
-                              <td style={{ textAlign: 'right' }}>
-                                {formatCurrency(inst.baseAmountClp)}
-                              </td>
-                              {MESES.map((_, idx) => (
-                                <td 
-                                  key={`inst-${inst.id}-month-${idx}`}
-                                  style={{ 
-                                    textAlign: 'right',
-                                    backgroundColor: idx === dueMonth ? '#dbeafe' : undefined,
-                                    fontWeight: idx === dueMonth ? '600' : undefined
-                                  }}
-                                >
-                                  {idx === dueMonth ? formatCurrency(inst.finalMonthlyAmountClp) : '-'}
-                                </td>
-                              ))}
-                              <td style={{ textAlign: 'right' }}>
-                                {formatCurrency(inst.finalMonthlyAmountClp)}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                        </React.Fragment>
-                      )}
-                    </React.Fragment>
-                  ))}
-
-                  {/* Fila de totales */}
-                  <tr style={{ backgroundColor: '#1e40af', color: '#fff', fontWeight: '700' }}>
-                    <td colSpan={4} style={{ position: 'sticky', left: 0, backgroundColor: '#1e40af', zIndex: 10 }}>
-                      TOTAL MENSUAL
-                    </td>
-                    {MESES.map((_, idx) => {
-                      const monthData = getMonthlyTotal(idx + 1);
-                      return (
-                        <td key={`total-month-${idx}`} style={{ textAlign: 'right' }}>
-                          {monthData.estimated > 0 ? formatCurrency(monthData.estimated) : '-'}
-                        </td>
-                      );
-                    })}
-                    <td style={{ textAlign: 'right' }}>
-                      {formatCurrency(totalAnualEstimado)}
-                    </td>
-                  </tr>
-                </>
+        {/* Filtros activos */}
+        {(selectedMonth || selectedCategory) && (
+          <div style={{
+            marginBottom: '1.5rem',
+            padding: '1rem',
+            backgroundColor: '#f0f9ff',
+            borderRadius: '8px',
+            border: '2px solid #0ea5e9',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '1rem'
+          }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
+              <span style={{ fontWeight: '600', color: '#0369a1' }}>🔍 Mostrando:</span>
+              {selectedMonth && (
+                <div style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#fff',
+                  border: '1px solid #7dd3fc',
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}>
+                  <span style={{ fontSize: '0.875rem', color: '#0369a1' }}>
+                    {['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'][selectedMonth - 1]} {anioSeleccionado}
+                  </span>
+                  <button
+                    onClick={() => setSelectedMonth(null)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#64748b',
+                      fontSize: '1rem',
+                      padding: 0,
+                      marginLeft: '0.25rem'
+                    }}
+                    title="Quitar filtro de mes"
+                  >
+                    ✕
+                  </button>
+                </div>
               )}
-            </tbody>
-          </table>
+              {selectedCategory && (
+                <div style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#fff',
+                  border: '1px solid #7dd3fc',
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}>
+                  <span style={{ fontSize: '0.875rem', color: '#0369a1' }}>
+                    {selectedCategory}
+                  </span>
+                  <button
+                    onClick={() => setSelectedCategory(null)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#64748b',
+                      fontSize: '1rem',
+                      padding: 0,
+                      marginLeft: '0.25rem'
+                    }}
+                    title="Quitar filtro de categoría"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={handleClearFilters}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#0ea5e9',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                cursor: 'pointer'
+              }}
+            >
+              🗑️ Limpiar todos los filtros
+            </button>
+          </div>
+        )}
+
+        {/* Gráficos coordinados */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))',
+          gap: '1.5rem',
+          marginBottom: '1.5rem'
+        }}>
+          <MonthlyBarChart
+            purchases={purchases}
+            selectedYear={anioSeleccionado}
+            selectedMonth={selectedMonth}
+            onSelectMonth={handleSelectMonth}
+          />
+          <CategoryParetoChart
+            purchases={purchases}
+            selectedYear={anioSeleccionado}
+            selectedMonth={selectedMonth}
+            selectedCategory={selectedCategory}
+            onSelectCategory={handleSelectCategory}
+          />
         </div>
+
+        {/* Tabla filtrada */}
+        <AnnualTenpoTable
+          purchases={purchases}
+          selectedYear={anioSeleccionado}
+          selectedMonth={selectedMonth}
+          selectedCategory={selectedCategory}
+          onPurchaseClick={handlePurchaseClick}
+        />
+
+        {/* Modal de detalle de compra */}
+        <PurchaseDetailModal
+          purchase={selectedPurchase}
+          open={detailModalOpen}
+          onClose={handleDetailModalClose}
+          onDataChange={loadData}
+        />
       </div>
-
-      {/* Modal confirmar valor real */}
-      {confirmModalOpen && (
-        <div 
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-          }}
-          onClick={() => {
-            setConfirmModalOpen(false);
-            setCuotaRealInput('');
-            setSelectedPurchaseId(null);
-          }}
-        >
-          <div 
-            className="card"
-            style={{ 
-              maxWidth: '500px',
-              width: '90%'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 style={{ marginBottom: '1rem', color: '#1e40af' }}>Confirmar Valor Real</h3>
-            <p style={{ marginBottom: '1rem', color: '#666' }}>
-              Ingresa el <strong>valor EXACTO de la cuota</strong> que aparece en tu estado de cuenta de Tenpo.
-              Una vez confirmado, esta compra quedará marcada como CONFIRMADA y no se recalculará automáticamente.
-            </p>
-            
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
-                Valor de cada cuota (CLP)
-              </label>
-              <InputNumber
-                value={cuotaRealInput ? parseFloat(cuotaRealInput) : undefined}
-                onChange={(value) => setCuotaRealInput(value?.toString() || '')}
-                placeholder="Ej: 15000"
-                style={{ width: '100%' }}
-                autoFocus
-              />
-            </div>
-
-            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => {
-                  setConfirmModalOpen(false);
-                  setCuotaRealInput('');
-                  setSelectedPurchaseId(null);
-                }}
-                className="button"
-                style={{ backgroundColor: '#6b7280', color: '#fff' }}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleConfirmarReal}
-                className="button"
-                style={{ backgroundColor: '#10b981', color: '#fff' }}
-              >
-                ✓ Confirmar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal ajustar calendario */}
-      {scheduleModalOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-          }}
-          onClick={() => {
-            setScheduleModalOpen(false);
-            setScheduleDateInput('');
-            setSelectedPurchaseId(null);
-          }}
-        >
-          <div
-            className="card"
-            style={{ 
-              maxWidth: '500px',
-              width: '90%'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 style={{ marginBottom: '1rem', color: '#1e40af' }}>📅 Ajustar Mes de Pago</h3>
-            <p style={{ marginBottom: '1rem', color: '#666' }}>
-              Ingresa la <strong>fecha de la primera cuota</strong> según tu estado de cuenta.
-              El calendario completo se recalculará automáticamente desde esta fecha.
-            </p>
-            
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
-                Fecha de primera cuota
-              </label>
-              <DatePicker
-                value={scheduleDateInput ? new Date(scheduleDateInput) : null}
-                onChange={(value) => setScheduleDateInput(value ? format(value, 'yyyy-MM-dd') : '')}
-                format="yyyy-MM-dd"
-                placeholder="2026-03-05"
-                style={{ width: '100%' }}
-                oneTap
-              />
-              <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.5rem' }}>
-                Ejemplo: 2026-03-05
-              </p>
-            </div>
-
-            <div style={{ 
-              padding: '0.75rem', 
-              backgroundColor: '#dbeafe', 
-              borderRadius: '0.375rem',
-              marginBottom: '1rem'
-            }}>
-              <p style={{ fontSize: '0.875rem', color: '#1e40af', margin: 0 }}>
-                💡 <strong>Tip:</strong> Deja el campo vacío para volver al modo automático
-              </p>
-            </div>
-
-            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => {
-                  setScheduleModalOpen(false);
-                  setScheduleDateInput('');
-                  setSelectedPurchaseId(null);
-                }}
-                className="button"
-                style={{ backgroundColor: '#6b7280', color: '#fff' }}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleApplySchedule}
-                className="button"
-                style={{ backgroundColor: '#6366f1', color: '#fff' }}
-              >
-                ✓ Aplicar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Modal para crear compra manual */}
       {manualModalOpen && (

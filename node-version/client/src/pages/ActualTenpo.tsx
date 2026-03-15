@@ -8,6 +8,8 @@ import DashboardTenpo from '../components/actual/DashboardTenpo';
 import CategoryBarChart from '../components/actual/CategoryBarChart';
 import MonthlyPaymentPanel from '../components/actual/MonthlyPaymentPanel';
 import YearMonthPicker from '../components/common/YearMonthPicker';
+import GmailSyncStatusBanner from '../components/common/GmailSyncStatusBanner';
+import { mapLegacyAuthState } from '../types/gmailIntegration';
 
 // Hook simple para media query
 function useMediaQueryHook(query: string) {
@@ -86,7 +88,6 @@ export default function ActualTenpo() {
   const savedPeriod = getSavedPeriod();
   const [year, setYear] = useState(savedPeriod.year);
   const [month, setMonth] = useState(savedPeriod.month);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [tokenExpired, setTokenExpired] = useState(false);
   const [authUrl, setAuthUrl] = useState('');
   const [purchases, setPurchases] = useState<Purchase[]>([]);
@@ -230,7 +231,6 @@ export default function ActualTenpo() {
       const res = await fetch(`/api/tenpo/admin/monthly?year=${year}&month=${month}`);
       
       if (res.status === 401) {
-        setIsAuthenticated(false);
         setTokenExpired(true);
         // Intentar obtener authUrl si no la tenemos
         if (!authUrl) {
@@ -238,15 +238,14 @@ export default function ActualTenpo() {
              .then(r => r.json())
              .then(d => d.authUrl && setAuthUrl(d.authUrl));
         }
-        return;
+        // NO hacer return - continuar procesando si hay datos
       }
       
-      if (!res.ok) {
+      if (!res.ok && res.status !== 401) {
         throw new Error('Error fetching data');
       }
 
       const data = await res.json();
-      setIsAuthenticated(true);
       setPurchases(data.purchases || []); 
     } catch (error) {
       console.error('❌ Error cargando datos:', error);
@@ -268,38 +267,6 @@ export default function ActualTenpo() {
       return catName === selectedCategory;
     });
   }, [purchases, selectedCategory]);
-
-  if (!isAuthenticated && !loading) {
-    return (
-      <MainLayout>
-        <div className="container">
-          <PageTitleSection title="Actual - Tenpo" />
-          <div className="card" style={{ backgroundColor: '#fef3c7', borderColor: '#fbbf24' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem' }}>
-              {tokenExpired ? '⚠️ Token expirado' : '🔐 Autenticación requerida'}
-            </h2>
-            <p style={{ marginBottom: '1rem', color: '#666' }}>
-              {tokenExpired 
-                ? 'Tu sesión con Gmail ha expirado. Debes autorizar nuevamente el acceso para continuar.'
-                : 'Para ver datos de Tenpo, debes autorizar el acceso a tu cuenta de Gmail.'}
-            </p>
-            <a
-              href={authUrl}
-              target="_blank"
-              rel="noreferrer"
-              style={{ display: 'inline-block', padding: '0.5rem 1.5rem', backgroundColor: '#3b82f6', color: 'white', textDecoration: 'none', borderRadius: '4px' }}
-              onClick={(e) => {
-                e.preventDefault();
-                window.open(authUrl, '_blank', 'width=600,height=700');
-              }}
-            >
-              {tokenExpired ? '🔄 Re-autorizar con Google' : '✅ Autorizar con Google'}
-            </a>
-          </div>
-        </div>
-      </MainLayout>
-    );
-  }
 
   return (
     <MainLayout>
@@ -350,6 +317,13 @@ export default function ActualTenpo() {
           }
         />
         </div>
+
+        {/* Banner de estado de sincronización Gmail */}
+        <GmailSyncStatusBanner
+          status={mapLegacyAuthState(tokenExpired, !!authUrl, null).status}
+          serviceName="Tenpo TC"
+          onReauthorize={() => window.open(authUrl, '_blank', 'width=600,height=700')}
+        />
 
         {loading && (
           <div style={{ textAlign: 'center', padding: '2rem' }}>

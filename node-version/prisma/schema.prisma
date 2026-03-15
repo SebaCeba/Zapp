@@ -105,9 +105,12 @@ model ServicioBasico {
   activo            Boolean                          @default(true)
   esBase            Boolean                          @default(false) @map("es_base")
   orden             Int                              @default(0)
+  gmailLabel        String?                          @map("gmail_label") // Ej: "Facturación ENEL"
+  hasEmailConnector Boolean                          @default(false) @map("has_email_connector")
   createdAt         DateTime                         @default(now()) @map("created_at")
   updatedAt         DateTime                         @updatedAt @map("updated_at")
   presupuestos      PresupuestoServicioBasico[]
+  transactions      UtilityTransaction[]
 
   @@map("servicios_basicos")
 }
@@ -394,4 +397,56 @@ model TcBillingOverride {
 
   @@unique([tcKey, year, month])
   @@map("tc_billing_overrides")
+}
+
+model Ahorro {
+  id                Int                      @id @default(autoincrement())
+  nombre            String                   @unique
+  activo            Boolean                  @default(true)
+  orden             Int                      @default(0)
+  createdAt         DateTime                 @default(now()) @map("created_at")
+  updatedAt         DateTime                 @updatedAt @map("updated_at")
+  presupuestos      PresupuestoAhorro[]
+
+  @@map("ahorros")
+}
+
+model PresupuestoAhorro {
+  id                Int             @id @default(autoincrement())
+  ahorroId          Int             @map("ahorro_id")
+  anio              Int
+  enero             Float           @default(0)
+  febrero           Float           @default(0)
+  marzo             Float           @default(0)
+  abril             Float           @default(0)
+  mayo              Float           @default(0)
+  junio             Float           @default(0)
+  julio             Float           @default(0)
+  agosto            Float           @default(0)
+  septiembre        Float           @default(0)
+  octubre           Float           @default(0)
+  noviembre         Float           @default(0)
+  diciembre         Float           @default(0)
+  ahorro            Ahorro          @relation(fields: [ahorroId], references: [id], onDelete: Cascade)
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  @@unique([ahorroId, anio])
+  @@map("presupuestos_ahorros")
+}
+
+// Transacciones reales de servicios básicos (similar a TenpoPurchase)
+model UtilityTransaction {
+  id                Int             @id @default(autoincrement())
+  providerKey       String          @map("provider_key") // "ENEL", "AGUA", etc. → ServicioBasico.nombre
+  provider          ServicioBasico  @relation(fields: [providerKey], references: [nombre], onDelete: Cascade)
+  transactionDate   DateTime        @map("transaction_date") // Fecha del consumo/pago
+  amount            Float           // Monto en CLP
+  description       String?         // Descripción opcional
+  source            String          @default("manual") // manual | email | csv
+  metadata          String?         // JSON string para extensibilidad futura
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  @@map("utility_transactions")
 }

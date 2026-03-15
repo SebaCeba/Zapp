@@ -59,17 +59,27 @@ export class GmailService {
 
     // Verificar si el token expiró y refrescarlo
     if (new Date() >= tokenRecord.expiryDate) {
-      const { credentials } = await this.oauth2Client.refreshAccessToken();
-      
-      await prisma.googleAuthToken.update({
-        where: { id: tokenRecord.id },
-        data: {
-          accessToken: credentials.access_token!,
-          expiryDate: new Date(credentials.expiry_date!),
-        }
-      });
+      try {
+        const { credentials } = await this.oauth2Client.refreshAccessToken();
+        
+        await prisma.googleAuthToken.update({
+          where: { id: tokenRecord.id },
+          data: {
+            accessToken: credentials.access_token!,
+            expiryDate: new Date(credentials.expiry_date!),
+          }
+        });
 
-      this.oauth2Client.setCredentials(credentials);
+        this.oauth2Client.setCredentials(credentials);
+
+      } catch (error) {
+        console.error('[OAuth] Refresh token inválido o revocado:', error);
+        
+        // Eliminar token corrupto de la base de datos
+        await prisma.googleAuthToken.deleteMany({});
+        
+        throw new Error('Autenticación expirada o revocada. Por favor vuelve a autenticarte.');
+      }
     }
 
     return google.gmail({ version: 'v1', auth: this.oauth2Client });

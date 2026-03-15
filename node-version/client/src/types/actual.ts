@@ -6,7 +6,8 @@ export enum ActualCategory {
   SERVICIOS_BASICOS = 'SERVICIOS_BASICOS',
   SUPERMERCADO = 'SUPERMERCADO',
   PAGO_TC = 'PAGO_TC',
-  AJUSTES = 'AJUSTES'
+  AJUSTES = 'AJUSTES',
+  AHORROS = 'AHORROS'
 }
 
 export interface ActualLine {

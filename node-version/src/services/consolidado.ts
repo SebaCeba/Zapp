@@ -17,6 +17,7 @@ interface MonthlyBudget {
   SUPERMERCADO: MonthlyBudgetLine[];
   PAGO_TC: MonthlyBudgetLine[];
   AJUSTES: MonthlyBudgetLine[];
+  AHORROS: MonthlyBudgetLine[];
 }
 
 const MESES_MAP: Record<number, string> = {
@@ -229,6 +230,21 @@ export async function getMonthlyBudget(year: number, month: number): Promise<Mon
   // 8. PAGO_TC (vacío por default, se llena con ActualEntry)
   const pagoTcLines: MonthlyBudgetLine[] = [];
 
+  // 9. AHORROS
+  const ahorros = await prisma.presupuestoAhorro.findMany({
+    where: { anio: year },
+    include: { ahorro: true }
+  });
+
+  const ahorrosLines: MonthlyBudgetLine[] = ahorros
+    .filter(p => p.ahorro.activo)
+    .map(p => ({
+      itemKey: `ahorro:${p.ahorroId}`,
+      label: p.ahorro.nombre,
+      amountClp: Math.round((p as any)[mesNombre] || 0)
+    }))
+    .filter(l => l.amountClp > 0);
+
   return {
     INGRESOS: ingresosLines,
     SUSCRIPCIONES: suscripcionesLines,
@@ -237,6 +253,7 @@ export async function getMonthlyBudget(year: number, month: number): Promise<Mon
     SERVICIOS_BASICOS: serviciosLines,
     SUPERMERCADO: supermercadoLines,
     PAGO_TC: pagoTcLines,
-    AJUSTES: ajustesLines
+    AJUSTES: ajustesLines,
+    AHORROS: ahorrosLines
   };
 }
