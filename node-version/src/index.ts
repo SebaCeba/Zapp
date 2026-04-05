@@ -12,6 +12,8 @@ import googleIntegrationRoutes from './routes/google-integration';
 import gmailRoutes from './routes/gmail';
 import actualRoutes from './routes/actual';
 import utilitiesRoutes from './routes/utilities';
+// V2 API - Modelo Dimensional Estrella
+import v2Routes from './routes/v2';
 
 dotenv.config();
 
@@ -21,7 +23,10 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// API Routes
+// API Routes v2 (Modelo Dimensional Estrella)
+app.use('/api/v2', v2Routes);
+
+// API Routes legacy (mantener para compatibilidad)
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/obligaciones', obligacionesRoutes);
 app.use('/api/hipotecario', hipotecarioRoutes);
@@ -40,6 +45,7 @@ app.get('/health', (_, res) => {
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`📊 V2 API (Dimensional Model): http://localhost:${PORT}/api/v2/health`);
 });
 
 export default app;
