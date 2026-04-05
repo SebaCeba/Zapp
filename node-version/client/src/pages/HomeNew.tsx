@@ -323,13 +323,13 @@ export function HomePage() {
           </div>
         </Link>
 
-        <Link to="/creditos" className="bg-white hover:shadow-md transition-all p-5 rounded-2xl flex items-center gap-4 shadow-sm group">
+        <Link to="/comparacion" className="bg-white hover:shadow-md transition-all p-5 rounded-2xl flex items-center gap-4 shadow-sm group">
           <div className="w-11 h-11 bg-slate-100 text-slate-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <span className="material-symbols-outlined">credit_card</span>
+            <span className="material-symbols-outlined">compare_arrows</span>
           </div>
           <div>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ver</p>
-            <p className="text-sm font-bold text-navy-dark">Créditos</p>
+            <p className="text-sm font-bold text-navy-dark">Comparación</p>
           </div>
         </Link>
       </section>

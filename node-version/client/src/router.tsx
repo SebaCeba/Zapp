@@ -16,6 +16,7 @@ import ConfigServiciosBasicos from './pages/ConfigServiciosBasicos';
 import { HomePage } from './pages/HomeNew';
 import { ActualPage } from './pages/ActualNew';
 import { PresupuestoResumenPage } from './pages/PresupuestoResumenNew';
+import { ComparacionPage } from './pages/ComparacionNew';
 
 export default function Router() {
   return (
@@ -29,6 +30,7 @@ export default function Router() {
         <Route path="/" element={<HomePage />} />
         <Route path="/presupuesto" element={<PresupuestoResumenPage />} />
         <Route path="/actual" element={<ActualPage />} />
+        <Route path="/comparacion" element={<ComparacionPage />} />
         <Route path="/actual/utilities" element={<ActualUtilities />} />
         <Route path="/app" element={<App />} />
         <Route path="/creditos" element={<Creditos />} />
