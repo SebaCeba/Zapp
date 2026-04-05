@@ -1,0 +1,204 @@
+// Schema del Modelo Dimensional Estrella
+// Basado en docs/auditorias/dimensional-model-star-schema-audit.md
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL_STAR")
+}
+
+// ===== DIMENSIONES =====
+
+// Dimensión: Jerarquía de Cuentas
+model DimAccount {
+  accountId      Int      @id @default(autoincrement()) @map("account_id")
+  accountCode    String   @unique @map("account_code")         // 'INGRESOS', 'ING.001', 'GAS.FIJ', etc.
+  accountName    String   @map("account_name")                 // 'Sueldo Principal', 'Netflix', etc.
+  parentId       Int?     @map("parent_id")                    // FK a otro account_id
+  level          Int                                           // 0=ROOT, 1=INGRESOS/GASTOS/AHORROS, 2=Subcategoría, etc.
+  isBaseMember   Boolean  @map("is_base_member")               // TRUE solo para hojas editables
+  accountType    String?  @map("account_type")                 // 'INGRESO' | 'GASTO' | 'AHORRO'
+  sortOrder      Int      @default(0) @map("sort_order")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  
+  // Relaciones
+  parent         DimAccount?  @relation("AccountHierarchy", fields: [parentId], references: [accountId], onDelete: NoAction, onUpdate: NoAction)
+  children       DimAccount[] @relation("AccountHierarchy")
+  facts          FactFinancial[]
+  budgetRules    BudgetRule[]
+  rawImports     RawImport[]
+
+  @@index([parentId])
+  @@index([accountType])
+  @@index([isBaseMember])
+  @@map("dim_account")
+}
+
+// Dimensión: Escenarios (Presupuesto vs Actual vs Forecast)
+model DimScenario {
+  scenarioId     Int      @id @default(autoincrement()) @map("scenario_id")
+  scenarioCode   String   @unique @map("scenario_code")    // 'BUDGET', 'ACTUAL', 'FORECAST'
+  scenarioName   String   @map("scenario_name")            // 'Presupuesto', 'Real', etc.
+  scenarioType   String   @map("scenario_type")            // 'PLAN' | 'ACTUAL'
+  description    String?
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  
+  // Relaciones
+  facts          FactFinancial[]
+
+  @@map("dim_scenario")
+}
+
+// Dimensión: Tiempo (granularidad mensual)
+model DimTime {
+  timeId         Int      @id @default(autoincrement()) @map("time_id")
+  year           Int
+  month          Int                                       // 1..12
+  yearMonth      String   @unique(map: "unique_year_month_str") @map("year_month")      // '2026-04' formato ISO
+  monthName      String?  @map("month_name")              // 'Abril'
+  quarter        Int?                                     // 1..4
+  isCurrentMonth Boolean  @default(false) @map("is_current_month")
+  createdAt      DateTime @default(now()) @map("created_at")
+  
+  // Relaciones
+  facts          FactFinancial[]
+
+  @@unique([year, month], name: "unique_year_month_int")
+  @@index([year])
+  @@index([quarter])
+  @@map("dim_time")
+}
+
+// ===== TABLA DE HECHOS =====
+
+// Hechos: Operaciones Financieras Unificadas
+model FactFinancial {
+  factId         Int       @id @default(autoincrement()) @map("fact_id")
+  timeId         Int       @map("time_id")              // FK a dim_time
+  scenarioId     Int       @map("scenario_id")          // FK a dim_scenario
+  accountBaseId  Int       @map("account_base_id")      // FK a dim_account (solo base members)
+  
+  amountClp      Int       @map("amount_clp")           // Monto en CLP (sin decimales)
+  
+  // Metadatos operativos (principalmente para ACTUAL)
+  isPaid         Boolean?  @map("is_paid")              // ¿Ya se pagó? (solo ACTUAL)
+  paymentDate    DateTime? @map("payment_date")         // Fecha de pago real (solo ACTUAL)
+  
+  // Auditoría
+  source         String    @default("manual")           // 'manual' | 'import_gmail' | 'calculated' | 'migrated_legacy'
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  
+  // Relaciones
+  time           DimTime     @relation(fields: [timeId], references: [timeId])
+  scenario       DimScenario @relation(fields: [scenarioId], references: [scenarioId])
+  account        DimAccount  @relation(fields: [accountBaseId], references: [accountId])
+
+  @@unique([timeId, scenarioId, accountBaseId], name: "unique_fact")
+  @@index([timeId])
+  @@index([scenarioId])
+  @@index([accountBaseId])
+  @@index([timeId, scenarioId])
+  @@map("fact_financial")
+}
+
+// ===== TABLAS AUXILIARES =====
+
+// Reglas de Cálculo para Budget (Suscripciones, Obligaciones, etc.)
+model BudgetRule {
+  ruleId         Int       @id @default(autoincrement()) @map("rule_id")
+  accountId      Int       @map("account_id")          // FK a dim_account
+  ruleType       String    @map("rule_type")           // 'subscription' | 'loan' | 'import'
+  ruleConfig     String    @map("rule_config")         // JSON: periodicidad, cuotas, etc.
+  isActive       Boolean   @default(true) @map("is_active")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  
+  // Relaciones
+  account        DimAccount @relation(fields: [accountId], references: [accountId])
+
+  @@unique([accountId, ruleType], name: "unique_account_rule")
+  @@map("budget_rules")
+}
+
+// Imports Crudos (Gmail, CSV, etc.) - Staging
+model RawImport {
+  importId        Int       @id @default(autoincrement()) @map("import_id")
+  source          String                                   // 'gmail' | 'csv' | 'api'
+  sourceType      String    @map("source_type")           // 'utilities' | 'banking' | 'cc_statement'
+  rawData         String?   @map("raw_data")              // JSON del mensaje/archivo original
+  parsedData      String?   @map("parsed_data")           // JSON parseado
+  accountId       Int?      @map("account_id")            // FK a dim_account (si se pudo mapear)
+  transactionDate DateTime? @map("transaction_date")
+  amount          Float?
+  status          String    @default("pending")           // 'pending' | 'processed' | 'error'
+  processedAt     DateTime? @map("processed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  
+  // Relaciones
+  account         DimAccount? @relation(fields: [accountId], references: [accountId])
+
+  @@index([source, status])
+  @@map("raw_imports")
+}
+
+// Supuestos Anuales (UF, etc.) - Config
+model Assumptions {
+  id               Int      @id @default(autoincrement())
+  year             Int      @unique
+  ufBaseValue      Float    @map("uf_base_value")
+  ufAnnualVariation Float   @map("uf_annual_variation")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("assumptions")
+}
+
+// Configuración de Presupuesto
+model BudgetConfig {
+  id             Int      @id @default(autoincrement())
+  projectedYear  Int      @unique @map("projected_year")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("budget_config")
+}
+
+// ===== TABLA TEMPORAL DE MIGRACIÓN =====
+// ⚠️ ESTA TABLA DEBE ELIMINARSE POST-MIGRACIÓN
+// Solo para scripts ETL, NO para runtime
+
+model LegacyAccountMapping {
+  mapId          Int      @id @default(autoincrement()) @map("map_id")
+  legacyType     String   @map("legacy_type")           // 'INGRESOS' | 'AHORROS' | 'SUSCRIPCIONES' | etc.
+  legacyId       Int?     @map("legacy_id")             // ID en tabla legacy (IngresoBase.id, etc.)
+  legacyCategory String?  @map("legacy_category")       // Para ActualEntry: 'INGRESOS', etc.
+  legacyItemKey  String?  @map("legacy_item_key")       // Para ActualEntry: 'ingreso:1', etc.
+  legacyName     String?  @map("legacy_name")           // Nombre legacy (debugging)
+  newAccountId   Int      @map("new_account_id")        // ID en dim_account
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@unique([legacyType, legacyId], name: "unique_legacy_type_id")
+  @@unique([legacyCategory, legacyItemKey], name: "unique_legacy_category_key")
+  @@map("legacy_account_mapping")
+}
+
+// ===== TABLAS LEGACY MANTENER PARA OAUTH/CONFIG =====
+
+model GoogleAuthToken {
+  id           Int      @id @default(autoincrement())
+  accessToken  String   @map("access_token")
+  refreshToken String   @map("refresh_token")
+  expiryDate   DateTime @map("expiry_date")
+  scope        String
+  tokenType    String   @default("Bearer") @map("token_type")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("google_auth_tokens")
+}
