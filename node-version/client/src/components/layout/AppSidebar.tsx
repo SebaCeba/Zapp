@@ -16,7 +16,7 @@ const navItems: NavItem[] = [
     icon: 'account_balance_wallet',
     children: [
       { path: '/presupuesto', label: 'Resumen', icon: 'summarize' },
-      { path: '/ingresos', label: 'Ingresos', icon: 'payments' },
+      { path: '/presupuesto/ingresos', label: 'Ingresos', icon: 'payments' },
       { path: '/gastos', label: 'Gastos', icon: 'trending_down' },
       { path: '/ahorros', label: 'Ahorros', icon: 'savings' },
     ],
