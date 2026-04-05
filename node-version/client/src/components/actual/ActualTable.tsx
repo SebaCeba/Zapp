@@ -16,7 +16,9 @@ const CATEGORY_LABELS: Record<ActualCategory, string> = {
   [ActualCategory.HIPOTECARIO]: 'Hipotecario',
   [ActualCategory.SERVICIOS_BASICOS]: 'Servicios Básicos',
   [ActualCategory.SUPERMERCADO]: 'Supermercado',
-  [ActualCategory.AJUSTES]: 'Ajustes'
+  [ActualCategory.PAGO_TC]: 'Pago TC',
+  [ActualCategory.AJUSTES]: 'Ajustes',
+  [ActualCategory.AHORROS]: 'Ahorros'
 };
 
 export default function ActualTable({ category, year, month, onEntryUpdated }: ActualTableProps) {

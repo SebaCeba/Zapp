@@ -192,7 +192,7 @@ router.post('/:provider/import-email/preview', async (req, res) => {
     const authStatus = await gmailService.getAuthStatus();
     if (!authStatus.authenticated) {
       return res.status(401).json({ 
-        error: 'No estás autenticado con Gmail. Ve a /actual/tenpo para autenticarte primero.'
+        error: 'No estás autenticado con Gmail. Autentícate primero en la configuración de servicios básicos.'
       });
     }
 

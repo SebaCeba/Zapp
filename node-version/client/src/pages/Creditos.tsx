@@ -4,7 +4,6 @@ import PageTitleSection from '../layout/PageTitleSection';
 import YearAndUFSelector from '../components/YearAndUFSelector';
 import ObligacionForm, { ObligacionFormData } from '../components/ObligacionForm';
 import VistaPreviaObligacion from '../components/VistaPreviaObligacion';
-import DashboardObligaciones from '../components/DashboardObligaciones';
 import TablaObligaciones from '../components/TablaObligaciones';
 
 export default function Creditos() {
@@ -96,12 +95,6 @@ export default function Creditos() {
           setUf={setUf}
           ufVariation={ufVariation}
           setUfVariation={setUfVariation}
-        />
-        <DashboardObligaciones
-          year={year}
-          uf={uf}
-          ufVariation={ufVariation}
-          refreshKey={refreshKey}
         />
         {previewData ? (
           <VistaPreviaObligacion

@@ -4,13 +4,11 @@ import MainLayout from '../layout/MainLayout';
 import PageTitleSection from '../layout/PageTitleSection';
 import TablaPresupuestoIngresos from '../components/TablaPresupuestoIngresos';
 import GestionarIngresosModal from '../components/GestionarIngresosModal';
-import GestionarBonosModal from '../components/GestionarBonosModal';
 
 const Ingresos: React.FC = () => {
   const [anioActual] = useState(new Date().getFullYear());
   const [anioSeleccionado, setAnioSeleccionado] = useState(anioActual);
   const [modalIngresosAbierto, setModalIngresosAbierto] = useState(false);
-  const [modalBonosAbierto, setModalBonosAbierto] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const aniosDisponibles = Array.from(
@@ -22,16 +20,12 @@ const Ingresos: React.FC = () => {
     setRefreshKey(prev => prev + 1);
   };
 
-  const handleBonosUpdated = () => {
-    setRefreshKey(prev => prev + 1);
-  };
-
   return (
     <MainLayout>
       <div className="container">
         <PageTitleSection
           title="Ingresos"
-          description="Planifica tus ingresos mensuales, bonos y distribución anual"
+          description="Planifica tus ingresos mensuales y distribución anual"
           actions={
             <>
               <SelectPicker
@@ -48,13 +42,6 @@ const Ingresos: React.FC = () => {
               >
                 💼 Gestionar Ingresos
               </Button>
-              <Button
-                appearance="primary"
-                color="yellow"
-                onClick={() => setModalBonosAbierto(true)}
-              >
-                💰 Gestionar Bonos
-              </Button>
             </>
           }
         />
@@ -64,7 +51,6 @@ const Ingresos: React.FC = () => {
           key={`${anioSeleccionado}-${refreshKey}`}
           anio={anioSeleccionado}
           onOpenCatalogo={() => setModalIngresosAbierto(true)}
-          onOpenBonos={() => setModalBonosAbierto(true)}
         />
 
         {/* Modales */}
@@ -72,13 +58,6 @@ const Ingresos: React.FC = () => {
           isOpen={modalIngresosAbierto}
           onClose={() => setModalIngresosAbierto(false)}
           onIngresosUpdated={handleIngresosUpdated}
-        />
-
-        <GestionarBonosModal
-          isOpen={modalBonosAbierto}
-          onClose={() => setModalBonosAbierto(false)}
-          onBonosUpdated={handleBonosUpdated}
-          anio={anioSeleccionado}
         />
       </div>
     </MainLayout>

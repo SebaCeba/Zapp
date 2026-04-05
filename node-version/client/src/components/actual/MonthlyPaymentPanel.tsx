@@ -76,7 +76,7 @@ export default function MonthlyPaymentPanel({
         year,
         month,
         category: 'PAGO_TC',
-        itemKey: `TENPO_PAY_${crypto.randomUUID()}`,
+        itemKey: `TC_PAY_${crypto.randomUUID()}`,
         label: newDescription,
         amountClp: newAmount
       });
@@ -100,7 +100,7 @@ export default function MonthlyPaymentPanel({
         year,
         month,
         category: 'PAGO_TC',
-        itemKey: `TENPO_PAY_${crypto.randomUUID()}`,
+        itemKey: `TC_PAY_${crypto.randomUUID()}`,
         label: `Pago por selección (${selectedCount} cuotas)`,
         amountClp: actualPaidAmount
       });

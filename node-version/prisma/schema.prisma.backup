@@ -1,0 +1,452 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Calendar {
+  id            Int            @id @default(autoincrement())
+  date          DateTime       @unique
+  subscriptions Subscription[]
+
+  @@map("calendar")
+}
+
+model Subscription {
+  id             Int             @id @default(autoincrement())
+  name           String
+  price          Float
+  periodicity    String // monthly, quarterly, semiannual, annual, weekly
+  startDate      DateTime        @map("start_date")
+  startDateId    Int             @map("start_date_id")
+  calendar       Calendar        @relation(fields: [startDateId], references: [id])
+  priceOverrides PriceOverride[]
+  createdAt      DateTime        @default(now()) @map("created_at")
+
+  @@map("subscriptions")
+}
+
+model PriceOverride {
+  id             Int          @id @default(autoincrement())
+  subscriptionId Int          @map("subscription_id")
+  year           Int
+  month          Int
+  price          Float
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionId, year, month])
+  @@map("price_overrides")
+}
+
+model Obligacion {
+  id           Int      @id @default(autoincrement())
+  nombre       String
+  tipo         String   // hipotecario, consumo, seguro
+  moneda       String   // CLP, UF
+  montoCuota   Float    @map("monto_cuota")
+  cuotasTotales Int     @map("cuotas_totales")
+  mesInicio    Int      @map("mes_inicio")
+  anioInicio   Int      @map("anio_inicio")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("obligaciones")
+}
+
+model SupuestoAnual {
+  id               Int      @id @default(autoincrement())
+  anio             Int      @unique
+  valorUfBase      Float    @map("valor_uf_base")
+  variacionAnualUf Float    @map("variacion_anual_uf")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("supuestos_anuales")
+}
+
+model MortgagePayment {
+  id                Int      @id @default(autoincrement())
+  numDiv            Int      @map("num_div")
+  amortizacionUf    Float    @map("amortizacion_uf")
+  interesUf         Float    @map("interes_uf")
+  comDIn            Float    @map("com_d_in")
+  totalDivUf        Float    @map("total_div_uf")
+  fechaVencimiento  DateTime @map("fecha_vencimiento")
+  saldoInsolutoUf   Float    @map("saldo_insoluto_uf")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@map("mortgage_payments")
+}
+
+model MortgageBudgetConfig {
+  id           Int      @id @default(autoincrement())
+  anioProyectado Int    @map("anio_proyectado")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("mortgage_budget_config")
+}
+
+model MortgageInsurance {
+  id        Int      @id @default(autoincrement())
+  nombre    String   @map("nombre")
+  mesAnio   String   @map("mes_anio") // formato YYYY-MM
+  monto     Float    @map("monto")
+  moneda    String   @default("CLP") @map("moneda") // CLP o UF
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("mortgage_insurance")
+}
+
+model ServicioBasico {
+  id                Int                              @id @default(autoincrement())
+  nombre            String                           @unique
+  activo            Boolean                          @default(true)
+  esBase            Boolean                          @default(false) @map("es_base")
+  orden             Int                              @default(0)
+  gmailLabel        String?                          @map("gmail_label") // Ej: "Facturación ENEL"
+  hasEmailConnector Boolean                          @default(false) @map("has_email_connector")
+  createdAt         DateTime                         @default(now()) @map("created_at")
+  updatedAt         DateTime                         @updatedAt @map("updated_at")
+  presupuestos      PresupuestoServicioBasico[]
+  transactions      UtilityTransaction[]
+
+  @@map("servicios_basicos")
+}
+
+model PresupuestoServicioBasico {
+  id                Int             @id @default(autoincrement())
+  servicioId        Int             @map("servicio_id")
+  anio              Int
+  enero             Float           @default(0)
+  febrero           Float           @default(0)
+  marzo             Float           @default(0)
+  abril             Float           @default(0)
+  mayo              Float           @default(0)
+  junio             Float           @default(0)
+  julio             Float           @default(0)
+  agosto            Float           @default(0)
+  septiembre        Float           @default(0)
+  octubre           Float           @default(0)
+  noviembre         Float           @default(0)
+  diciembre         Float           @default(0)
+  servicio          ServicioBasico  @relation(fields: [servicioId], references: [id], onDelete: Cascade)
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  @@unique([servicioId, anio])
+  @@map("presupuestos_servicios_basicos")
+}
+model SupermercadoPresupuesto {
+  id                Int      @id @default(autoincrement())
+  anio              Int      @unique
+  enero             Float    @default(0)
+  febrero           Float    @default(0)
+  marzo             Float    @default(0)
+  abril             Float    @default(0)
+  mayo              Float    @default(0)
+  junio             Float    @default(0)
+  julio             Float    @default(0)
+  agosto            Float    @default(0)
+  septiembre        Float    @default(0)
+  octubre           Float    @default(0)
+  noviembre         Float    @default(0)
+  diciembre         Float    @default(0)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("supermercado_presupuesto")
+}
+model IngresoBase {
+  id                Int                          @id @default(autoincrement())
+  nombre            String                       @unique
+  activo            Boolean                      @default(true)
+  esRecurrente      Boolean                      @default(true) @map("es_recurrente")
+  orden             Int                          @default(0)
+  createdAt         DateTime                     @default(now()) @map("created_at")
+  updatedAt         DateTime                     @updatedAt @map("updated_at")
+  presupuestos      PresupuestoIngreso[]
+
+  @@map("ingresos_base")
+}
+
+model PresupuestoIngreso {
+  id                Int             @id @default(autoincrement())
+  ingresoId         Int             @map("ingreso_id")
+  anio              Int
+  enero             Float           @default(0)
+  febrero           Float           @default(0)
+  marzo             Float           @default(0)
+  abril             Float           @default(0)
+  mayo              Float           @default(0)
+  junio             Float           @default(0)
+  julio             Float           @default(0)
+  agosto            Float           @default(0)
+  septiembre        Float           @default(0)
+  octubre           Float           @default(0)
+  noviembre         Float           @default(0)
+  diciembre         Float           @default(0)
+  ingreso           IngresoBase     @relation(fields: [ingresoId], references: [id], onDelete: Cascade)
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  @@unique([ingresoId, anio])
+  @@map("presupuestos_ingresos")
+}
+
+model Bono {
+  id                Int             @id @default(autoincrement())
+  nombre            String
+  anio              Int
+  mes               Int             // 1=Enero, 2=Febrero, etc.
+  monto             Float
+  descripcion       String?
+  repartos          RepartoBono[]
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  @@map("bonos")
+}
+
+model RepartoBono {
+  id                Int      @id @default(autoincrement())
+  bonoId            Int      @map("bono_id")
+  destino           String   // ahorro, deuda, vacaciones, apoyo_mensual, otros
+  monto             Float
+  porcentaje        Float?
+  mesesDistribucion Int?     @map("meses_distribucion") // solo para apoyo_mensual
+  bono              Bono     @relation(fields: [bonoId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@map("repartos_bonos")
+}
+
+model GoogleAuthToken {
+  id           Int      @id @default(autoincrement())
+  accessToken  String   @map("access_token")
+  refreshToken String   @map("refresh_token")
+  expiryDate   DateTime @map("expiry_date")
+  scope        String
+  tokenType    String   @default("Bearer") @map("token_type")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("google_auth_tokens")
+}
+
+model TenpoEmail {
+  id             Int             @id @default(autoincrement())
+  gmailMessageId String          @unique @map("gmail_message_id")
+  labelType      String          @map("label_type") // COMPRAS or PAGOS
+  rawBody        String          @map("raw_body")
+  emailDate      DateTime        @map("email_date")
+  parsedOk       Boolean         @default(false) @map("parsed_ok")
+  parseError     String?         @map("parse_error")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  purchases      TenpoPurchase[]
+  payments       TenpoPayment[]
+
+  @@map("tenpo_emails")
+}
+
+model TenpoPurchase {
+  id                        Int                @id @default(autoincrement())
+  emailId                   Int?               @map("email_id")
+  source                    String             @default("gmail") // gmail | manual
+  purchaseDate              DateTime           @map("purchase_date")
+  merchant                  String
+  amountTotalClp            Float              @map("amount_total_clp") // Capital (C)
+  installmentsCount         Int                @map("installments_count")
+  tieneInteres              Boolean            @default(true) @map("tiene_interes") // Default: CON interés
+  modoMonto                 String             @default("ESTIMADO") @map("modo_monto") // ESTIMADO | REAL
+  totalFinanciadoEstimado   Float?             @map("total_financiado_estimado")
+  interesTotalEstimado      Float?             @map("interes_total_estimado")
+  metadata                  String?            @map("metadata") // JSON string: { feePct: 0.02, ... }
+  scheduleMode              String             @default("AUTO") @map("schedule_mode") // AUTO | MANUAL
+  firstDueDateOverride      DateTime?          @map("first_due_date_override") // Override fecha primera cuota
+  email                     TenpoEmail?        @relation(fields: [emailId], references: [id], onDelete: Cascade)
+  installments              TenpoInstallment[]
+  createdAt                 DateTime           @default(now()) @map("created_at")
+  updatedAt                 DateTime           @default(now()) @updatedAt @map("updated_at")
+
+  @@map("tenpo_purchases")
+}
+
+model TenpoInstallment {
+  id                       Int           @id @default(autoincrement())
+  purchaseId               Int           @map("purchase_id")
+  installmentNumber        Int           @map("installment_number")
+  baseAmountClp            Float         @map("base_amount_clp")
+  dueDate                  DateTime      @map("due_date")
+  payDateEstimated         DateTime      @map("pay_date_estimated")
+  estado                   String        @default("ESTIMADO") @map("estado") // ESTIMADO | REAL
+  overrideInterestRate     Float?        @map("override_interest_rate")
+  overrideMonthlyAmountClp Float?        @map("override_monthly_amount_clp")
+  finalMonthlyAmountClp    Float         @map("final_monthly_amount_clp")
+  purchase                 TenpoPurchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  createdAt                DateTime      @default(now()) @map("created_at")
+  updatedAt                DateTime      @updatedAt @map("updated_at")
+
+  @@map("tenpo_installments")
+}
+
+model TenpoPayment {
+  id                Int        @id @default(autoincrement())
+  emailId           Int        @map("email_id")
+  payDate           DateTime   @map("pay_date")
+  amountClp         Float      @map("amount_clp")
+  paymentMethod     String     @map("payment_method")
+  transactionCode   String     @map("transaction_code")
+  periodPay         String?    @map("period_pay") // periodo de pago (mes/año que se pagó)
+  periodBill        String?    @map("period_bill") // periodo de factura
+  email             TenpoEmail @relation(fields: [emailId], references: [id], onDelete: Cascade)
+  createdAt         DateTime   @default(now()) @map("created_at")
+
+  @@map("tenpo_payments")
+}
+
+// Sistema de categorización de comercios (3 niveles jerárquicos)
+model MerchantCategory {
+  id              Int                  @id @default(autoincrement())
+  name            String
+  parentId        Int?                 @map("parent_id")
+  parent          MerchantCategory?    @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children        MerchantCategory[]   @relation("CategoryHierarchy")
+  level           Int                  @default(1) // 1 (principal), 2 (subcategoría), 3 (comercio)
+  order           Int                  @default(0) // Orden visual en UI
+  color           String?              // Hex color para UI (#FF5733)
+  icon            String?              // Emoji o icon name
+  isSystem        Boolean              @default(false) @map("is_system") // true para "Sin Categorizar"
+  merchants       MerchantMapping[]
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+
+  @@map("merchant_categories")
+}
+
+// Asignación de comercios a categorías
+model MerchantMapping {
+  id              Int                  @id @default(autoincrement())
+  merchantName    String               @unique @map("merchant_name") // Nombre del comercio de TenpoPurchase
+  categoryId      Int                  @map("category_id")
+  category        MerchantCategory     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  matchPattern    String?              @map("match_pattern") // Para futuro auto-matching (regex)
+  confidence      Float?               // Para futuro ML (0.0 - 1.0)
+  assignedBy      String               @default("MANUAL") @map("assigned_by") // MANUAL | AUTO | ML
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+
+  @@index([categoryId])
+  @@map("merchant_mappings")
+}
+
+// Configuración de Tasa Global de Cuotas (historial de cambios)
+model TenpoTasaCuotas {
+  id              Int       @id @default(autoincrement())
+  tasaMensual     Float     @map("tasa_mensual") // Ej: 0.0211 (2.11%)
+  cae             String?   @map("cae") // Informativo, ej: "28.4%"
+  vigenteDesde    DateTime  @map("vigente_desde")
+  vigenteHasta    DateTime? @map("vigente_hasta")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  @@map("tenpo_tasa_cuotas")
+}
+
+model ActualEntry {
+  id         Int      @id @default(autoincrement())
+  year       Int
+  month      Int
+  category   String   // INGRESOS, SUSCRIPCIONES, OBLIGACIONES, HIPOTECARIO, SERVICIOS_BASICOS, SUPERMERCADO, AJUSTES
+  itemKey    String   @map("item_key")
+  label      String?
+  amountClp  Int      @map("amount_clp")
+  isPaid     Boolean  @default(false) @map("is_paid")
+  isLocked   Boolean  @default(false) @map("is_locked")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([year, month, category, itemKey], name: "year_month_category_itemKey")
+  @@map("actual_entries")
+}
+
+// Configuración de ciclos de facturación por TC
+model TcBillingConfig {
+  id                    Int                      @id @default(autoincrement())
+  tcKey                 String                   @unique @map("tc_key") // "TENPO", "BCI", etc.
+  closingDay            Int                      @default(21) @map("closing_day") // 1..31
+  dueDay                Int                      @default(5) @map("due_day") // 1..31 (día de vencimiento)
+  businessDayRule       String                   @default("PREVIOUS") @map("business_day_rule") // PREVIOUS | NEXT | NONE
+  createdAt             DateTime                 @default(now()) @map("created_at")
+  updatedAt             DateTime                 @updatedAt @map("updated_at")
+  overrides             TcBillingOverride[]
+
+  @@map("tc_billing_configs")
+}
+
+// Overrides mensuales de ciclo de facturación
+model TcBillingOverride {
+  id                    Int                @id @default(autoincrement())
+  tcKey                 String             @map("tc_key")
+  year                  Int
+  month                 Int                // 1..12
+  effectiveCloseDate    DateTime           @map("effective_close_date") // Fecha de cierre efectiva (solo fecha)
+  config                TcBillingConfig    @relation(fields: [tcKey], references: [tcKey], onDelete: Cascade)
+  createdAt             DateTime           @default(now()) @map("created_at")
+  updatedAt             DateTime           @updatedAt @map("updated_at")
+
+  @@unique([tcKey, year, month])
+  @@map("tc_billing_overrides")
+}
+
+model Ahorro {
+  id                Int                      @id @default(autoincrement())
+  nombre            String                   @unique
+  activo            Boolean                  @default(true)
+  orden             Int                      @default(0)
+  createdAt         DateTime                 @default(now()) @map("created_at")
+  updatedAt         DateTime                 @updatedAt @map("updated_at")
+  presupuestos      PresupuestoAhorro[]
+
+  @@map("ahorros")
+}
+
+model PresupuestoAhorro {
+  id                Int             @id @default(autoincrement())
+  ahorroId          Int             @map("ahorro_id")
+  anio              Int
+  enero             Float           @default(0)
+  febrero           Float           @default(0)
+  marzo             Float           @default(0)
+  abril             Float           @default(0)
+  mayo              Float           @default(0)
+  junio             Float           @default(0)
+  julio             Float           @default(0)
+  agosto            Float           @default(0)
+  septiembre        Float           @default(0)
+  octubre           Float           @default(0)
+  noviembre         Float           @default(0)
+  diciembre         Float           @default(0)
+  ahorro            Ahorro          @relation(fields: [ahorroId], references: [id], onDelete: Cascade)
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  @@unique([ahorroId, anio])
+  @@map("presupuestos_ahorros")
+}
+
+// Transacciones reales de servicios básicos (similar a TenpoPurchase)
+model UtilityTransaction {
+  id                Int             @id @default(autoincrement())
+  providerKey       String          @map("provider_key") // "ENEL", "AGUA", etc. → ServicioBasico.nombre
+  provider          ServicioBasico  @relation(fields: [providerKey], references: [nombre], onDelete: Cascade)
+  transactionDate   DateTime        @map("transaction_date") // Fecha del consumo/pago
+  amount            Float           // Monto en CLP
+  description       String?         // Descripción opcional
+  source            String          @default("manual") // manual | email | csv
+  metadata          String?         // JSON string para extensibilidad futura
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  @@map("utility_transactions")
+}

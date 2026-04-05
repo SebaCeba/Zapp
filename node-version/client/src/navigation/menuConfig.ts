@@ -29,7 +29,6 @@ export const menuConfig: MenuItem[] = [
     label: 'Presupuesto',
     iconName: 'funnel',
     children: [
-      { key: '/presupuesto/resumen', label: 'Resumen' },
       { key: '/ingresos', label: 'Ingresos' },
       { key: 'gastos-header', label: 'Gastos', disabled: true },
       { key: '/app', label: '    Suscripciones' },
@@ -37,7 +36,6 @@ export const menuConfig: MenuItem[] = [
       { key: '/hipotecario', label: '    Hipotecario' },
       { key: '/servicios-basicos', label: '    Servicios Básicos' },
       { key: '/supermercado', label: '    Supermercado' },
-      { key: '/presupuesto/tenpo', label: '    Tenpo TC' },
       { key: 'ahorros-header', label: 'Ahorros', disabled: true },
       { key: '/ahorros', label: '    Ahorros' },
     ],
@@ -54,7 +52,6 @@ export const menuConfig: MenuItem[] = [
       { key: '/actual/hipotecario', label: '    Hipotecario' },
       { key: '/actual/utilities', label: '    Servicios Básicos' },
       { key: '/actual/supermercado', label: '    Supermercado' },
-      { key: '/actual/tenpo', label: '    Tenpo TC' },
       { key: 'actual-ahorros-header', label: 'Ahorros', disabled: true },
     ],
   },
@@ -63,9 +60,6 @@ export const menuConfig: MenuItem[] = [
     label: 'Configuración',
     children: [
       { key: '/config/servicios-basicos', label: 'Servicios Básicos' },
-      { key: '/presupuesto/tenpo/config', label: 'Tenpo TC' },
-      { key: '/tenpo/categorias', label: 'Categorías Tenpo' },
-      { key: '/tenpo/asignacion', label: 'Asignación Comercios' },
     ],
   },
 ];

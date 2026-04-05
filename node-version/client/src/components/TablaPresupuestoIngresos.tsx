@@ -30,29 +30,9 @@ interface Presupuesto {
   diciembre: number;
 }
 
-interface Bono {
-  id: number;
-  nombre: string;
-  anio: number;
-  mes: number;
-  monto: number;
-  descripcion?: string;
-  repartos: RepartoBono[];
-}
-
-interface RepartoBono {
-  id: number;
-  bonoId: number;
-  destino: string;
-  monto: number;
-  porcentaje?: number;
-  mesesDistribucion?: number;
-}
-
 interface Props {
   anio: number;
   onOpenCatalogo: () => void;
-  onOpenBonos: () => void;
 }
 
 const MESES = [
@@ -65,9 +45,8 @@ const MESES_DISPLAY = [
   'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
 ];
 
-export default function TablaPresupuestoIngresos({ anio, onOpenCatalogo, onOpenBonos }: Props) {
+export default function TablaPresupuestoIngresos({ anio, onOpenCatalogo }: Props) {
   const [ingresos, setIngresos] = useState<IngresoBase[]>([]);
-  const [bonos, setBonos] = useState<Bono[]>([]);
   const [loading, setLoading] = useState(true);
   const [editando, setEditando] = useState<{ ingresoId: number; mes: string } | null>(null);
   const [guardando, setGuardando] = useState<{ ingresoId: number; mes: string } | null>(null);
@@ -79,14 +58,9 @@ export default function TablaPresupuestoIngresos({ anio, onOpenCatalogo, onOpenB
   const cargarDatos = async () => {
     try {
       setLoading(true);
-      const [ingresosRes, bonosRes] = await Promise.all([
-        fetch(`http://localhost:3000/api/ingresos/presupuesto/${anio}`),
-        fetch(`http://localhost:3000/api/ingresos/bonos/${anio}`)
-      ]);
+      const ingresosRes = await fetch(`http://localhost:3000/api/ingresos/presupuesto/${anio}`);
       const ingresosData = await ingresosRes.json();
-      const bonosData = await bonosRes.json();
       setIngresos(ingresosData);
-      setBonos(bonosData);
     } catch (error) {
       console.error('Error al cargar ingresos:', error);
     } finally {
@@ -137,35 +111,6 @@ export default function TablaPresupuestoIngresos({ anio, onOpenCatalogo, onOpenB
     return MESES.reduce((sum, mes) => sum + (presupuesto[mes as keyof Presupuesto] as number || 0), 0);
   };
 
-  const calcularBonosMes = (mesIndex: number): number => {
-    const mesNum = mesIndex + 1;
-    let total = 0;
-
-    bonos.forEach(bono => {
-      // Bono en el mes específico
-      if (bono.mes === mesNum) {
-        total += bono.monto;
-      }
-
-      // Apoyo mensual distribuido
-      bono.repartos.forEach(reparto => {
-        if (reparto.destino === 'apoyo_mensual' && reparto.mesesDistribucion) {
-          const mesInicio = bono.mes;
-          const distribucion = reparto.monto / reparto.mesesDistribucion;
-          
-          for (let i = 0; i < reparto.mesesDistribucion; i++) {
-            const mesDistribucion = ((mesInicio + i - 1) % 12) + 1;
-            if (mesDistribucion === mesNum) {
-              total += distribucion;
-            }
-          }
-        }
-      });
-    });
-
-    return total;
-  };
-
   const calcularTotalMes = (mesIndex: number): number => {
     const mes = MESES[mesIndex];
     let total = 0;
@@ -175,9 +120,6 @@ export default function TablaPresupuestoIngresos({ anio, onOpenCatalogo, onOpenB
       const presupuesto = obtenerPresupuesto(ingreso);
       total += presupuesto[mes as keyof Presupuesto] as number || 0;
     });
-
-    // Sumar bonos
-    total += calcularBonosMes(mesIndex);
 
     return total;
   };
@@ -271,7 +213,7 @@ export default function TablaPresupuestoIngresos({ anio, onOpenCatalogo, onOpenB
   // Preparar datos para la tabla
   interface TableRow {
     id: string;
-    rowType: 'ingreso' | 'bonos' | 'total';
+    rowType: 'ingreso' | 'total';
     nombre: string;
     ingresoId?: number;
     enero: number;
@@ -318,30 +260,6 @@ export default function TablaPresupuestoIngresos({ anio, onOpenCatalogo, onOpenB
         total
       });
     });
-
-    // Fila de bonos (si hay)
-    if (bonos.length > 0) {
-      const bonosRow: TableRow = {
-        id: 'bonos',
-        rowType: 'bonos',
-        nombre: 'Bonos + Apoyo Mensual',
-        enero: calcularBonosMes(0),
-        febrero: calcularBonosMes(1),
-        marzo: calcularBonosMes(2),
-        abril: calcularBonosMes(3),
-        mayo: calcularBonosMes(4),
-        junio: calcularBonosMes(5),
-        julio: calcularBonosMes(6),
-        agosto: calcularBonosMes(7),
-        septiembre: calcularBonosMes(8),
-        octubre: calcularBonosMes(9),
-        noviembre: calcularBonosMes(10),
-        diciembre: calcularBonosMes(11),
-        total: bonos.reduce((sum, b) => sum + b.monto, 0),
-        background: '#fef9e7'
-      };
-      rows.push(bonosRow);
-    }
 
     // Fila de total
     rows.push({
@@ -393,25 +311,6 @@ export default function TablaPresupuestoIngresos({ anio, onOpenCatalogo, onOpenB
 
   return (
     <>
-      {/* Resumen de bonos */}
-      {bonos.length > 0 && (
-        <div className="card" style={{ marginBottom: '1rem', background: '#fef3c7' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <strong style={{ color: '#92400e' }}>💰 Bonos del año {anio}</strong>
-            <Button onClick={onOpenBonos} size="sm">
-              Gestionar
-            </Button>
-          </div>
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            {bonos.map(bono => (
-              <span key={bono.id} style={{ fontSize: '0.875rem', color: '#78350f' }}>
-                {MESES_DISPLAY[bono.mes - 1]}: {bono.nombre} (${Math.round(bono.monto).toLocaleString('es-CL')})
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
       <div className="card">
         <Table
           data={tableData}
@@ -426,7 +325,6 @@ export default function TablaPresupuestoIngresos({ anio, onOpenCatalogo, onOpenB
           affixHorizontalScrollbar
           rowClassName={(rowData: any) => {
             if (rowData?.rowType === 'total') return 'total-row';
-            if (rowData?.rowType === 'bonos') return 'bonos-row';
             return '';
           }}
         >
@@ -438,7 +336,7 @@ export default function TablaPresupuestoIngresos({ anio, onOpenCatalogo, onOpenB
             <CompactCell>
               {(rowData: TableRow) => (
                 <div style={{ 
-                  fontWeight: rowData.rowType === 'total' ? '700' : rowData.rowType === 'bonos' ? '500' : '500',
+                  fontWeight: rowData.rowType === 'total' ? '700' : '500',
                   background: rowData.background || 'transparent'
                 }}>
                   {rowData.nombre}
@@ -457,7 +355,7 @@ export default function TablaPresupuestoIngresos({ anio, onOpenCatalogo, onOpenB
                 {(rowData: TableRow) => {
                   const valor = rowData[mes as keyof TableRow] as number;
                   
-                  // Si es fila de total o bonos, solo mostrar valor
+                  // Si es fila de total, solo mostrar valor
                   if (rowData.rowType === 'total') {
                     return (
                       <div style={{ 
@@ -466,19 +364,6 @@ export default function TablaPresupuestoIngresos({ anio, onOpenCatalogo, onOpenB
                         textAlign: 'right'
                       }}>
                         {formatearMontoTotal(valor)}
-                      </div>
-                    );
-                  }
-
-                  if (rowData.rowType === 'bonos') {
-                    return (
-                      <div style={{ 
-                        fontWeight: '500',
-                        background: rowData.background || 'transparent',
-                        color: valor > 0 ? '#92400e' : '#9ca3af',
-                        textAlign: 'right'
-                      }}>
-                        {valor > 0 ? formatearMonto(valor) : '0'}
                       </div>
                     );
                   }
@@ -536,8 +421,7 @@ export default function TablaPresupuestoIngresos({ anio, onOpenCatalogo, onOpenB
               {(rowData: TableRow) => (
                 <div style={{ 
                   fontWeight: rowData.rowType === 'total' ? '700' : '600',
-                  background: rowData.rowType === 'total' ? '#6ee7b7' : rowData.rowType === 'bonos' ? '#fef3c7' : 'var(--gray-50)',
-                  color: rowData.rowType === 'bonos' ? '#92400e' : 'inherit',
+                  background: rowData.rowType === 'total' ? '#6ee7b7' : 'var(--gray-50)',
                   fontSize: rowData.rowType === 'total' ? '1.125rem' : 'inherit',
                   textAlign: 'right'
                 }}>
