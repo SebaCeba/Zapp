@@ -1,22 +1,30 @@
 # Arquitectura del Sistema Zapps
 
-**Fecha:** 21 de Febrero, 2026  
-**Versión:** 2.0  
+**Fecha:** 21 de Febrero, 2026 (actualizado 05 de Abril, 2026)  
+**Versión:** 3.0 - Post-desmontaje  
 **Autor:** Documentación del Sistema
+
+---
+
+## ⚠️ Nota de Versión 3.0
+
+**Actualizado:** 05 de Abril de 2026  
+**Cambio:** Eliminación de 8 módulos (Tenpo TC, Bonos, TC Billing, Analytics)  
+Ver: [plan-desmontaje-modulos-zapp.md](plan-desmontaje-modulos-zapp.md)
 
 ---
 
 ## 📋 Resumen Ejecutivo
 
-Zapps es un **sistema de gestión financiera personal** desarrollado en **Node.js + TypeScript** con frontend **React**. Permite planificar ingresos y egresos mensuales/anuales, integración con bancos (Tenpo), gestión de créditos, hipotecario, y seguimiento de presupuesto vs actual.
+Zapps es un **sistema de gestión financiera personal** desarrollado en **Node.js + TypeScript** con frontend **React**. Permite planificar ingresos y egresos mensuales/anuales, gestión de créditos, hipotecario, servicios básicos, y seguimiento de presupuesto vs actual.
 
 ### Características Principales
 - 📅 Suscripciones periódicas con calendario
-- 💳 Integración Tenpo (compras y pagos via Gmail)
 - 🏠 Cálculo hipotecario con tabla de amortización
-- 💰 Gestión de ingresos (salarios, bonos)
-- 🔧 Servicios básicos mensuales
+- 💰 Gestión de ingresos (salarios)
+- 🔧 Servicios básicos mensuales (importación Gmail)
 - 🛒 Presupuesto de supermercado
+- 💾 Gestión de ahorros
 - 📊 Módulo "Actual" (presupuesto vs realidad)
 - 📧 OAuth2 Gmail para procesamiento de emails
 
@@ -33,7 +41,7 @@ Zapps es un **sistema de gestión financiera personal** desarrollado en **Node.j
 | **ORM** | Prisma | 5.x | Acceso a BD |
 | **Base de Datos** | SQLite | 3.x | Almacenamiento (dev) |
 | **Autenticación** | Google OAuth2 | 2.x | Gmail API |
-| **Email Parsing** | Custom Gmail API | - | Procesamiento Tenpo |
+| **Email Parsing** | Custom Gmail API | - | Procesamiento facturas |
 
 ### Frontend
 | Componente | Tecnología | Versión | Propósito |
@@ -69,19 +77,16 @@ Zapps/
 │   │   ├── db.ts                   # Cliente Prisma
 │   │   ├── routes/                 # Endpoints API
 │   │   │   ├── subscriptions.ts   # CRUD suscripciones
-│   │   │   ├── analytics.ts       # Analytics y reportes
 │   │   │   ├── obligaciones.ts    # Créditos y seguros
 │   │   │   ├── hipotecario.ts     # Gestión hipotecario
 │   │   │   ├── ingresos.ts        # Gestión ingresos
 │   │   │   ├── servicios-basicos.ts
 │   │   │   ├── supermercado.ts
-│   │   │   ├── tenpo.ts           # Integración Tenpo
 │   │   │   ├── google-integration.ts # Gmail OAuth
-│   │   │   ├── actual.ts          # Módulo Actual
-│   │   │   └── tc-billing.ts      # TC billing cycles
+│   │   │   └── actual.ts          # Módulo Actual
 │   │   │
 │   │   └── services/               # Lógica de negocio
-│   │       └── tcBillingCycle.service.ts
+│   │       └── (servicios varios)
 │   │
 │   ├── client/                     # Frontend (React + TypeScript)
 │   │   ├── src/
@@ -91,7 +96,7 @@ Zapps/
 │   │   │   ├── index.css           # Estilos globales
 │   │   │   │
 │   │   │   ├── api/                # Clients API
-│   │   │   │   └── tcBillingApi.ts
+│   │   │   │   └── (varios clients)
 │   │   │   │
 │   │   │   ├── layout/             # Layouts
 │   │   │   │   └── MainLayout.tsx  # Layout principal
@@ -104,15 +109,10 @@ Zapps/
 │   │   │   │   ├── Hipotecario.tsx
 │   │   │   │   ├── Ingresos.tsx
 │   │   │   │   ├── ServiciosBasicos.tsx
-│   │   │   │   ├── Supermercado.tsx
-│   │   │   │   ├── Tenpo.tsx
-│   │   │   │   ├── TenpoConfig.tsx
-│   │   │   │   └── ConfiguracionTC.tsx
+│   │   │   │   └── Supermercado.tsx
 │   │   │   │
 │   │   │   ├── components/         # Componentes reutilizables
 │   │   │   │   ├── Sidebar.tsx
-│   │   │   │   ├── Dashboard.tsx
-│   │   │   │   ├── DashboardObligaciones.tsx
 │   │   │   │   ├── AddSubscriptionForm.tsx
 │   │   │   │   ├── SubscriptionTable.tsx
 │   │   │   │   ├── ObligacionForm.tsx
@@ -120,21 +120,15 @@ Zapps/
 │   │   │   │   ├── VistaPreviaObligacion.tsx
 │   │   │   │   ├── TablaPresupuesto*.tsx
 │   │   │   │   ├── YearAndUFSelector.tsx
-│   │   │   │   ├── GestionarBonosModal.tsx
 │   │   │   │   ├── GestionarIngresosModal.tsx
 │   │   │   │   ├── GestionarCatalogoModal.tsx
-│   │   │   │   ├── TcConfigForm.tsx
-│   │   │   │   ├── TcAnnualCyclesTable.tsx
-│   │   │   │   ├── TcOverridesTable.tsx
-│   │   │   │   ├── TcRecalculationPanel.tsx
 │   │   │   │   ├── Toast.tsx
 │   │   │   │   └── actual/         # Componentes módulo Actual
 │   │   │   │       ├── ActualRow.tsx
 │   │   │   │       └── ...
 │   │   │   │
 │   │   │   └── types/              # TypeScript types
-│   │   │       ├── actual.ts
-│   │   │       └── tcBilling.ts
+│   │   │       └── actual.ts
 │   │   │
 │   │   ├── index.html              # HTML template
 │   │   ├── vite.config.ts          # Configuración Vite
@@ -152,10 +146,7 @@ Zapps/
 │   ├── PLAN_IMPLEMENTACION_RSUITE.md
 │   ├── README.md                   # Índice documentación
 │   ├── DESARROLLO.md               # Guía desarrollo
-│   ├── TENPO_INTEGRATION.md        # Integración Tenpo
 │   ├── CREDENCIALES_GOOGLE.md      # Setup Gmail OAuth
-│   ├── tc-billing-cycle-*.md       # TC billing cycle
-│   ├── tenpo-*.md                  # Documentación Tenpo
 │   └── archive/                    # Documentación obsoleta
 │
 ├── scripts/                        # Scripts utilidades
@@ -240,7 +231,7 @@ model MortgagePayment {
 ---
 
 #### 4. **Ingresos** (`IngresoBase`, `PresupuestoIngreso`)
-Gestión de ingresos recurrentes y bonos
+Gestión de ingresos recurrentes
 
 ```prisma
 model IngresoBase {
@@ -258,26 +249,6 @@ model PresupuestoIngreso {
   enero     Float
   febrero   Float
   // ... resto de meses
-}
-```
-
-**Bonos:**
-```prisma
-model Bono {
-  id       Int
-  nombre   String
-  anio     Int
-  mes      Int
-  monto    Float
-  repartos RepartoBono[]
-}
-
-model RepartoBono {
-  id                  Int
-  bonoId              Int
-  destino             String  // ahorro, deuda, vacaciones, etc.
-  monto               Float
-  mesesDistribucion   Int?
 }
 ```
 
@@ -307,53 +278,7 @@ model PresupuestoServicioBasico {
 
 ---
 
-#### 6. **Tenpo** (Tarjeta de Crédito)
-Compras e pagos procesados desde Gmail
-
-```prisma
-model TenpoPurchase {
-  id                    Int
-  purchaseDate          DateTime
-  merchant              String
-  amountTotalClp        Float
-  installmentsCount     Int
-  isPaid                Boolean
-  firstDueDate          DateTime?
-  source                String      // gmail, manual
-  gmailMessageId        String?
-  // ... campos de cálculo
-  installments          TenpoInstallment[]
-}
-
-model TenpoInstallment {
-  id                Int
-  purchaseId        Int
-  installmentNumber Int
-  dueDate           DateTime
-  amountBaseClp     Float
-  interestClp       Float
-  amountTotalClp    Float
-}
-
-model TenpoPayment {
-  id             Int
-  paymentDate    DateTime
-  amountClp      Float
-  source         String
-  // ...
-}
-```
-
-**Features:**
-- Integración Gmail OAuth2
-- Parsing automático de emails Tenpo
-- Cálculo de intereses con tasa configurable
-- Sistema de calendario de vencimientos
-- Override manual de fechas (TC billing cycles)
-
----
-
-#### 7. **Módulo Actual** (`ActualCategory`, `ActualEntry`)
+#### 6. **Módulo Actual** (`ActualCategory`, `ActualEntry`)
 Seguimiento de presupuesto vs realidad
 
 ```prisma
@@ -405,31 +330,7 @@ Usuario → AddSubscriptionForm
         Dashboard visualiza gráfico
 ```
 
-### 2. Flujo de Integración Tenpo
-
-```
-Gmail (emails Tenpo)
-            ↓
-    Google OAuth2 → Token refresh automático
-            ↓
-    GET /api/tenpo/sync
-            ↓
-    Gmail API search + fetch messages
-            ↓
-    Parser personalizado (regex + lógica)
-            ↓
-    TenpoPurchase + TenpoInstallment creation
-            ↓
-    Cálculo de intereses (Add-On V1)
-            ↓
-    GET /api/tenpo/monthly?year=2026
-            ↓
-    Agregación por mes (incluyendo pagos)
-            ↓
-    Frontend display con desglose
-```
-
-### 3. Flujo de Presupuesto Consolidado
+### 2. Flujo de Presupuesto Consolidado
 
 ```
 GET /api/actual/consolidated-budget?year=2026
@@ -440,7 +341,6 @@ GET /api/actual/consolidated-budget?year=2026
     - Hipotecario
     - Servicios Básicos
     - Supermercado
-    - Tenpo TC
     - Ingresos
             ↓
     Cálculo por mes (12 meses)
@@ -498,8 +398,6 @@ GET /api/actual/consolidated-budget?year=2026
 | POST | `/api/ingresos` | Crear ingreso base |
 | GET | `/api/ingresos/presupuesto/:anio` | Presupuesto por año |
 | POST | `/api/ingresos/presupuesto` | Guardar presupuesto |
-| GET | `/api/ingresos/bonos/:anio` | Bonos del año |
-| POST | `/api/ingresos/bonos` | Crear/actualizar bono |
 
 ### Servicios Básicos
 | Método | Endpoint | Descripción |
@@ -515,32 +413,12 @@ GET /api/actual/consolidated-budget?year=2026
 | GET | `/api/supermercado/presupuesto/:anio` | Presupuesto año |
 | POST | `/api/supermercado/presupuesto` | Guardar presupuesto |
 
-### Tenpo
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| GET | `/api/tenpo/status` | Estado autenticación |
-| POST | `/api/tenpo/sync` | Sincronizar con Gmail |
-| GET | `/api/tenpo/purchases?year=2026` | Compras del año |
-| POST | `/api/tenpo/purchases/manual` | Crear compra manual |
-| DELETE | `/api/tenpo/purchases/:id` | Eliminar compra |
-| GET | `/api/tenpo/monthly?year=2026` | Totales mensuales |
-| POST | `/api/tenpo/purchases/:id/confirm-real` | Confirmar monto real |
-
 ### Google Integration
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
 | GET | `/api/google/auth-url` | URL autenticación OAuth |
 | GET | `/api/google/oauth2callback` | Callback OAuth2 |
 | DELETE | `/api/google/revoke` | Revocar token |
-
-### TC Billing Cycles
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| GET | `/api/tc-billing/:tcKey` | Config de TC |
-| POST | `/api/tc-billing/:tcKey` | Crear/actualizar config |
-| POST | `/api/tc-billing/:tcKey/override` | Override fecha específica |
-| GET | `/api/tc-billing/:tcKey/annual-cycles/:year` | Ciclos del año |
-| POST | `/api/tc-billing/:tcKey/recalculate` | Recalcular fechas |
 
 ### Actual (Presupuesto vs Real)
 | Método | Endpoint | Descripción |

@@ -2,16 +2,18 @@
 
 Sistema completo de planificación y gestión financiera que incluye:
 
+> **Nota:** El 5 de enero de 2026 se eliminaron 8 módulos (Tenpo, TC Billing, Analytics, Bonos, Presupuesto Resumen) como parte de una simplificación del sistema.
+
 ## 🌟 Características
 
 - 📅 **Suscripciones**: Gestión de suscripciones periódicas con calendario
-- 💳 **Integración Tenpo**: Procesamiento automático de emails de compras y pagos
 - 🏠 **Hipotecario**: Cálculo y seguimiento de dividendos hipotecarios
-- 💰 **Ingresos**: Gestión de ingresos, bonos y repartos
+- 💰 **Ingresos**: Gestión de ingresos
 - 🔧 **Servicios Básicos**: Seguimiento de servicios (agua, luz, gas, internet, etc.)
 - 🛒 **Supermercado**: Control de gastos de supermercado
 - 📊 **Módulo Actual**: Presupuesto mensual actualizable con estado de pagos
-- 📧 **Integración Gmail**: Autenticación OAuth2 para procesamiento de emails
+- 💳 **Créditos**: Gestión de tarjetas de crédito y cuotas
+- 📧 **Integración Gmail**: Autenticación OAuth2 para procesamiento de facturas por email
 
 ## 🚀 Inicio Rápido
 
@@ -63,9 +65,9 @@ python app.py
 ## 📚 Documentación
 
 Consulta la carpeta [docs/](docs/) para documentación detallada:
-- [Integración Tenpo](docs/TENPO_INTEGRATION.md)
-- [Implementación Backend](docs/RESUMEN_IMPLEMENTACION_BACKEND_ACTUAL.md)
-- [Implementación Frontend](docs/RESUMEN_IMPLEMENTACION_FRONTEND_ACTUAL.md)
+- [Índice de Documentación](docs/README.md)
+- [Arquitectura del Sistema](docs/ARQUITECTURA.md)
+- [Guía de Desarrollo](docs/DESARROLLO.md)
 - [Credenciales Google](docs/CREDENCIALES_GOOGLE.md)
 
 ## 🛠️ Tecnologías

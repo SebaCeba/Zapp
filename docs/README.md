@@ -1,7 +1,10 @@
 # Documentación Zapps
 
-**Última actualización:** 27 de Febrero, 2026  
+**Última actualización:** 5 de Enero, 2026 (Post-desmontaje módulos)  
 Índice de toda la documentación técnica del proyecto.
+
+> **Nota:** El 5 de enero de 2026 se eliminaron 8 módulos (Tenpo, TC Billing, Analytics, Bonos, Presupuesto Resumen).  
+> Ver [zapp-functional-audit-classification.md](auditorias/zapp-functional-audit-classification.md) para detalles.
 
 ---
 
@@ -31,27 +34,70 @@
 
 ---
 
-### 📝 Diseño y Análisis Activos
+### 🔍 Auditorías y Análisis
 
-| Documento | Descripción |
-|-----------|-------------|
-| **[ANALISIS_CATEGORIAS_PRESUPUESTO.md](ANALISIS_CATEGORIAS_PRESUPUESTO.md)** | Análisis de categorías de presupuesto |
-| **[panel_pago_mes_tempo_tc.md](panel_pago_mes_tempo_tc.md)** | Diseño panel mensual de pagos TC |
-| **[registro_pagos_tc_diseno.md](registro_pagos_tc_diseno.md)** | Diseño registro de pagos TC |
+**📁 [auditorias/](auditorias/)** - Auditorías técnicas y análisis del sistema
+
+| Documento Principal | Descripción |
+|--------------------|-------------|
+| **[zapp-functional-audit-classification.md](auditorias/zapp-functional-audit-classification.md)** ⭐ | Auditoría funcional completa de 19 módulos originales |
+| **[auditoria_oauth_gmail.md](auditorias/auditoria_oauth_gmail.md)** | Auditoría del sistema OAuth con Gmail |
+| **[feasibility-multi-budget-audit.md](auditorias/feasibility-multi-budget-audit.md)** | Análisis de viabilidad multi-presupuesto |
+
+Ver [auditorias/README.md](auditorias/README.md) para lista completa.
 
 ---
 
-### 📋 Registro de Cambios
+### 📋 Especificaciones MVP
 
-**📁 [changes/](changes/)** - Registro histórico de cambios e implementaciones
+**📁 [specs/](specs/)** - Especificaciones técnicas y decisiones arquitecturales
 
-Documentos recientes (2026-02-27):
-- Vista consolidada de pagos actual
-- Implementación Tenpo v2 con cuotas
-- Refactor panel mensual de pagos
-- Mejoras UX (scroll sticky, sidebar)
-- Endpoint lista de pagos TC
-- Ajustes financieros consolidados
+| Documento Principal | Descripción |
+|--------------------|-------------|
+| **[architecture-decisions-finanzapp-mvp.md](specs/architecture-decisions-finanzapp-mvp.md)** ⭐ | Decisiones arquitecturales del MVP |
+| **[spec-final-mvp-data-model.md](specs/spec-final-mvp-data-model.md)** | Modelo de datos final del MVP |
+
+Ver [specs/README.md](specs/README.md) para las 6 especificaciones completas.
+
+---
+
+### 🚀 Planes de Implementación
+
+**📁 [implementacion/](implementacion/)** - Planes de implementación y diseños técnicos
+
+| Documento Principal | Descripción |
+|--------------------|-------------|
+| **[plan-desmontaje-modulos-zapp.md](implementacion/plan-desmontaje-modulos-zapp.md)** ⭐ | Plan ejecutado de desmontaje (commit c6db140) |
+| **[git-branching-zapp-front-rebuild.md](implementacion/git-branching-zapp-front-rebuild.md)** | Estrategia de branching para rebuild |
+| **[import_gmail_preview_confirm.md](implementacion/import_gmail_preview_confirm.md)** | Diseño flujo preview/confirm Gmail |
+
+Ver [implementacion/README.md](implementacion/README.md) para lista completa.
+
+---
+
+### ⚙️ Configuraciones Técnicas
+
+**📁 [config/](config/)** - Configuraciones técnicas específicas
+
+| Documento | Descripción |
+|-----------|-------------|
+| **[api_gmail_labels.md](config/api_gmail_labels.md)** | API de labels de Gmail y su uso |
+| **[config_servicios_basicos_labels.md](config/config_servicios_basicos_labels.md)** | Configuración labels para servicios básicos |
+| **[parser_aguas_andinas.md](config/parser_aguas_andinas.md)** | Parser específico Aguas Andinas |
+| **[servicios-basicos_architectura.md](config/servicios-basicos_architectura.md)** | Arquitectura módulo servicios básicos |
+
+---
+
+### 📝 Registro de Cambios
+
+**📁 [changes/](changes/)** - Registro histórico cronológico de cambios (13 documentos por fecha)
+
+**📁 [changelogs/](changelogs/)** - Changelogs específicos de features
+
+| Documento | Descripción |
+|-----------|-------------|
+| **[CHANGELOG_import_inline_mes_anio.md](changelogs/CHANGELOG_import_inline_mes_anio.md)** | Cambios en importación inline |
+| **[CHANGELOG_payperiod_edit_v2.md](changelogs/CHANGELOG_payperiod_edit_v2.md)** | Cambios en edición de periodos v2 |
 
 ---
 
@@ -64,42 +110,7 @@ Documentos recientes (2026-02-27):
 
 ---
 
-### 💳 Integración Tenpo
-
-**📁 [tenpo/](tenpo/)** - 17 documentos sobre integración Tenpo + Gmail
-
-| Documento Principal | Descripción |
-|--------------------|-------------|
-| **[tenpo/TENPO_INTEGRATION.md](tenpo/TENPO_INTEGRATION.md)** ⭐ | Overview completo de integración |
-| **[tenpo/README.md](tenpo/README.md)** | Índice con todos los documentos organizados |
-
-**Temas cubiertos:**
-- Cálculo de intereses (Add-On V1, fees, sistema francés)
-- UI y desglose de costos
-- Compras manuales
-- Calendario y overrides
-- Validación y auditoría
-- QA y testing
-
----
-
-### 🏦 TC Billing Cycles (Tarjetas de Crédito)
-
-**📁 [tc-billing/](tc-billing/)** - 5 documentos sobre ciclos de facturación
-
-| Documento Principal | Descripción |
-|--------------------|-------------|
-| **[tc-billing/tc-billing-cycle-design.md](tc-billing/tc-billing-cycle-design.md)** ⭐ | Diseño completo del sistema |
-| **[tc-billing/README.md](tc-billing/README.md)** | Índice con todos los documentos |
-
-**Temas cubiertos:**
-- Diseño del sistema
-- Implementación backend y frontend
-- Auditoría de implementación
-
----
-
-### 🗄️ Documentación Archivada
+### ️ Documentación Archivada
 
 Los siguientes documentos fueron movidos a `archive/` por estar obsoletos o completamente implementados:
 
@@ -112,7 +123,6 @@ Los siguientes documentos fueron movidos a `archive/` por estar obsoletos o comp
 | [RESUMEN_IMPLEMENTACION_FRONTEND_ACTUAL.md](archive/RESUMEN_IMPLEMENTACION_FRONTEND_ACTUAL.md) | Consolidado en ARQUITECTURA.md |
 | [MEJORAS_ACTUAL_BACKEND.md](archive/MEJORAS_ACTUAL_BACKEND.md) | Propuestas antiguas, algunas implementadas |
 | [PULIR_FRONTEND_ACTUAL.md](archive/PULIR_FRONTEND_ACTUAL.md) | Obsoleto por plan RSuite |
-| [PRESUPUESTO_RESUMEN_TECNICO.md](archive/PRESUPUESTO_RESUMEN_TECNICO.md) | Info consolidada en ARQUITECTURA.md |
 
 **Auditorías y análisis puntuales (archivados 27/02/2026):**
 | Documento | Razón |
@@ -120,8 +130,6 @@ Los siguientes documentos fueron movidos a `archive/` por estar obsoletos o comp
 | [PAGE_TITLE_AUDIT.md](archive/PAGE_TITLE_AUDIT.md) | ✅ Auditoría de migración de títulos completada |
 | [RSUITE_CURRENT_STATE_AUDIT.md](archive/RSUITE_CURRENT_STATE_AUDIT.md) | Auditoría del 21 feb, superada por cambios del 27 |
 | [MONTH_TABLES_INVENTORY.md](archive/MONTH_TABLES_INVENTORY.md) | Inventario para estandarización ya completado |
-| [auditoria_grafico_categoria_tempo_tc.md](archive/auditoria_grafico_categoria_tempo_tc.md) | Auditoría puntual, implementación completada |
-| [modelo_datos_bar_chart_categoria_tempo_tc.md](archive/modelo_datos_bar_chart_categoria_tempo_tc.md) | Modelo específico ya implementado |
 | [RSUITE_PHASE3_SUBSCRIPTIONTABLE_NOTES.md](archive/RSUITE_PHASE3_SUBSCRIPTIONTABLE_NOTES.md) | Notas de fase 3 completada |
 | [RSUITE_PHASE3_SUPERMERCADO_NOTES.md](archive/RSUITE_PHASE3_SUPERMERCADO_NOTES.md) | Notas de fase 3 completada |
 | [ANALISIS_DOCUMENTACION.md](archive/ANALISIS_DOCUMENTACION.md) | Análisis del 21 feb, superado por limpieza del 27 |
@@ -147,34 +155,16 @@ docs/
 ├── CREDENCIALES_GOOGLE.md            # Setup Gmail OAuth
 ├── PAGE_TITLE_STANDARD.md            # Estándar de títulos
 │
-├── 📝 Diseño y Análisis
-│   ├── ANALISIS_CATEGORIAS_PRESUPUESTO.md
-│   ├── panel_pago_mes_tempo_tc.md
-│   └── registro_pagos_tc_diseno.md
-│
-├── 📋 changes/                        # Registro histórico de cambios
-│   ├── 2026-02-27-*.md               # Cambios recientes (11 docs)
-│   └── 2026-02-22-*.md               # Cambios anteriores
+├── � changes/                        # Registro histórico de cambios
+│   └── (ver carpeta para lista completa)
 │
 ├── 🎨 implementacion_rsuite/          # Migración a RSuite
 │   ├── README.md
 │   ├── PLAN_IMPLEMENTACION_RSUITE.md
 │   └── fase-*/                        # Fases 0-3
 │
-├── 💳 tenpo/                          # 17 documentos Tenpo
-│   ├── README.md                      # ⭐ Índice completo
-│   ├── TENPO_INTEGRATION.md
-│   └── ...
-│
-├── 🏦 tc-billing/                     # 5 documentos TC Billing
-│   ├── README.md
-│   ├── tc-billing-cycle-design.md
-│   └── ...
-│
-└── 🗄️ archive/                        # 16 documentos obsoletos
-    ├── FRONTEND_ACTUAL_IMPLEMENTACION.md
-    ├── PAGE_TITLE_AUDIT.md
-    └── ...
+└── 🗄️ archive/                        # Documentos obsoletos/implementados
+    └── (ver sección anterior para lista completa)
 ```
 
 ---
@@ -188,8 +178,6 @@ docs/
 | Entender arquitectura completa | [ARQUITECTURA.md](ARQUITECTURA.md) |
 | Empezar a desarrollar | [DESARROLLO.md](DESARROLLO.md) |
 | Implementar RSuite | [PLAN_IMPLEMENTACION_RSUITE.md](implementacion_rsuite/PLAN_IMPLEMENTACION_RSUITE.md) |
-| Entender Tenpo | [tenpo/TENPO_INTEGRATION.md](tenpo/TENPO_INTEGRATION.md) → [tenpo/README.md](tenpo/README.md) |
-| Entender TC Billing | [tc-billing/tc-billing-cycle-design.md](tc-billing/tc-billing-cycle-design.md) → [tc-billing/README.md](tc-billing/README.md) |
 | Ver cambios recientes | [changes/](changes/) - últimas implementaciones |
 | Configurar Gmail | [CREDENCIALES_GOOGLE.md](CREDENCIALES_GOOGLE.md) |
 | Ver docs antiguas | [archive/](archive/) |

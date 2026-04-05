@@ -12,10 +12,21 @@ import Actual from './pages/Actual';
 import ActualUtilities from './pages/ActualUtilities';
 import ConfigServiciosBasicos from './pages/ConfigServiciosBasicos';
 
+// New Tailwind-based pages
+import { HomePage } from './pages/HomeNew';
+import { ActualPage } from './pages/ActualNew';
+import { PresupuestoResumenPage } from './pages/PresupuestoResumenNew';
+
 export default function Router() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* New Tailwind Pages - Use these routes to preview the new design */}
+        <Route path="/new" element={<HomePage />} />
+        <Route path="/new/actual" element={<ActualPage />} />
+        <Route path="/new/presupuesto" element={<PresupuestoResumenPage />} />
+        
+        {/* Legacy RSuite Pages - To be migrated */}
         <Route path="/" element={<Home />} />
         <Route path="/actual" element={<Actual />} />
         <Route path="/actual/utilities" element={<ActualUtilities />} />
