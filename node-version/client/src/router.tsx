@@ -21,11 +21,14 @@ export default function Router() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* New Tailwind Pages - Use these routes to preview the new design */}
+        {/* New Tailwind Pages */}
         <Route path="/new" element={<HomePage />} />
         <Route path="/new/actual" element={<ActualPage />} />
-        <Route path="/new/presupuesto" element={<PresupuestoResumenPage />} />
-        
+
+        {/* Main Routes - New Design */}
+        <Route path="/" element={<HomePage />} />
+        <Route path="/presupuesto" element={<PresupuestoResumenPage />} />
+
         {/* Legacy RSuite Pages - To be migrated */}
         <Route path="/" element={<Home />} />
         <Route path="/actual" element={<Actual />} />
