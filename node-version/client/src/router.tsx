@@ -28,10 +28,7 @@ export default function Router() {
         {/* Main Routes - New Design */}
         <Route path="/" element={<HomePage />} />
         <Route path="/presupuesto" element={<PresupuestoResumenPage />} />
-
-        {/* Legacy RSuite Pages - To be migrated */}
-        <Route path="/" element={<Home />} />
-        <Route path="/actual" element={<Actual />} />
+        <Route path="/actual" element={<ActualPage />} />
         <Route path="/actual/utilities" element={<ActualUtilities />} />
         <Route path="/app" element={<App />} />
         <Route path="/creditos" element={<Creditos />} />
