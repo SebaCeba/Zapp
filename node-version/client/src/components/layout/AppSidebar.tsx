@@ -27,20 +27,7 @@ const navItems: NavItem[] = [
     icon: 'receipt_long',
     children: [
       { path: '/actual', label: 'Resumen', icon: 'summarize' },
-      { path: '/actual/ingresos', label: 'Ingresos', icon: 'payments' },
-      { 
-        path: '/actual/gastos', 
-        label: 'Gastos', 
-        icon: 'trending_down',
-        children: [
-          { path: '/actual/servicios-basicos', label: 'Servicios Básicos', icon: '' },
-          { path: '/actual/suscripciones', label: 'Suscripciones', icon: '' },
-          { path: '/creditos', label: 'Tarjetas de Crédito', icon: '' },
-          { path: '/actual/creditos-other', label: 'Créditos', icon: '' },
-          { path: '/actual/seguros', label: 'Seguros', icon: '' },
-        ],
-      },
-      { path: '/actual/ahorros', label: 'Ahorros', icon: 'savings' },
+      { path: '/comparacion', label: 'Comparación', icon: 'compare_arrows' },
     ],
   },
 ];
@@ -120,8 +107,8 @@ export function AppSidebar() {
           level === 0 ? 'px-4 py-3' : level === 1 ? 'px-8 py-2.5' : 'py-1.5 text-xs'
         } ${
           active
-            ? level === 1 
-              ? 'bg-white/10 text-white font-medium rounded-lg translate-x-1'
+            ? level === 1
+              ? 'bg-white/10 text-white font-medium rounded-lg'
               : 'text-white'
             : 'text-slate-300/70 hover:text-white hover:bg-white/5'
         } transition-all duration-200 ${level <= 1 ? 'rounded-lg' : 'block'}`}
@@ -140,7 +127,7 @@ export function AppSidebar() {
   };
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 flex flex-col p-4 z-50 bg-navy-dark text-white shadow-xl">
+    <aside className="fixed left-0 top-0 h-screen w-64 flex flex-col p-4 z-50 bg-navy-dark text-white shadow-xl overflow-x-hidden">
       {/* Logo */}
       <div className="mb-8 px-4 py-2">
         <h1 className="text-xl font-black text-white tracking-tighter">Zapp</h1>
