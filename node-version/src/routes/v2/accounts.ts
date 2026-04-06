@@ -195,4 +195,78 @@ router.get('/search', async (req: Request, res: Response) => {
   }
 });
 
+// ===================================================================
+// CREATE ACCOUNT (BASE MEMBER)
+// ===================================================================
+
+/**
+ * POST /api/v2/accounts
+ *
+ * Crea un nuevo miembro base (hoja editable) bajo un parent dado.
+ *
+ * Body:
+ * - name: string (requerido) — nombre de la cuenta
+ * - parentCode: string (requerido) — código del nodo padre (ej: 'INGRESOS')
+ *
+ * El accountCode se genera automáticamente con el prefijo del padre:
+ *   INGRESOS → ING.001, ING.002, ...
+ *   AHORROS  → AHO.001, ...
+ */
+router.post('/', async (req: Request, res: Response) => {
+  try {
+    const { name, parentCode } = req.body;
+
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      return res.status(400).json({ error: 'name es requerido' });
+    }
+    if (!parentCode || typeof parentCode !== 'string') {
+      return res.status(400).json({ error: 'parentCode es requerido' });
+    }
+
+    const parent = await prismaStar.dimAccount.findUnique({
+      where: { accountCode: parentCode.toUpperCase() },
+    });
+
+    if (!parent) {
+      return res.status(404).json({ error: `Cuenta padre '${parentCode}' no encontrada` });
+    }
+
+    // Determinar prefijo del código: primeras 3 letras del código padre
+    const prefix = parentCode.toUpperCase().slice(0, 3);
+
+    // Contar cuentas existentes con ese prefijo para auto-numerar
+    const existingCount = await prismaStar.dimAccount.count({
+      where: { accountCode: { startsWith: `${prefix}.` } },
+    });
+
+    // Generar código único con incremento, verificando colisiones
+    let newCode: string;
+    let attempt = existingCount + 1;
+    while (true) {
+      newCode = `${prefix}.${String(attempt).padStart(3, '0')}`;
+      const collision = await prismaStar.dimAccount.findUnique({ where: { accountCode: newCode } });
+      if (!collision) break;
+      attempt++;
+    }
+
+    const account = await prismaStar.dimAccount.create({
+      data: {
+        accountCode: newCode,
+        accountName: name.trim(),
+        parentId: parent.accountId,
+        level: parent.level + 1,
+        isBaseMember: true,
+        accountType: parent.accountType ?? null,
+        sortOrder: existingCount + 1,
+        isActive: true,
+      },
+    });
+
+    res.status(201).json(account);
+  } catch (error: any) {
+    console.error('Error en POST /api/v2/accounts:', error);
+    res.status(500).json({ error: 'Error al crear la cuenta' });
+  }
+});
+
 export default router;

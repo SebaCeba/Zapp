@@ -142,6 +142,35 @@ export async function upsertFact(payload: UpsertFactPayload): Promise<void> {
   }
 }
 
+// ---- Account creation ----
+
+export interface CreateAccountPayload {
+  name: string;
+  parentCode: string;
+}
+
+export interface CreatedAccount {
+  accountId: number;
+  accountCode: string;
+  accountName: string;
+  accountType: string | null;
+  level: number;
+  isBaseMember: boolean;
+}
+
+export async function createAccount(payload: CreateAccountPayload): Promise<CreatedAccount> {
+  const res = await fetch(`${BASE}/accounts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
 // ---- Accounts endpoints ----
 
 export function fetchAccountHierarchy(

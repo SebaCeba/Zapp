@@ -3,6 +3,7 @@ import { MainLayout } from '../components/layout';
 import {
   fetchBudgetByAccount,
   upsertFact,
+  createAccount,
   AccountTotal,
 } from '../api/v2Api';
 
@@ -109,6 +110,13 @@ export function PresupuestoIngresosPage() {
   const [loading, setLoading] = useState(true);
   const [saveCount, setSaveCount] = useState(0); // tracks unsaved optimistic updates
 
+  // Modal "Agregar Ingreso"
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const newNameRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     const monthCalls = Array.from({ length: 12 }, (_, i) =>
       fetchBudgetByAccount(NOW_YEAR, i + 1, 'ING').then(rows => ({ month: i + 1, rows }))
@@ -142,6 +150,45 @@ export function PresupuestoIngresosPage() {
   const grandTotal = accounts.reduce((s, a) => s + getRowTotal(a.accountCode), 0);
 
   const maxCol = Math.max(...Array.from({ length: 12 }, (_, i) => getColTotal(i + 1)), 1);
+
+  const openAddModal = () => {
+    setNewName('');
+    setCreateError(null);
+    setShowAddModal(true);
+    setTimeout(() => newNameRef.current?.focus(), 50);
+  };
+
+  const closeAddModal = () => {
+    if (creating) return;
+    setShowAddModal(false);
+    setNewName('');
+    setCreateError(null);
+  };
+
+  const handleCreateAccount = async () => {
+    const name = newName.trim();
+    if (!name) { setCreateError('El nombre es requerido'); return; }
+    setCreating(true);
+    setCreateError(null);
+    try {
+      const created = await createAccount({ name, parentCode: 'INGRESOS' });
+      // Agregar a la lista de cuentas con total 0
+      const newAccount: AccountTotal = {
+        accountCode: created.accountCode,
+        accountName: created.accountName,
+        totalClp: 0,
+      };
+      setAccounts(prev => [...prev, newAccount]);
+      // Inicializar fila vacía en la matriz
+      setMatrix(prev => ({ ...prev, [created.accountCode]: {} }));
+      setShowAddModal(false);
+      setNewName('');
+    } catch (err: any) {
+      setCreateError(err.message ?? 'Error al crear la cuenta');
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const handleSave = async (accountCode: string, month: number, newValue: number) => {
     // Optimistic update
@@ -324,11 +371,77 @@ export function PresupuestoIngresosPage() {
         </table>
       </div>
 
+      {/* Add income button */}
+      <div className="flex justify-center -mt-2">
+        <button
+          onClick={openAddModal}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full border-2 border-dashed border-primary/30 text-primary/60 text-sm font-bold hover:border-primary hover:text-primary hover:bg-primary/5 transition-all"
+        >
+          <span className="material-symbols-outlined text-[18px]">add_circle</span>
+          Agregar Ingreso
+        </button>
+      </div>
+
       {/* Keyboard hint */}
       <p className="text-center text-[11px] text-slate-400 font-medium -mt-2">
         <span className="material-symbols-outlined text-[12px] align-middle mr-1">edit</span>
         Clic en cualquier celda para editar - Enter para confirmar - Esc para cancelar
       </p>
+
+      {/* Add income modal */}
+      {showAddModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
+          onClick={closeAddModal}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm mx-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-black text-navy-dark mb-1">Nuevo Ingreso</h2>
+            <p className="text-xs text-slate-400 mb-5">Se creará bajo la categoría Ingresos con valor $0 en cada mes.</p>
+
+            <label className="block text-xs font-black text-on-surface-variant uppercase tracking-widest mb-1.5">
+              Nombre
+            </label>
+            <input
+              ref={newNameRef}
+              value={newName}
+              onChange={e => setNewName(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') handleCreateAccount();
+                if (e.key === 'Escape') closeAddModal();
+              }}
+              placeholder="Ej: Arriendo Local"
+              className={`w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 ${
+                createError ? 'border-red-400' : 'border-surface-container-high'
+              }`}
+              disabled={creating}
+            />
+            {createError && (
+              <p className="mt-1.5 text-xs text-red-500 font-medium">{createError}</p>
+            )}
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={closeAddModal}
+                disabled={creating}
+                className="flex-1 py-2.5 rounded-xl border border-surface-container-high text-sm font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors disabled:opacity-40"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleCreateAccount}
+                disabled={creating || !newName.trim()}
+                className="flex-1 py-2.5 rounded-xl bg-primary text-white text-sm font-black hover:bg-primary/90 transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
+              >
+                {creating && <span className="material-symbols-outlined text-[14px] animate-spin">progress_activity</span>}
+                {creating ? 'Creando…' : 'Crear'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </MainLayout>
   );
 }
