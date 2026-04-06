@@ -20,7 +20,7 @@ function clp(n: number): string {
 }
 
 function clpShort(n: number): string {
-  if (n === 0) return 'â€”';
+  if (n === 0) return '\u2014';
   return new Intl.NumberFormat('es-CL', {
     style: 'currency', currency: 'CLP', maximumFractionDigits: 0,
   }).format(n);
@@ -66,7 +66,7 @@ function EditableCell({ value, accountCode, month, onSave }: EditableCellProps) 
 
   if (editing) {
     return (
-      <td className="px-3 py-0 text-right">
+      <td className="px-2 py-0 text-right">
         <input
           ref={inputRef}
           value={draft}
@@ -76,7 +76,7 @@ function EditableCell({ value, accountCode, month, onSave }: EditableCellProps) 
             if (e.key === 'Enter') commit();
             if (e.key === 'Escape') cancel();
           }}
-          className={`w-full text-right text-xs font-bold tabular-nums bg-primary/10 border rounded px-2 py-4 focus:outline-none focus:ring-1 focus:ring-primary ${error ? 'border-red-400' : 'border-primary/40'}`}
+          className={`w-full text-right text-xs font-bold tabular-nums bg-primary/10 border rounded px-2 py-3 focus:outline-none focus:ring-1 focus:ring-primary ${error ? 'border-red-400' : 'border-primary/40'}`}
           disabled={saving}
           placeholder="0"
           type="text"
@@ -88,7 +88,7 @@ function EditableCell({ value, accountCode, month, onSave }: EditableCellProps) 
 
   return (
     <td
-      className={`px-4 py-5 text-right tabular-nums text-xs cursor-pointer group/cell transition-colors hover:bg-primary/5 ${
+      className={`px-3 py-3 text-right tabular-nums text-xs cursor-pointer group/cell transition-colors hover:bg-primary/5 whitespace-nowrap ${
         value === 0 ? 'text-slate-300' : 'text-on-surface-variant'
       } ${saving ? 'opacity-40' : ''}`}
       onClick={startEdit}
@@ -96,7 +96,7 @@ function EditableCell({ value, accountCode, month, onSave }: EditableCellProps) 
     >
       <span className="group-hover/cell:hidden">{clpShort(value)}</span>
       <span className="hidden group-hover/cell:inline text-primary/60">
-        <span className="material-symbols-outlined text-[11px] align-middle mr-0.5">edit</span>
+        <span className="material-symbols-outlined text-[10px] align-middle mr-0.5">edit</span>
         {clpShort(value)}
       </span>
     </td>
@@ -231,13 +231,13 @@ export function PresupuestoIngresosPage() {
           {saveCount > 0 && (
             <span className="flex items-center gap-1.5 text-xs font-bold text-primary animate-pulse">
               <span className="material-symbols-outlined text-[14px]">sync</span>
-              Guardandoâ€¦
+              Guardando\u2026
             </span>
           )}
           {saveCount === 0 && !loading && (
             <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600">
               <span className="material-symbols-outlined text-[14px]">cloud_done</span>
-              Al dÃ­a
+              Al d\u00EDa
             </span>
           )}
         </div>
@@ -298,31 +298,31 @@ export function PresupuestoIngresosPage() {
 
       {/* Matrix table */}
       <div className="overflow-x-auto bg-white rounded-2xl shadow-sm border border-surface-container-high">
-        <table className="w-full text-left border-collapse" style={{ minWidth: '1100px' }}>
+        <table className="w-full text-left border-collapse" style={{ minWidth: '1180px' }}>
           <thead>
-            <tr className="bg-surface-container-low">
-              <th className="py-5 px-6 text-xs font-black text-on-surface-variant uppercase tracking-widest w-56 sticky left-0 bg-surface-container-low z-10">
+            <tr className="bg-surface-container-low border-b border-surface-container">
+              <th className="py-3 px-5 text-[10px] font-black text-on-surface-variant uppercase tracking-widest min-w-[220px] sticky left-0 bg-surface-container-low z-10 whitespace-nowrap">
                 Tipo de Ingreso
               </th>
               {MONTHS.map(m => (
-                <th key={m} className="py-5 px-4 text-xs font-black text-on-surface-variant uppercase tracking-widest text-right">
+                <th key={m} className="py-3 px-3 text-[10px] font-black text-on-surface-variant uppercase tracking-widest text-right whitespace-nowrap">
                   {m}
                 </th>
               ))}
-              <th className="py-5 px-6 text-xs font-black text-primary uppercase tracking-widest text-right bg-secondary-container/20">
+              <th className="py-3 px-5 text-[10px] font-black text-primary uppercase tracking-widest text-right bg-secondary-container/20 whitespace-nowrap">
                 Total Anual
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-surface-container">
+          <tbody className="divide-y divide-surface-container/60">
             {loading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <tr key={i}>
-                  <td className="py-5 px-6 sticky left-0 bg-white">
+                  <td className="py-4 px-5 sticky left-0 bg-white">
                     <div className="h-4 w-32 bg-surface-container animate-pulse rounded" />
                   </td>
                   {Array.from({ length: 13 }).map((__, j) => (
-                    <td key={j} className="py-5 px-4">
+                    <td key={j} className="py-4 px-3">
                       <div className="h-4 w-16 bg-surface-container animate-pulse rounded ml-auto" />
                     </td>
                   ))}
@@ -331,9 +331,9 @@ export function PresupuestoIngresosPage() {
             ) : (
               accounts.map(account => (
                 <tr key={account.accountCode} className="hover:bg-brand-atelier-bg transition-colors group">
-                  <td className="py-5 px-6 sticky left-0 bg-white group-hover:bg-brand-atelier-bg transition-colors z-10">
-                    <p className="font-semibold text-sm text-on-surface">{account.accountName}</p>
-                    <p className="text-[10px] text-slate-400 font-mono mt-0.5">{account.accountCode}</p>
+                  <td className="py-3 px-5 sticky left-0 bg-white group-hover:bg-brand-atelier-bg transition-colors z-10">
+                    <p className="font-semibold text-[13px] text-on-surface whitespace-nowrap">{account.accountName}</p>
+                    <p className="text-[9px] text-slate-400 font-mono mt-0.5 tracking-wider">{account.accountCode}</p>
                   </td>
                   {Array.from({ length: 12 }, (_, i) => (
                     <EditableCell
@@ -344,7 +344,7 @@ export function PresupuestoIngresosPage() {
                       onSave={handleSave}
                     />
                   ))}
-                  <td className="py-5 px-6 text-right font-bold tabular-nums text-on-surface text-sm bg-secondary-container/10">
+                  <td className="py-3 px-5 text-right font-bold tabular-nums text-on-surface text-[13px] bg-secondary-container/10 whitespace-nowrap">
                     {clpShort(getRowTotal(account.accountCode))}
                   </td>
                 </tr>
@@ -354,15 +354,15 @@ export function PresupuestoIngresosPage() {
           {!loading && (
             <tfoot>
               <tr className="bg-primary-container text-on-primary-container">
-                <td className="py-6 px-6 font-black uppercase tracking-widest text-sm sticky left-0 bg-primary-container z-10">
+                <td className="py-4 px-5 font-black uppercase tracking-widest text-[11px] sticky left-0 bg-primary-container z-10">
                   Total Ingresos
                 </td>
                 {Array.from({ length: 12 }, (_, i) => (
-                  <td key={i} className="py-6 px-4 text-right font-bold tabular-nums text-sm">
+                  <td key={i} className="py-4 px-3 text-right font-bold tabular-nums text-[12px]">
                     {clpShort(getColTotal(i + 1))}
                   </td>
                 ))}
-                <td className="py-6 px-6 text-right text-lg font-black tabular-nums bg-on-primary-fixed/20">
+                <td className="py-4 px-5 text-right text-base font-black tabular-nums bg-on-primary-fixed/20 whitespace-nowrap">
                   {clp(grandTotal)}
                 </td>
               </tr>
