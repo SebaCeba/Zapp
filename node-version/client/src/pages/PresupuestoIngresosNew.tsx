@@ -196,6 +196,59 @@ export function PresupuestoIngresosPage() {
         </div>
       </div>
 
+      {/* Insights row */}
+      {!loading && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Seasonality chart */}
+          <div className="md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-surface-container-high">
+            <h4 className="text-sm font-black text-navy-dark mb-1 flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-[18px]">trending_up</span>
+              Estacionalidad Mensual
+            </h4>
+            <p className="text-xs text-slate-400 mb-5">Distribución de ingresos presupuestados por mes</p>
+            <div className="flex items-end gap-2 h-24">
+              {Array.from({ length: 12 }, (_, i) => {
+                const val = getColTotal(i + 1);
+                const hPct = (val / maxCol) * 100;
+                return (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                    <div className="w-full flex flex-col justify-end h-20">
+                      <div
+                        className="w-full rounded-t-lg bg-secondary-container hover:bg-primary/40 transition-all"
+                        style={{ height: `${Math.max(hPct, val > 0 ? 6 : 2)}%` }}
+                        title={clpShort(val)}
+                      />
+                    </div>
+                    <span className="text-[8px] font-black uppercase text-slate-400">{MONTHS[i]}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Summary card */}
+          <div className="bg-secondary-fixed p-6 rounded-2xl flex flex-col justify-between">
+            <div className="w-12 h-12 bg-white/40 rounded-full flex items-center justify-center mb-4">
+              <span className="material-symbols-outlined text-primary-container text-2xl"
+                style={{ fontVariationSettings: "'FILL' 1" }}>
+                auto_awesome
+              </span>
+            </div>
+            <div>
+              <h4 className="text-on-secondary-fixed font-black text-base mb-2">
+                Total {NOW_YEAR}
+              </h4>
+              <p className="text-3xl font-black tabular-nums text-navy-dark mb-1">
+                {clp(grandTotal)}
+              </p>
+              <p className="text-xs text-on-secondary-fixed-variant">
+                {accounts.length} fuentes · prom. {clp(Math.round(grandTotal / 12))}/mes
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Matrix table */}
       <div className="overflow-x-auto bg-white rounded-2xl shadow-sm border border-surface-container-high">
         <table className="w-full text-left border-collapse" style={{ minWidth: '1100px' }}>
@@ -270,59 +323,6 @@ export function PresupuestoIngresosPage() {
           )}
         </table>
       </div>
-
-      {/* Bottom insights */}
-      {!loading && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Seasonality chart */}
-          <div className="md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-surface-container-high">
-            <h4 className="text-sm font-black text-navy-dark mb-1 flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-[18px]">trending_up</span>
-              Estacionalidad Mensual
-            </h4>
-            <p className="text-xs text-slate-400 mb-5">DistribuciÃ³n de ingresos presupuestados por mes</p>
-            <div className="flex items-end gap-2 h-24">
-              {Array.from({ length: 12 }, (_, i) => {
-                const val = getColTotal(i + 1);
-                const hPct = (val / maxCol) * 100;
-                return (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                    <div className="w-full flex flex-col justify-end h-20">
-                      <div
-                        className="w-full rounded-t-lg bg-secondary-container hover:bg-primary/40 transition-all"
-                        style={{ height: `${Math.max(hPct, val > 0 ? 6 : 2)}%` }}
-                        title={clpShort(val)}
-                      />
-                    </div>
-                    <span className="text-[8px] font-black uppercase text-slate-400">{MONTHS[i]}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Summary card */}
-          <div className="bg-secondary-fixed p-6 rounded-2xl flex flex-col justify-between">
-            <div className="w-12 h-12 bg-white/40 rounded-full flex items-center justify-center mb-4">
-              <span className="material-symbols-outlined text-primary-container text-2xl"
-                style={{ fontVariationSettings: "'FILL' 1" }}>
-                auto_awesome
-              </span>
-            </div>
-            <div>
-              <h4 className="text-on-secondary-fixed font-black text-base mb-2">
-                Total {NOW_YEAR}
-              </h4>
-              <p className="text-3xl font-black tabular-nums text-navy-dark mb-1">
-                {clp(grandTotal)}
-              </p>
-              <p className="text-xs text-on-secondary-fixed-variant">
-                {accounts.length} fuentes Â· prom. {clp(Math.round(grandTotal / 12))}/mes
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Keyboard hint */}
       <p className="text-center text-[11px] text-slate-400 font-medium -mt-2">
