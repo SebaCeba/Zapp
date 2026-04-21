@@ -30,6 +30,284 @@ interface AccountMonthlyData {
   totalClp: number;
 }
 
+// Mapeo de códigos de tipos de gasto a nombres conocidos
+// Usado cuando el tipo padre no existe en los datos (solo existen los subtipos)
+const EXPENSE_TYPE_NAMES: Record<string, string> = {
+  'GAS.SUS': 'Suscripciones',
+  'GAS.SER': 'Servicios Básicos',
+  'GAS.OBL': 'Créditos / Obligaciones',
+  'GAS.HIP': 'Hipotecario',
+  'GAS.SUP': 'Supermercado',
+  'GAS.AJU': 'Ajustes',
+};
+
+// Estructura jerárquica para renderizado
+interface HierarchyNode {
+  code: string;
+  name: string;
+  level: number; // 1=Grupo raíz, 2=Tipo, 3=Subtipo
+  totalClp: number;
+  accountBaseId?: number; // Solo para hojas
+  children: HierarchyNode[];
+}
+
+// Estructura jerárquica para vista mensual
+interface HierarchyNodeMonthly {
+  code: string;
+  name: string;
+  level: number;
+  monthlyAmounts: number[]; // 12 months
+  totalClp: number;
+  accountBaseId?: number;
+  children: HierarchyNodeMonthly[];
+}
+
+/**
+ * Agrupa cuentas jerárquicamente según su accountCode
+ * Jerarquía funcional:
+ * - Ingresos: 2 niveles (ING. → ING.001)
+ * - Gastos: 3 niveles (GAS. → GAS.SUS → GAS.SUS.001)
+ * - Ahorros: 2 niveles (AHO. → AHO.001)
+ */
+function buildHierarchy(accounts: AccountTotal[]): HierarchyNode[] {
+  const rootNodes: Map<string, HierarchyNode> = new Map();
+
+  // Inicializar nodos raíz
+  const ingresosNode: HierarchyNode = { code: 'ING', name: 'Ingresos', level: 1, totalClp: 0, children: [] };
+  const gastosNode: HierarchyNode = { code: 'GAS', name: 'Gastos', level: 1, totalClp: 0, children: [] };
+  const ahorrosNode: HierarchyNode = { code: 'AHO', name: 'Ahorros', level: 1, totalClp: 0, children: [] };
+
+  rootNodes.set('ING', ingresosNode);
+  rootNodes.set('GAS', gastosNode);
+  rootNodes.set('AHO', ahorrosNode);
+
+  // Procesar cada cuenta
+  accounts.forEach(acc => {
+    const parts = acc.accountCode.split('.');
+    const rootPrefix = parts[0]; // ING, GAS, AHO
+
+    const rootNode = rootNodes.get(rootPrefix);
+    if (!rootNode) return; // Ignorar códigos no reconocidos
+
+    rootNode.totalClp += acc.totalClp;
+
+    if (rootPrefix === 'ING' || rootPrefix === 'AHO') {
+      // 2 niveles: Grupo → Tipo (directo)
+      // La cuenta misma es el tipo
+      const typeNode: HierarchyNode = {
+        code: acc.accountCode,
+        name: acc.accountName,
+        level: 2,
+        totalClp: acc.totalClp,
+        accountBaseId: acc.accountBaseId,
+        children: []
+      };
+      rootNode.children.push(typeNode);
+    } else if (rootPrefix === 'GAS') {
+      // 3 niveles: Grupo → Tipo → Subtipo
+      if (parts.length === 2) {
+        // GAS.SUS = Tipo (nivel 2)
+        const typeCode = parts.slice(0, 2).join('.');
+        let typeNode = rootNode.children.find(c => c.code === typeCode);
+        if (!typeNode) {
+          typeNode = {
+            code: typeCode,
+            name: acc.accountName, // Si la cuenta es GAS.SUS, su nombre es "Suscripciones"
+            level: 2,
+            totalClp: 0,
+            children: []
+          };
+          rootNode.children.push(typeNode);
+        }
+        typeNode.totalClp += acc.totalClp;
+        
+        // Si es una hoja directa (sin subtipo), agregar como hoja
+        const subtypeNode: HierarchyNode = {
+          code: acc.accountCode,
+          name: acc.accountName,
+          level: 3,
+          totalClp: acc.totalClp,
+          accountBaseId: acc.accountBaseId,
+          children: []
+        };
+        typeNode.children.push(subtypeNode);
+      } else if (parts.length === 3) {
+        // GAS.SUS.001 = Subtipo (nivel 3)
+        const typeCode = parts.slice(0, 2).join('.');
+        let typeNode = rootNode.children.find(c => c.code === typeCode);
+        if (!typeNode) {
+          // Crear tipo si no existe (usando nombre del mapeo o fallback genérico)
+          const typeName = EXPENSE_TYPE_NAMES[typeCode] || `Tipo ${typeCode}`;
+          typeNode = {
+            code: typeCode,
+            name: typeName,
+            level: 2,
+            totalClp: 0,
+            children: []
+          };
+          rootNode.children.push(typeNode);
+        }
+        typeNode.totalClp += acc.totalClp;
+
+        const subtypeNode: HierarchyNode = {
+          code: acc.accountCode,
+          name: acc.accountName,
+          level: 3,
+          totalClp: acc.totalClp,
+          accountBaseId: acc.accountBaseId,
+          children: []
+        };
+        typeNode.children.push(subtypeNode);
+      }
+    }
+  });
+
+  // Ordenar children por monto descendente
+  [ingresosNode, gastosNode, ahorrosNode].forEach(root => {
+    root.children.sort((a, b) => b.totalClp - a.totalClp);
+    root.children.forEach(child => {
+      child.children.sort((a, b) => b.totalClp - a.totalClp);
+    });
+  });
+
+  return [ingresosNode, gastosNode, ahorrosNode];
+}
+
+/**
+ * Agrupa datos mensuales jerárquicamente
+ */
+function buildHierarchyMonthly(monthlyData: AccountMonthlyData[]): HierarchyNodeMonthly[] {
+  const rootNodes: Map<string, HierarchyNodeMonthly> = new Map();
+
+  // Inicializar nodos raíz
+  const ingresosNode: HierarchyNodeMonthly = { 
+    code: 'ING', 
+    name: 'Ingresos', 
+    level: 1, 
+    monthlyAmounts: Array(12).fill(0),
+    totalClp: 0, 
+    children: [] 
+  };
+  const gastosNode: HierarchyNodeMonthly = { 
+    code: 'GAS', 
+    name: 'Gastos', 
+    level: 1, 
+    monthlyAmounts: Array(12).fill(0),
+    totalClp: 0, 
+    children: [] 
+  };
+  const ahorrosNode: HierarchyNodeMonthly = { 
+    code: 'AHO', 
+    name: 'Ahorros', 
+    level: 1, 
+    monthlyAmounts: Array(12).fill(0),
+    totalClp: 0, 
+    children: [] 
+  };
+
+  rootNodes.set('ING', ingresosNode);
+  rootNodes.set('GAS', gastosNode);
+  rootNodes.set('AHO', ahorrosNode);
+
+  // Procesar cada cuenta
+  monthlyData.forEach(acc => {
+    const parts = acc.accountCode.split('.');
+    const rootPrefix = parts[0];
+
+    const rootNode = rootNodes.get(rootPrefix);
+    if (!rootNode) return;
+
+    // Acumular montos mensuales al root
+    acc.monthlyAmounts.forEach((amount, idx) => {
+      rootNode.monthlyAmounts[idx] += amount;
+    });
+    rootNode.totalClp += acc.totalClp;
+
+    if (rootPrefix === 'ING' || rootPrefix === 'AHO') {
+      // 2 niveles
+      const typeNode: HierarchyNodeMonthly = {
+        code: acc.accountCode,
+        name: acc.accountName,
+        level: 2,
+        monthlyAmounts: [...acc.monthlyAmounts],
+        totalClp: acc.totalClp,
+        accountBaseId: acc.accountBaseId,
+        children: []
+      };
+      rootNode.children.push(typeNode);
+    } else if (rootPrefix === 'GAS') {
+      // 3 niveles
+      if (parts.length === 2) {
+        const typeCode = parts.slice(0, 2).join('.');
+        let typeNode = rootNode.children.find(c => c.code === typeCode);
+        if (!typeNode) {
+          typeNode = {
+            code: typeCode,
+            name: acc.accountName,
+            level: 2,
+            monthlyAmounts: Array(12).fill(0),
+            totalClp: 0,
+            children: []
+          };
+          rootNode.children.push(typeNode);
+        }
+        typeNode.monthlyAmounts = typeNode.monthlyAmounts.map((v, i) => v + acc.monthlyAmounts[i]);
+        typeNode.totalClp += acc.totalClp;
+        
+        const subtypeNode: HierarchyNodeMonthly = {
+          code: acc.accountCode,
+          name: acc.accountName,
+          level: 3,
+          monthlyAmounts: [...acc.monthlyAmounts],
+          totalClp: acc.totalClp,
+          accountBaseId: acc.accountBaseId,
+          children: []
+        };
+        typeNode.children.push(subtypeNode);
+      } else if (parts.length === 3) {
+        const typeCode = parts.slice(0, 2).join('.');
+        let typeNode = rootNode.children.find(c => c.code === typeCode);
+        if (!typeNode) {
+          // Crear tipo si no existe (usando nombre del mapeo o fallback genérico)
+          const typeName = EXPENSE_TYPE_NAMES[typeCode] || `Tipo ${typeCode}`;
+          typeNode = {
+            code: typeCode,
+            name: typeName,
+            level: 2,
+            monthlyAmounts: Array(12).fill(0),
+            totalClp: 0,
+            children: []
+          };
+          rootNode.children.push(typeNode);
+        }
+        typeNode.monthlyAmounts = typeNode.monthlyAmounts.map((v, i) => v + acc.monthlyAmounts[i]);
+        typeNode.totalClp += acc.totalClp;
+
+        const subtypeNode: HierarchyNodeMonthly = {
+          code: acc.accountCode,
+          name: acc.accountName,
+          level: 3,
+          monthlyAmounts: [...acc.monthlyAmounts],
+          totalClp: acc.totalClp,
+          accountBaseId: acc.accountBaseId,
+          children: []
+        };
+        typeNode.children.push(subtypeNode);
+      }
+    }
+  });
+
+  // Ordenar children por monto descendente
+  [ingresosNode, gastosNode, ahorrosNode].forEach(root => {
+    root.children.sort((a, b) => b.totalClp - a.totalClp);
+    root.children.forEach(child => {
+      child.children.sort((a, b) => b.totalClp - a.totalClp);
+    });
+  });
+
+  return [ingresosNode, gastosNode, ahorrosNode];
+}
+
 export function PresupuestoResumenPage() {
   const year = 2026;
 
@@ -40,6 +318,43 @@ export function PresupuestoResumenPage() {
   const [loadingMonthly, setLoadingMonthly] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('anual');
+  
+  // Estado de nodos expandidos/colapsados (Set de códigos de nodos)
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(() => {
+    // Cargar estado desde localStorage
+    try {
+      const saved = localStorage.getItem('presupuesto-resumen-expanded-nodes');
+      if (saved) {
+        return new Set(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.warn('Error loading expanded nodes from localStorage:', e);
+    }
+    // Estado inicial: grupos raíz expandidos, tipos de gasto colapsados
+    return new Set(['ING', 'GAS', 'AHO']);
+  });
+
+  // Guardar estado en localStorage cuando cambie
+  useEffect(() => {
+    try {
+      localStorage.setItem('presupuesto-resumen-expanded-nodes', JSON.stringify([...expandedNodes]));
+    } catch (e) {
+      console.warn('Error saving expanded nodes to localStorage:', e);
+    }
+  }, [expandedNodes]);
+
+  // Función para expandir/colapsar un nodo
+  const toggleNode = (nodeCode: string) => {
+    setExpandedNodes(prev => {
+      const next = new Set(prev);
+      if (next.has(nodeCode)) {
+        next.delete(nodeCode);
+      } else {
+        next.add(nodeCode);
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -321,7 +636,7 @@ export function PresupuestoResumenPage() {
         </div>
 
         {viewMode === 'anual' ? (
-          /* Vista Anual - Tabla Existente */
+          /* Vista Anual - Tabla Jerárquica */
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -342,31 +657,100 @@ export function PresupuestoResumenPage() {
                       <td className="px-8 py-4 text-right"><div className="h-4 w-12 bg-surface-container-high rounded animate-pulse ml-auto" /></td>
                     </tr>
                   ))
-                ) : (
-                  accounts
-                    .sort((a, b) => b.totalClp - a.totalClp)
-                    .map((acc, idx) => {
-                      const pct = totalAnual > 0 ? (acc.totalClp / totalAnual) * 100 : 0;
-                      return (
-                        <tr
-                          key={acc.accountBaseId}
-                          className={`${idx % 2 === 0 ? '' : 'bg-surface-container/10'} hover:bg-surface-container-low transition-colors border-b border-surface-container-low/50`}
-                        >
-                          <td className="px-8 py-3 font-semibold text-navy-dark">{acc.accountName}</td>
-                          <td className="px-6 py-3 font-mono text-xs text-slate-400">{acc.accountCode}</td>
-                          <td className="px-6 py-3 text-right tabular-nums font-bold text-navy-dark">{clp(acc.totalClp)}</td>
-                          <td className="px-8 py-3 text-right">
+                ) : (() => {
+                  const hierarchy = buildHierarchy(accounts);
+                  const rows: JSX.Element[] = [];
+                  let rowIdx = 0;
+
+                  // Función recursiva para renderizar nodos
+                  const renderNode = (node: HierarchyNode, depth: number = 0) => {
+                    const pct = totalAnual > 0 ? (node.totalClp / totalAnual) * 100 : 0;
+                    const paddingLeft = depth === 0 ? '2rem' : `${1.5 + depth * 1.5}rem`;
+                    const isGroupRoot = node.level === 1;
+                    const isType = node.level === 2;
+                    const isSubtype = node.level === 3;
+                    const hasChildren = node.children.length > 0;
+                    const isExpanded = expandedNodes.has(node.code);
+
+                    const bgClass = isGroupRoot 
+                      ? 'bg-surface-container-high font-bold' 
+                      : rowIdx % 2 === 0 ? '' : 'bg-surface-container/10';
+
+                    rows.push(
+                      <tr
+                        key={`${node.code}-${rowIdx}`}
+                        className={`${bgClass} hover:bg-surface-container-low transition-colors border-b border-surface-container-low/50`}
+                      >
+                        <td className="px-8 py-3" style={{ paddingLeft }}>
+                          <div className="flex items-center gap-2">
+                            {hasChildren && (
+                              <button
+                                onClick={() => toggleNode(node.code)}
+                                className="text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
+                                aria-label={isExpanded ? 'Colapsar' : 'Expandir'}
+                              >
+                                <span className="text-sm">{isExpanded ? '▼' : '▶'}</span>
+                              </button>
+                            )}
+                            {!hasChildren && <span className="w-4" />}
+                            <span 
+                              className={`${isGroupRoot ? 'font-black text-base' : isType ? 'font-semibold' : 'font-normal'} text-navy-dark ${hasChildren ? 'cursor-pointer' : ''}`}
+                              onClick={() => hasChildren && toggleNode(node.code)}
+                            >
+                              {isGroupRoot && (
+                                <span className="mr-2">
+                                  {node.code === 'ING' && '💰'}
+                                  {node.code === 'GAS' && '💸'}
+                                  {node.code === 'AHO' && '🏦'}
+                                </span>
+                              )}
+                              {node.name}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-3">
+                          <span className={`font-mono text-xs ${isGroupRoot ? 'font-bold text-navy-dark' : 'text-slate-400'}`}>
+                            {node.code}
+                          </span>
+                        </td>
+                        <td className="px-6 py-3 text-right">
+                          <span className={`tabular-nums ${isGroupRoot ? 'font-black text-base' : isType ? 'font-bold' : 'font-normal'} text-navy-dark`}>
+                            {clp(node.totalClp)}
+                          </span>
+                        </td>
+                        <td className="px-8 py-3 text-right">
+                          {isGroupRoot ? (
+                            <span className="text-sm font-black text-navy-dark tabular-nums">{pct.toFixed(1)}%</span>
+                          ) : (
                             <div className="flex items-center justify-end gap-2">
                               <div className="w-16 h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
-                                <div className="h-full bg-primary-container rounded-full" style={{ width: `${Math.min(pct * 3, 100)}%` }} />
+                                <div 
+                                  className={`h-full ${isType ? 'bg-primary-container' : 'bg-primary-container/60'} rounded-full`} 
+                                  style={{ width: `${Math.min(pct * 3, 100)}%` }} 
+                                />
                               </div>
-                              <span className="text-xs font-bold text-slate-500 tabular-nums w-10 text-right">{pct.toFixed(1)}%</span>
+                              <span className={`text-xs ${isType ? 'font-bold' : 'font-normal'} text-slate-500 tabular-nums w-10 text-right`}>
+                                {pct.toFixed(1)}%
+                              </span>
                             </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                )}
+                          )}
+                        </td>
+                      </tr>
+                    );
+
+                    rowIdx++;
+
+                    // Renderizar children solo si el nodo está expandido
+                    if (node.children.length > 0 && isExpanded) {
+                      node.children.forEach(child => renderNode(child, depth + 1));
+                    }
+                  };
+
+                  // Renderizar toda la jerarquía
+                  hierarchy.forEach(root => renderNode(root, 0));
+
+                  return rows;
+                })()}
               </tbody>
               {!loading && (
                 <tfoot>
@@ -430,31 +814,82 @@ export function PresupuestoResumenPage() {
                       </div>
                     </td>
                   </tr>
-                ) : (
-                  accountsMonthlyData
-                    .sort((a, b) => b.totalClp - a.totalClp)
-                    .map((acc, idx) => (
+                ) : (() => {
+                  const hierarchy = buildHierarchyMonthly(accountsMonthlyData);
+                  const rows: JSX.Element[] = [];
+                  let rowIdx = 0;
+
+                  const renderNodeMonthly = (node: HierarchyNodeMonthly, depth: number = 0) => {
+                    const paddingLeft = depth === 0 ? '1.5rem' : `${1 + depth * 1.5}rem`;
+                    const isGroupRoot = node.level === 1;
+                    const isType = node.level === 2;
+                    const isSubtype = node.level === 3;
+                    const hasChildren = node.children.length > 0;
+                    const isExpanded = expandedNodes.has(node.code);
+
+                    const bgClass = isGroupRoot 
+                      ? 'bg-surface-container-high font-bold' 
+                      : rowIdx % 2 === 0 ? 'bg-white' : 'bg-surface-container/10';
+
+                    rows.push(
                       <tr
-                        key={acc.accountBaseId}
-                        className={`${idx % 2 === 0 ? '' : 'bg-surface-container/10'} hover:bg-surface-container-low transition-colors border-b border-surface-container-low/50`}
+                        key={`${node.code}-${rowIdx}`}
+                        className={`${bgClass} hover:bg-surface-container-low transition-colors border-b border-surface-container-low/50`}
                       >
-                        <td className="sticky left-0 z-10 px-6 py-3 font-semibold text-navy-dark bg-inherit">
-                          {acc.accountName}
+                        <td className={`sticky left-0 z-10 ${bgClass} px-6 py-3`} style={{ paddingLeft }}>
+                          <div className="flex items-center gap-2">
+                            {hasChildren && (
+                              <button
+                                onClick={() => toggleNode(node.code)}
+                                className="text-slate-400 hover:text-slate-600 transition-colors focus:outline-none flex-shrink-0"
+                                aria-label={isExpanded ? 'Colapsar' : 'Expandir'}
+                              >
+                                <span className="text-sm">{isExpanded ? '▼' : '▶'}</span>
+                              </button>
+                            )}
+                            {!hasChildren && <span className="w-4 flex-shrink-0" />}
+                            <span 
+                              className={`${isGroupRoot ? 'font-black text-base' : isType ? 'font-semibold' : 'font-normal'} text-navy-dark ${hasChildren ? 'cursor-pointer' : ''}`}
+                              onClick={() => hasChildren && toggleNode(node.code)}
+                            >
+                              {isGroupRoot && (
+                                <span className="mr-2">
+                                  {node.code === 'ING' && '💰'}
+                                  {node.code === 'GAS' && '💸'}
+                                  {node.code === 'AHO' && '🏦'}
+                                </span>
+                              )}
+                              {node.name}
+                            </span>
+                          </div>
                         </td>
-                        <td className="px-4 py-3 font-mono text-xs text-slate-400">
-                          {acc.accountCode}
+                        <td className="px-4 py-3">
+                          <span className={`font-mono text-xs ${isGroupRoot ? 'font-bold text-navy-dark' : 'text-slate-400'}`}>
+                            {node.code}
+                          </span>
                         </td>
-                        {acc.monthlyAmounts.map((amount, monthIdx) => (
-                          <td key={monthIdx} className="px-3 py-3 text-right tabular-nums text-xs">
+                        {node.monthlyAmounts.map((amount, monthIdx) => (
+                          <td key={monthIdx} className={`px-3 py-3 text-right tabular-nums ${isGroupRoot ? 'font-bold' : 'text-xs'}`}>
                             {amount > 0 ? clp(amount) : '—'}
                           </td>
                         ))}
-                        <td className="sticky right-0 z-10 px-6 py-3 text-right tabular-nums font-bold text-navy-dark bg-surface-container-highest">
-                          {clp(acc.totalClp)}
+                        <td className={`sticky right-0 z-10 ${isGroupRoot ? 'bg-surface-container-highest' : 'bg-surface-container-highest'} px-6 py-3 text-right tabular-nums ${isGroupRoot ? 'font-black text-base' : isType ? 'font-bold' : 'font-normal'} text-navy-dark`}>
+                          {clp(node.totalClp)}
                         </td>
                       </tr>
-                    ))
-                )}
+                    );
+
+                    rowIdx++;
+
+                    // Renderizar children solo si el nodo está expandido
+                    if (node.children.length > 0 && isExpanded) {
+                      node.children.forEach(child => renderNodeMonthly(child, depth + 1));
+                    }
+                  };
+
+                  hierarchy.forEach(root => renderNodeMonthly(root, 0));
+                  return rows;
+                })()}
               </tbody>
               {!loadingMonthly && accountsMonthlyData.length > 0 && (
                 <tfoot>
