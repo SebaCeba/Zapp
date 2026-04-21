@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Button, Input, Table } from 'rsuite';
-
-const { Column, HeaderCell, Cell } = Table;
+import { useState, useEffect } from 'react';
+import { Button } from './primitives';
+import { EditableCell, LoadingSpinner, EmptyState } from './ui';
 
 interface IngresoBase {
   id: number;
@@ -48,8 +47,6 @@ const MESES_DISPLAY = [
 export default function TablaPresupuestoIngresos({ anio, onOpenCatalogo }: Props) {
   const [ingresos, setIngresos] = useState<IngresoBase[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editando, setEditando] = useState<{ ingresoId: number; mes: string } | null>(null);
-  const [guardando, setGuardando] = useState<{ ingresoId: number; mes: string } | null>(null);
 
   useEffect(() => {
     cargarDatos();
@@ -91,7 +88,7 @@ export default function TablaPresupuestoIngresos({ anio, onOpenCatalogo }: Props
   };
 
   const formatearMonto = (monto: number): string => {
-    if (monto === 0) return '';
+    if (monto === 0) return '—';
     return Math.round(monto).toLocaleString('es-CL');
   };
 
@@ -128,19 +125,14 @@ export default function TablaPresupuestoIngresos({ anio, onOpenCatalogo }: Props
     return MESES.reduce((sum, _, idx) => sum + calcularTotalMes(idx), 0);
   };
 
-  const guardarMonto = async (ingresoId: number, mes: string, valor: string) => {
+  const guardarMonto = async (ingresoId: number, mes: string, valor: number) => {
     try {
-      setGuardando({ ingresoId, mes });
-      
-      const monto = valor.replace(/\./g, '').replace(/,/g, '.');
-      const montoFloat = parseFloat(monto) || 0;
-
       const response = await fetch(
         `http://localhost:3000/api/ingresos/presupuesto/${ingresoId}/${anio}/${mes}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ monto: montoFloat })
+          body: JSON.stringify({ monto: valor })
         }
       );
 
@@ -169,7 +161,7 @@ export default function TablaPresupuestoIngresos({ anio, onOpenCatalogo }: Props
                   diciembre: 0
                 };
             
-            const presupuestoActualizado = { ...presupuestoBase, [mes]: montoFloat };
+            const presupuestoActualizado = { ...presupuestoBase, [mes]: valor };
             
             return {
               ...ingreso,
@@ -183,255 +175,88 @@ export default function TablaPresupuestoIngresos({ anio, onOpenCatalogo }: Props
       console.error('Error al guardar monto:', error);
       alert('Error al guardar el monto');
     } finally {
-      setGuardando(null);
       setEditando(null);
     }
   };
 
-  // Wrappers compactos siguiendo TABLE_STANDARD_V1
-  const CompactCell = (props: any) => (
-    <Cell
-      {...props}
-      style={{
-        padding: '4px',
-        fontSize: '12px',
-        ...props.style
-      }}
-    />
-  );
-
-  const CompactHeaderCell = (props: any) => (
-    <HeaderCell
-      {...props}
-      style={{
-        padding: '4px',
-        ...props.style
-      }}
-    />
-  );
-
-  // Preparar datos para la tabla
-  interface TableRow {
-    id: string;
-    rowType: 'ingreso' | 'total';
-    nombre: string;
-    ingresoId?: number;
-    enero: number;
-    febrero: number;
-    marzo: number;
-    abril: number;
-    mayo: number;
-    junio: number;
-    julio: number;
-    agosto: number;
-    septiembre: number;
-    octubre: number;
-    noviembre: number;
-    diciembre: number;
-    total: number;
-    background?: string;
-  }
-
-  const prepararDatosTabla = (): TableRow[] => {
-    const rows: TableRow[] = [];
-
-    // Filas de ingresos
-    ingresos.forEach((ingreso) => {
-      const presupuesto = obtenerPresupuesto(ingreso);
-      const total = calcularTotalIngreso(presupuesto);
-      
-      rows.push({
-        id: `ingreso-${ingreso.id}`,
-        rowType: 'ingreso',
-        nombre: ingreso.nombre,
-        ingresoId: ingreso.id,
-        enero: presupuesto.enero,
-        febrero: presupuesto.febrero,
-        marzo: presupuesto.marzo,
-        abril: presupuesto.abril,
-        mayo: presupuesto.mayo,
-        junio: presupuesto.junio,
-        julio: presupuesto.julio,
-        agosto: presupuesto.agosto,
-        septiembre: presupuesto.septiembre,
-        octubre: presupuesto.octubre,
-        noviembre: presupuesto.noviembre,
-        diciembre: presupuesto.diciembre,
-        total
-      });
-    });
-
-    // Fila de total
-    rows.push({
-      id: 'total',
-      rowType: 'total',
-      nombre: 'TOTAL INGRESOS',
-      enero: calcularTotalMes(0),
-      febrero: calcularTotalMes(1),
-      marzo: calcularTotalMes(2),
-      abril: calcularTotalMes(3),
-      mayo: calcularTotalMes(4),
-      junio: calcularTotalMes(5),
-      julio: calcularTotalMes(6),
-      agosto: calcularTotalMes(7),
-      septiembre: calcularTotalMes(8),
-      octubre: calcularTotalMes(9),
-      noviembre: calcularTotalMes(10),
-      diciembre: calcularTotalMes(11),
-      total: calcularTotalAnual(),
-      background: '#d1fae5'
-    });
-
-    return rows;
-  };
-
-  const tableData = prepararDatosTabla();
-
   if (loading) {
-    return (
-      <div className="loading" style={{ textAlign: 'center', padding: '3rem' }}>
-        Cargando...
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (ingresos.length === 0) {
     return (
-      <div className="card" style={{ textAlign: 'center', padding: '2rem' }}>
-        <p style={{ color: '#666', marginBottom: '1rem' }}>No tienes ingresos configurados.</p>
-        <Button
-          onClick={onOpenCatalogo}
-          appearance="primary"
-        >
-          Agregar primer ingreso
-        </Button>
-      </div>
+      <EmptyState
+        icon="payments"
+        title="No tienes ingresos configurados"
+        action={
+          <Button onClick={onOpenCatalogo} variant="primary">
+            Agregar primer ingreso
+          </Button>
+        }
+      />
     );
   }
 
   return (
-    <>
-      <div className="card">
-        <Table
-          data={tableData}
-          autoHeight
-          bordered={true}
-          cellBordered={true}
-          showHeader={true}
-          hover={true}
-          rowHeight={30}
-          headerHeight={30}
-          affixHeader
-          affixHorizontalScrollbar
-          rowClassName={(rowData: any) => {
-            if (rowData?.rowType === 'total') return 'total-row';
-            return '';
-          }}
-        >
-          {/* Columna Nombre (fija izquierda) */}
-          <Column width={160} fixed align="left">
-            <CompactHeaderCell className="app-table-header" style={{ textAlign: 'left' }}>
-              Ingreso
-            </CompactHeaderCell>
-            <CompactCell>
-              {(rowData: TableRow) => (
-                <div style={{ 
-                  fontWeight: rowData.rowType === 'total' ? '700' : '500',
-                  background: rowData.background || 'transparent'
-                }}>
-                  {rowData.nombre}
-                </div>
-              )}
-            </CompactCell>
-          </Column>
+    <div className="bg-white rounded-[24px] shadow-sm overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs border-collapse">
+          <thead className="sticky top-0 bg-surface-container z-10">
+            <tr>
+              <th className="px-4 py-2 text-left font-semibold text-on-surface-variant border-b border-outline-variant">
+                Ingreso
+              </th>
+              {MESES_DISPLAY.map((mes) => (
+                <th key={mes} className="px-3 py-2 text-center font-semibold text-on-surface-variant border-b border-outline-variant whitespace-nowrap">
+                  {mes}
+                </th>
+              ))}
+              <th className="px-4 py-2 text-right font-semibold text-on-surface-variant border-b border-outline-variant sticky right-0 bg-surface-container">
+                Total
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {ingresos.map((ingreso) => {
+              const presupuesto = obtenerPresupuesto(ingreso);
+              const total = calcularTotalIngreso(presupuesto);
 
-          {/* Columnas de meses */}
-          {MESES.map((mes, index) => (
-            <Column key={mes} width={90} align="right">
-              <CompactHeaderCell className="app-table-header" style={{ textAlign: 'center' }}>
-                {MESES_DISPLAY[index]}
-              </CompactHeaderCell>
-              <CompactCell>
-                {(rowData: TableRow) => {
-                  const valor = rowData[mes as keyof TableRow] as number;
-                  
-                  // Si es fila de total, solo mostrar valor
-                  if (rowData.rowType === 'total') {
-                    return (
-                      <div style={{ 
-                        fontWeight: '600',
-                        background: rowData.background || 'transparent',
-                        textAlign: 'right'
-                      }}>
-                        {formatearMontoTotal(valor)}
-                      </div>
-                    );
-                  }
-
-                  // Fila de ingreso editable
-                  const isEditando = editando?.ingresoId === rowData.ingresoId && editando?.mes === mes;
-                  const isGuardando = guardando?.ingresoId === rowData.ingresoId && guardando?.mes === mes;
-
-                  if (isEditando) {
-                    return (
-                      <Input
-                        autoFocus
-                        defaultValue={valor || ''}
-                        style={{ width: '100%', textAlign: 'right', fontSize: '12px' }}
-                        size="sm"
-                        onBlur={(e) => guardarMonto(rowData.ingresoId!, mes, (e.target as HTMLInputElement).value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            guardarMonto(rowData.ingresoId!, mes, (e.target as HTMLInputElement).value);
-                          }
-                        }}
-                      />
-                    );
-                  }
-
-                  return (
-                    <div
-                      style={{
-                        cursor: 'pointer',
-                        padding: '0.25rem 0.5rem',
-                        borderRadius: '4px',
-                        color: valor === 0 ? '#9ca3af' : 'inherit',
-                        textAlign: 'right'
-                      }}
-                      onClick={() => setEditando({ ingresoId: rowData.ingresoId!, mes })}
-                    >
-                      {isGuardando ? (
-                        <span style={{ color: 'var(--primary)' }}>...</span>
-                      ) : (
-                        formatearMonto(valor) || '0'
-                      )}
-                    </div>
-                  );
-                }}
-              </CompactCell>
-            </Column>
-          ))}
-
-          {/* Columna Total (fija derecha) */}
-          <Column width={120} align="right" fixed="right">
-            <CompactHeaderCell className="app-table-header" style={{ textAlign: 'right' }}>
-              Total
-            </CompactHeaderCell>
-            <CompactCell>
-              {(rowData: TableRow) => (
-                <div style={{ 
-                  fontWeight: rowData.rowType === 'total' ? '700' : '600',
-                  background: rowData.rowType === 'total' ? '#6ee7b7' : 'var(--gray-50)',
-                  fontSize: rowData.rowType === 'total' ? '1.125rem' : 'inherit',
-                  textAlign: 'right'
-                }}>
-                  {formatearMontoTotal(rowData.total)}
-                </div>
-              )}
-            </CompactCell>
-          </Column>
-        </Table>
+              return (
+                <tr key={ingreso.id} className="border-b border-outline-variant/30 hover:bg-surface-container/50 transition-colors">
+                  <td className="px-4 py-2 font-medium text-on-surface">
+                    {ingreso.nombre}
+                  </td>
+                  {MESES.map((mes) => (
+                    <EditableCell
+                      key={mes}
+                      value={presupuesto[mes as keyof Presupuesto] as number}
+                      onSave={(valor) => guardarMonto(ingreso.id, mes, valor)}
+                    />
+                  ))}
+                  <td className="px-4 py-3 text-right font-semibold text-on-surface tabular-nums sticky right-0 bg-surface/80 backdrop-blur-sm">
+                    {formatearMontoTotal(total)}
+                  </td>
+                </tr>
+              );
+            })}
+            
+            {/* Fila de total */}
+            <tr className="bg-primary-container/20 font-bold border-t-2 border-primary">
+              <td className="px-4 py-3 text-on-surface">
+                TOTAL INGRESOS
+              </td>
+              {MESES.map((_, index) => (
+                <td key={index} className="px-3 py-3 text-right tabular-nums text-on-surface whitespace-nowrap">
+                  {formatearMontoTotal(calcularTotalMes(index))}
+                </td>
+              ))}
+              <td className="px-4 py-3 text-right text-lg tabular-nums text-primary sticky right-0 bg-primary-container/20 backdrop-blur-sm">
+                {formatearMontoTotal(calcularTotalAnual())}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-    </>
+    </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { ActualCategory } from '../../types/actual';
 import { upsertActualEntry } from '../../api/actualApi';
 
@@ -24,10 +24,13 @@ export default function ActualEditableCell({
   const [isEditing, setIsEditing] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleEdit = () => {
     setIsEditing(true);
     setInputValue(String(value));
+    setTimeout(() => inputRef.current?.select(), 0);
   };
 
   const handleSave = async () => {
@@ -36,6 +39,9 @@ export default function ActualEditableCell({
       setError('Valor inválido');
       return;
     }
+
+    setSaving(true);
+    setError('');
 
     try {
       await upsertActualEntry({
@@ -46,7 +52,6 @@ export default function ActualEditableCell({
         amountClp: amount
       });
       setIsEditing(false);
-      setError('');
       onSaved(amount);
     } catch (err: any) {
       if (err.status === 423) {
@@ -54,6 +59,8 @@ export default function ActualEditableCell({
       } else {
         setError('Error al guardar');
       }
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -79,51 +86,42 @@ export default function ActualEditableCell({
     });
   };
 
-  if (!isEditing) {
+  if (isEditing) {
     return (
-      <>
-        <span onDoubleClick={handleEdit} style={{ cursor: 'pointer' }}>
-          {formatMonto(value)}
-        </span>
-        <button 
-          onClick={handleEdit} 
-          style={{ marginLeft: '0.5rem', fontSize: '0.875rem', border: 'none', background: 'transparent', cursor: 'pointer' }}
+      <div className="relative">
+        <input
+          ref={inputRef}
+          type="text"
+          value={inputValue}
+          onChange={e => setInputValue(e.target.value)}
+          onBlur={handleSave}
+          onKeyDown={handleKeyDown}
+          disabled={saving}
+          className={`w-full text-right text-xs font-bold tabular-nums bg-primary/10 border rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary ${
+            error ? 'border-error' : 'border-primary/40'
+          }`}
+          placeholder="0"
+          inputMode="numeric"
           aria-label={`Editar ${itemName}`}
-        >
-          ✏️
-        </button>
-      </>
+        />
+        {error && (
+          <span className="absolute top-full left-0 mt-1 bg-error text-white px-2 py-1 rounded text-xs whitespace-nowrap z-10 shadow-lg">
+            {error}
+          </span>
+        )}
+      </div>
     );
   }
 
   return (
-    <div className="edit-mode" style={{ position: 'relative' }}>
-      <input
-        type="text"
-        value={inputValue}
-        onChange={e => setInputValue(e.target.value)}
-        onBlur={handleSave}
-        onKeyDown={handleKeyDown}
-        autoFocus
-        style={{ width: '100%', padding: '0.25rem' }}
-        aria-label={`Editar ${itemName}`}
-      />
-      {error && (
-        <span className="error-tooltip" style={{
-          position: 'absolute',
-          top: '100%',
-          left: 0,
-          background: '#ef4444',
-          color: 'white',
-          padding: '0.25rem 0.5rem',
-          borderRadius: '4px',
-          fontSize: '0.75rem',
-          whiteSpace: 'nowrap',
-          zIndex: 10
-        }}>
-          {error}
-        </span>
-      )}
+    <div className="group/cell cursor-pointer transition-colors hover:bg-primary/5 py-1 px-2 rounded" onClick={handleEdit}>
+      <span className="group-hover/cell:hidden tabular-nums">
+        {formatMonto(value)}
+      </span>
+      <span className="hidden group-hover/cell:inline text-primary/80 tabular-nums">
+        <span className="material-symbols-outlined text-[10px] align-middle mr-0.5">edit</span>
+        {formatMonto(value)}
+      </span>
     </div>
   );
 }

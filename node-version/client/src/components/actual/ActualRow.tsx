@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { ActualLine, ActualCategory } from '../../types/actual';
 import { upsertActualEntry } from '../../api/actualApi';
 
@@ -14,11 +14,13 @@ export default function ActualRow({ line, year, month, category, onSaved }: Actu
   const [isEditing, setIsEditing] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleEdit = () => {
     setIsEditing(true);
-    // Sin formato: solo el número
     setInputValue(String(line.actualClp));
+    setTimeout(() => inputRef.current?.select(), 0);
   };
 
   const handleSave = async () => {
@@ -27,6 +29,9 @@ export default function ActualRow({ line, year, month, category, onSaved }: Actu
       setError('Valor inválido');
       return;
     }
+
+    setSaving(true);
+    setError('');
 
     try {
       await upsertActualEntry({
@@ -37,7 +42,6 @@ export default function ActualRow({ line, year, month, category, onSaved }: Actu
         amountClp: amount
       });
       setIsEditing(false);
-      setError('');
       onSaved(amount);
     } catch (err: any) {
       if (err.status === 423) {
@@ -45,6 +49,8 @@ export default function ActualRow({ line, year, month, category, onSaved }: Actu
       } else {
         setError('Error al guardar');
       }
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -77,58 +83,53 @@ export default function ActualRow({ line, year, month, category, onSaved }: Actu
 
   // Color para delta: positivo en ingresos es bueno, en gastos es malo
   const isIncome = category === ActualCategory.INGRESOS;
-  const deltaClass = deltaClp === 0 ? '' : 
-                     (isIncome ? (deltaClp > 0 ? 'favorable' : 'unfavorable') : 
-                                 (deltaClp < 0 ? 'favorable' : 'unfavorable'));
+  const deltaClass = deltaClp === 0 ? 'text-slate-500' : 
+                     (isIncome ? (deltaClp > 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold') : 
+                                 (deltaClp < 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'));
 
   return (
-    <tr>
-      <td>{line.itemName}</td>
-      <td className="monto">{formatMonto(line.budgetClp)}</td>
-      <td className="monto actual-cell">
+    <tr className="hover:bg-surface-container/30 transition-colors">
+      <td className="px-4 py-2 text-sm text-on-surface">{line.itemName}</td>
+      <td className="px-4 py-2 text-right tabular-nums text-sm text-on-surface-variant">{formatMonto(line.budgetClp)}</td>
+      <td className="px-4 py-2 text-right">
         {!isEditing ? (
-          <>
-            <span onDoubleClick={handleEdit} style={{ cursor: 'pointer' }}>
+          <div className="group/cell cursor-pointer transition-colors hover:bg-primary/5 py-1 px-2 rounded inline-block" onClick={handleEdit}>
+            <span className="group-hover/cell:hidden tabular-nums text-sm">
               {formatMonto(line.actualClp)}
             </span>
-            <button onClick={handleEdit} style={{ marginLeft: '0.5rem', fontSize: '0.875rem' }}>
-              ✏️
-            </button>
-          </>
+            <span className="hidden group-hover/cell:inline text-primary/80 tabular-nums text-sm">
+              <span className="material-symbols-outlined text-[10px] align-middle mr-0.5">edit</span>
+              {formatMonto(line.actualClp)}
+            </span>
+          </div>
         ) : (
-          <div className="edit-mode" style={{ position: 'relative' }}>
+          <div className="relative inline-block min-w-[120px]">
             <input
+              ref={inputRef}
               type="text"
               value={inputValue}
               onChange={e => setInputValue(e.target.value)}
               onBlur={handleSave}
               onKeyDown={handleKeyDown}
-              autoFocus
-              style={{ width: '100%', padding: '0.25rem' }}
+              disabled={saving}
+              className={`w-full text-right text-sm font-bold tabular-nums bg-primary/10 border rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary ${
+                error ? 'border-error' : 'border-primary/40'
+              }`}
+              placeholder="0"
+              inputMode="numeric"
             />
             {error && (
-              <span className="error-tooltip" style={{
-                position: 'absolute',
-                top: '100%',
-                left: 0,
-                background: '#ef4444',
-                color: 'white',
-                padding: '0.25rem 0.5rem',
-                borderRadius: '4px',
-                fontSize: '0.75rem',
-                whiteSpace: 'nowrap',
-                zIndex: 10
-              }}>
+              <span className="absolute top-full left-0 mt-1 bg-error text-white px-2 py-1 rounded text-xs whitespace-nowrap z-10 shadow-lg">
                 {error}
               </span>
             )}
           </div>
         )}
       </td>
-      <td className={`monto delta ${deltaClass}`}>
+      <td className={`px-4 py-2 text-right tabular-nums text-sm ${deltaClass}`}>
         {formatMonto(deltaClp)}
       </td>
-      <td className="percent">{pctExecDisplay}</td>
+      <td className="px-4 py-2 text-center text-sm text-on-surface-variant">{pctExecDisplay}</td>
     </tr>
   );
 }

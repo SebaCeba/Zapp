@@ -12,7 +12,7 @@ export function MainLayout({ children, headerProps }: MainLayoutProps) {
     <div className="min-h-screen bg-cream text-on-background antialiased">
       <AppSidebar />
       
-      <main className="ml-64 min-h-screen relative">
+      <main className="ml-56 min-h-screen relative">
         {headerProps && <PageHeader {...headerProps} />}
         
         <div className="p-8 max-w-7xl mx-auto space-y-8 pb-16">

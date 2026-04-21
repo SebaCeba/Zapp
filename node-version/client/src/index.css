@@ -22,6 +22,25 @@
   }
 }
 
+@layer components {
+  /* Override RSuite styles for custom inputs */
+  input[type="text"],
+  input[type="number"],
+  input[type="date"],
+  select {
+    appearance: none !important;
+  }
+  
+  /* Ensure Tailwind utilities take precedence */
+  .rounded-xl {
+    border-radius: 0.75rem !important;
+  }
+  
+  .bg-surface-container\/30 {
+    background-color: rgb(236 237 245 / 0.3) !important;
+  }
+}
+
 @layer utilities {
   /* Material Symbols icon styles */
   .material-symbols-outlined {

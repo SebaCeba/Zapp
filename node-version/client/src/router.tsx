@@ -18,6 +18,7 @@ import { ActualPage } from './pages/ActualNew';
 import { PresupuestoResumenPage } from './pages/PresupuestoResumenNew';
 import { ComparacionPage } from './pages/ComparacionNew';
 import { PresupuestoIngresosPage } from './pages/PresupuestoIngresosNew';
+import { SubscriptionsPage } from './pages/Subscriptions';
 
 export default function Router() {
   return (
@@ -34,6 +35,7 @@ export default function Router() {
         <Route path="/actual" element={<ActualPage />} />
         <Route path="/comparacion" element={<ComparacionPage />} />
         <Route path="/actual/utilities" element={<ActualUtilities />} />
+        <Route path="/suscripciones" element={<SubscriptionsPage />} />
         <Route path="/app" element={<App />} />
         <Route path="/creditos" element={<Creditos />} />
         <Route path="/hipotecario" element={<Hipotecario />} />

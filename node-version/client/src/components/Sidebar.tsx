@@ -68,14 +68,23 @@ export default function Sidebar() {
                         key={child.key} 
                         eventKey={child.key}
                         disabled={child.disabled}
-                        style={child.disabled ? { 
-                          fontWeight: 600, 
-                          color: 'var(--rs-text-secondary)',
-                          cursor: 'default',
-                          marginTop: '12px',
-                          paddingTop: '12px',
-                          borderTop: '1px solid var(--rs-border-primary)',
-                        } : {}}
+                        style={{
+                          ...(child.disabled && child.isHeader ? { 
+                            fontWeight: 600, 
+                            color: 'var(--rs-text-secondary)',
+                            cursor: 'default',
+                            marginTop: '12px',
+                            paddingTop: '12px',
+                            borderTop: '1px solid var(--rs-border-primary)',
+                            fontSize: '0.75rem',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                          } : {}),
+                          ...(child.indent ? {
+                            paddingLeft: '40px',
+                            fontSize: '0.875rem',
+                          } : {})
+                        }}
                       >
                         {child.label}
                       </Nav.Item>
