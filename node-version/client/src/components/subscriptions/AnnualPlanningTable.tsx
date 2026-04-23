@@ -1,10 +1,13 @@
 import { Card } from '../primitives';
+import { isActiveInMonth, calculateMonthlyTotals } from '../../utils/subscriptionPeriodicity';
 
 interface Subscription {
   id: number;
   name: string;
   price: number;
   category: string;
+  periodicity: string;
+  startDate: string;
 }
 
 interface AnnualPlanningTableProps {
@@ -26,12 +29,11 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 /**
  * Annual subscription planning table showing all subscriptions distributed by month
+ * Now correctly applies periodicity rules to show charges only in active months
  */
 export function AnnualPlanningTable({ year, subscriptions, onExport }: AnnualPlanningTableProps) {
-  // Calculate monthly totals (for now showing same price every month - need backend logic for periodicity)
-  const monthlyTotals = MONTHS.map(() => {
-    return subscriptions.reduce((sum, sub) => sum + sub.price, 0);
-  });
+  // Calculate monthly totals using periodicity logic
+  const monthlyTotals = calculateMonthlyTotals(subscriptions, year);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CL', {
@@ -93,13 +95,22 @@ export function AnnualPlanningTable({ year, subscriptions, onExport }: AnnualPla
                         <span className="text-[11px] text-slate-500">{CATEGORY_LABELS[sub.category] || sub.category}</span>
                       </div>
                     </td>
-                    {MONTHS.map((month) => (
-                      <td key={month} className="px-4 py-4 text-center">
-                        <span className="text-sm font-semibold text-slate-900 tabular-nums">
-                          {formatCurrency(sub.price)}
-                        </span>
-                      </td>
-                    ))}
+                    {MONTHS.map((month, monthIdx) => {
+                      const monthNumber = monthIdx + 1; // 1-12
+                      const isActive = isActiveInMonth(sub, year, monthNumber);
+                      
+                      return (
+                        <td key={month} className="px-4 py-4 text-center">
+                          {isActive ? (
+                            <span className="text-sm font-semibold text-slate-900 tabular-nums">
+                              {formatCurrency(sub.price)}
+                            </span>
+                          ) : (
+                            <span className="text-sm text-slate-300">—</span>
+                          )}
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
                 {/* Total Row */}

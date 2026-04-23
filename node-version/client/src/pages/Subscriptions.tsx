@@ -5,35 +5,54 @@ import { NewSubscriptionForm } from '../components/subscriptions/NewSubscription
 import { MonthlyEvolutionChart } from '../components/subscriptions/MonthlyEvolutionChart';
 import { NextPaymentCard } from '../components/subscriptions/NextPaymentCard';
 import { AnnualPlanningTable } from '../components/subscriptions/AnnualPlanningTable';
+import { ScenarioSelector, ScenarioType } from '../components/common/ScenarioSelector';
+import { calculateAnnualCost, calculateMonthlyTotals } from '../utils/subscriptionPeriodicity';
 
-interface Subscription {
-  id: number;
-  name: string;
-  price: number;
+interface SubscriptionV2 {
+  accountId: number;
+  accountCode: string;
+  accountName: string;
   periodicity: string;
   startDate: string;
-  category?: string;
+  monthlyPrice: number | null;
+  activeMonths: number[];
+  totalAnnual: number;
+  hasActuals: boolean;
+  hasBudget: boolean;
+  lastModified: string;
+}
+
+interface SubscriptionSummary {
+  totalSubscriptions: number;
+  totalAnnualBudget: number;
+  totalAnnualActual: number;
 }
 
 const MONTHS_SHORT = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
 
 export function SubscriptionsPage() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [scenario, setScenario] = useState<ScenarioType>('BUDGET');
+  const [subscriptions, setSubscriptions] = useState<SubscriptionV2[]>([]);
+  const [summary, setSummary] = useState<SubscriptionSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     fetchSubscriptions();
-  }, [refreshKey]);
+  }, [refreshKey, selectedYear, scenario]);
 
   const fetchSubscriptions = async () => {
+    setLoading(true);
     try {
-      const response = await fetch('/api/subscriptions');
+      const response = await fetch(`/api/v2/subscriptions?scenario=${scenario}&year=${selectedYear}`);
       const data = await response.json();
-      setSubscriptions(data);
+      setSubscriptions(data.subscriptions || []);
+      setSummary(data.summary || null);
     } catch (error) {
       console.error('Error fetching subscriptions:', error);
+      setSubscriptions([]);
+      setSummary(null);
     } finally {
       setLoading(false);
     }
@@ -43,11 +62,17 @@ export function SubscriptionsPage() {
     setRefreshKey(prev => prev + 1);
   };
 
-  // Calculate metrics
-  const totalAnnual = subscriptions.reduce((sum, sub) => {
-    // Simplified: assuming monthly for now
-    return sum + (sub.price * 12);
-  }, 0);
+  const handleSaveBudget = async () => {
+    // This functionality would save current plan as BUDGET
+    // For now, just refresh to show updated data
+    console.log('Save budget plan for year:', selectedYear);
+    handleRefresh();
+  };
+
+  // Calculate metrics from API summary or subscriptions
+  const totalAnnual = summary
+    ? (scenario === 'BUDGET' ? summary.totalAnnualBudget : summary.totalAnnualActual)
+    : subscriptions.reduce((sum, sub) => sum + sub.totalAnnual, 0);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('es-CL', {
@@ -58,14 +83,21 @@ export function SubscriptionsPage() {
     }).format(value);
   };
 
-  // Calculate monthly evolution data (simplified)
-  const monthlyData = MONTHS_SHORT.map((month) => ({
+  // Calculate monthly evolution data from subscriptions
+  const monthlyTotals = Array(12).fill(0);
+  subscriptions.forEach(sub => {
+    sub.activeMonths.forEach(month => {
+      const price = sub.monthlyPrice || 0;
+      monthlyTotals[month - 1] += price;
+    });
+  });
+  const monthlyData = MONTHS_SHORT.map((month, idx) => ({
     month,
-    amount: subscriptions.reduce((sum, sub) => sum + sub.price, 0),
+    amount: monthlyTotals[idx],
   }));
 
-  // Find next payment (simplified: first subscription)
-  const nextPayment = subscriptions[0];
+  // Find next payment (simplified: first subscription with price)
+  const nextPayment = subscriptions.find(s => s.monthlyPrice && s.monthlyPrice > 0);
   const daysUntilPayment = nextPayment ? 3 : 0; // Mock for now
 
   if (loading) {
@@ -85,7 +117,7 @@ export function SubscriptionsPage() {
 
   return (
     <MainLayout headerProps={{ year: selectedYear }}>
-      {/* Page title */}
+      {/* Page title and scenario selector */}
       <div className="flex justify-between items-end mb-8">
         <div>
           <p className="text-[10px] font-black uppercase tracking-widest text-tertiary mb-1">
@@ -95,6 +127,7 @@ export function SubscriptionsPage() {
             Suscripciones
           </h1>
         </div>
+        <ScenarioSelector value={scenario} onChange={setScenario} />
       </div>
 
       <div className="space-y-8">
@@ -102,24 +135,28 @@ export function SubscriptionsPage() {
         <MetricCard
           icon="payments"
           iconColor="text-primary"
-          label="Gasto Anual Proyectado"
+          label={scenario === 'BUDGET' ? 'Gasto Anual Presupuestado' : 'Gasto Anual Real'}
           value={formatCurrency(totalAnnual)}
-          badgeLabel="CLP Total"
+          badgeLabel={`CLP Total - ${scenario === 'BUDGET' ? 'Presupuesto' : 'Real'}`}
           badgeColor="text-primary"
         />
 
         {/* Form and Chart Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <NewSubscriptionForm onSuccess={handleRefresh} />
+          <NewSubscriptionForm 
+            year={selectedYear} 
+            scenario={scenario}
+            onSuccess={handleRefresh} 
+          />
           <MonthlyEvolutionChart year={selectedYear} monthlyData={monthlyData} />
         </div>
 
         {/* Next Payment Card */}
         {nextPayment && (
           <NextPaymentCard
-            serviceName={nextPayment.name}
+            serviceName={nextPayment.accountName}
             daysUntilPayment={daysUntilPayment}
-            amount={nextPayment.price}
+            amount={nextPayment.monthlyPrice || 0}
           />
         )}
 
@@ -127,8 +164,12 @@ export function SubscriptionsPage() {
         <AnnualPlanningTable
           year={selectedYear}
           subscriptions={subscriptions.map(sub => ({
-            ...sub,
-            category: sub.category || 'other',
+            id: sub.accountId,
+            name: sub.accountName,
+            price: sub.monthlyPrice || 0,
+            category: 'other',
+            periodicity: sub.periodicity,
+            startDate: sub.startDate,
           }))}
           onExport={() => {
             console.log('Export clicked');
@@ -136,15 +177,23 @@ export function SubscriptionsPage() {
           }}
         />
 
-        {/* Action Buttons */}
-        <div className="flex justify-center gap-4">
-          <button className="px-6 py-3 text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors">
-            Descartar
-          </button>
-          <button className="px-8 py-3 text-sm font-bold bg-primary text-white rounded-xl hover:bg-primary/90 transition-all shadow-sm">
-            Guardar Plan {selectedYear}
-          </button>
-        </div>
+        {/* Action Buttons - Only show for BUDGET scenario */}
+        {scenario === 'BUDGET' && (
+          <div className="flex justify-center gap-4">
+            <button 
+              onClick={handleRefresh}
+              className="px-6 py-3 text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              Refrescar
+            </button>
+            <button 
+              onClick={handleSaveBudget}
+              className="px-8 py-3 text-sm font-bold bg-primary text-white rounded-xl hover:bg-primary/90 transition-all shadow-sm"
+            >
+              Guardar Plan {selectedYear}
+            </button>
+          </div>
+        )}
       </div>
     </MainLayout>
   );

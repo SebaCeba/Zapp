@@ -18,6 +18,7 @@ import budgetRoutes from './budget';
 import actualRoutes from './actual';
 import comparisonRoutes from './comparison';
 import accountsRoutes from './accounts';
+import subscriptionsRoutes from './subscriptions';
 
 const router = Router();
 
@@ -27,6 +28,7 @@ router.use('/budget', budgetRoutes);
 router.use('/actual', actualRoutes);
 router.use('/comparison', comparisonRoutes);
 router.use('/accounts', accountsRoutes);
+router.use('/subscriptions', subscriptionsRoutes);
 
 // Health check específico de v2
 router.get('/health', (_, res) => {

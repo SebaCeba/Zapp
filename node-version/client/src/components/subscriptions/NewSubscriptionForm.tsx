@@ -1,7 +1,10 @@
 import { useState, FormEvent } from 'react';
 import { Input, Select, Button, Card } from '../primitives';
+import { ScenarioType } from '../common/ScenarioSelector';
 
 interface NewSubscriptionFormProps {
+  year: number;
+  scenario: ScenarioType;
   onSuccess: () => void;
 }
 
@@ -16,9 +19,9 @@ const CATEGORY_OPTIONS = [
 ];
 
 /**
- * Form to add new subscription - Tailwind only, no RSuite
+ * Form to add new subscription using API v2 - Tailwind only, no RSuite
  */
-export function NewSubscriptionForm({ onSuccess }: NewSubscriptionFormProps) {
+export function NewSubscriptionForm({ year, scenario, onSuccess }: NewSubscriptionFormProps) {
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -33,14 +36,16 @@ export function NewSubscriptionForm({ onSuccess }: NewSubscriptionFormProps) {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/subscriptions', {
+      const response = await fetch('/api/v2/subscriptions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: formData.name,
-          price: parseFloat(formData.price),
+          price: parseInt(formData.price), // API expects integer
           periodicity: formData.periodicity,
           startDate: formData.nextChargeDate,
+          year: year,
+          scenario: scenario,
         }),
       });
 
@@ -54,9 +59,14 @@ export function NewSubscriptionForm({ onSuccess }: NewSubscriptionFormProps) {
           nextChargeDate: '',
         });
         onSuccess();
+      } else {
+        const error = await response.json();
+        console.error('Error creating subscription:', error);
+        alert(`Error: ${error.error || 'No se pudo crear la suscripción'}`);
       }
     } catch (error) {
       console.error('Error adding subscription:', error);
+      alert('Error al crear la suscripción. Por favor intenta nuevamente.');
     } finally {
       setIsSubmitting(false);
     }
