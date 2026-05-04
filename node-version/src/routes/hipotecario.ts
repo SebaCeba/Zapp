@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import prisma from '../db';
 import multer from 'multer';
+import { syncHipotecarioToFact } from '../services/hipotecarioSync';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -35,6 +36,12 @@ router.put('/config', async (req: Request, res: Response) => {
         where: { id: config.id },
         data: { anioProyectado: parseInt(anioProyectado) }
       });
+    }
+    
+    // Sincronizar con FACT después de cambiar el año
+    const syncResult = await syncHipotecarioToFact(parseInt(anioProyectado));
+    if (!syncResult.success) {
+      console.log('[HipotecarioAPI] ⚠️ Sincronización con FACT falló:', syncResult.errors);
     }
     
     res.json(config);
@@ -117,10 +124,17 @@ router.post('/import-csv', upload.single('file'), async (req: Request, res: Resp
 
     await prisma.mortgagePayment.createMany({ data: payments });
 
+    // Sincronizar con FACT después de importar
+    const syncResult = await syncHipotecarioToFact();
+    if (!syncResult.success) {
+      console.log('[HipotecarioAPI] ⚠️ Sincronización con FACT falló:', syncResult.errors);
+    }
+
     res.json({ 
       success: true, 
       count: payments.length,
-      message: `${payments.length} cuotas importadas exitosamente`
+      message: `${payments.length} cuotas importadas exitosamente`,
+      factsCreated: syncResult.success ? syncResult.factsCreated : 0
     });
   } catch (error: any) {
     console.error('CSV Import Error:', error);
@@ -168,7 +182,18 @@ router.post('/seguros', async (req: Request, res: Response) => {
     
     await prisma.mortgageInsurance.createMany({ data: seguros });
     
-    res.json({ success: true, count: 12, message: `Seguro "${nombre}" agregado para todo ${anio}` });
+    // Sincronizar con FACT después de agregar seguro
+    const syncResult = await syncHipotecarioToFact();
+    if (!syncResult.success) {
+      console.log('[HipotecarioAPI] ⚠️ Sincronización con FACT falló:', syncResult.errors);
+    }
+    
+    res.json({ 
+      success: true, 
+      count: 12, 
+      message: `Seguro "${nombre}" agregado para todo ${anio}`,
+      factsCreated: syncResult.success ? syncResult.factsCreated : 0
+    });
   } catch (error) {
     console.error('Error al crear seguro:', error);
     res.status(400).json({ error: 'Invalid seguro data' });
@@ -176,7 +201,13 @@ router.post('/seguros', async (req: Request, res: Response) => {
 });
 
 // DELETE seguro por nombre y año (elimina los 12 meses)
-router.delete('/seguros/:nombre/:anio', async (req: Request, res: Response) => {
+rout// Sincronizar con FACT después de eliminar seguro
+    const syncResult = await syncHipotecarioToFact(parseInt(anio));
+    if (!syncResult.success) {
+      console.log('[HipotecarioAPI] ⚠️ Sincronización con FACT falló:', syncResult.errors);
+    }
+    
+    er.delete('/seguros/:nombre/:anio', async (req: Request, res: Response) => {
   try {
     const { nombre, anio } = req.params;
     

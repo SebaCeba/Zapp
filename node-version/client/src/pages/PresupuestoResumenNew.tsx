@@ -8,6 +8,7 @@ import {
   AccountTotal,
 } from '../api/v2Api';
 
+
 const MONTH_LABELS = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
 
 function clp(amount: number): string {
@@ -104,7 +105,8 @@ function buildHierarchy(accounts: AccountTotal[]): HierarchyNode[] {
       };
       rootNode.children.push(typeNode);
     } else if (rootPrefix === 'GAS') {
-      // 3 niveles: Grupo → Tipo → Subtipo
+      // 3+ niveles: Grupo → Tipo → Subtipo(s)
+      // Soporta GAS.HIP.DIV (3 partes) y GAS.HIP.SEG.001 (4 partes)
       if (parts.length === 2) {
         // GAS.SUS = Tipo (nivel 2)
         const typeCode = parts.slice(0, 2).join('.');
@@ -131,8 +133,9 @@ function buildHierarchy(accounts: AccountTotal[]): HierarchyNode[] {
           children: []
         };
         typeNode.children.push(subtypeNode);
-      } else if (parts.length === 3) {
+      } else if (parts.length >= 3) {
         // GAS.SUS.001 = Subtipo (nivel 3)
+        // GAS.HIP.SEG.001 = Subtipo (nivel 3, aunque tenga 4 partes)
         const typeCode = parts.slice(0, 2).join('.');
         let typeNode = rootNode.children.find(c => c.code === typeCode);
         if (!typeNode) {
@@ -236,7 +239,7 @@ function buildHierarchyMonthly(monthlyData: AccountMonthlyData[]): HierarchyNode
       };
       rootNode.children.push(typeNode);
     } else if (rootPrefix === 'GAS') {
-      // 3 niveles
+      // 3+ niveles: Soporta GAS.HIP.DIV (3 partes) y GAS.HIP.SEG.001 (4 partes)
       if (parts.length === 2) {
         const typeCode = parts.slice(0, 2).join('.');
         let typeNode = rootNode.children.find(c => c.code === typeCode);
@@ -264,7 +267,8 @@ function buildHierarchyMonthly(monthlyData: AccountMonthlyData[]): HierarchyNode
           children: []
         };
         typeNode.children.push(subtypeNode);
-      } else if (parts.length === 3) {
+      } else if (parts.length >= 3) {
+        // GAS.HIP.DIV (3 partes) o GAS.HIP.SEG.001 (4 partes)
         const typeCode = parts.slice(0, 2).join('.');
         let typeNode = rootNode.children.find(c => c.code === typeCode);
         if (!typeNode) {
@@ -435,6 +439,8 @@ export function PresupuestoResumenPage() {
   };
 
   // Derived metrics
+  const mergedAccounts = accounts;
+  const mergedAccountsMonthly = accountsMonthlyData;
   const totalAnual = monthly.reduce((s, m) => s + m.totalClp, 0);
   const totalIngresos = groupByPrefix(accounts, 'ING.');
   const totalGastos = groupByPrefix(accounts, 'GAS.');
@@ -606,7 +612,7 @@ export function PresupuestoResumenPage() {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-xs text-slate-400 font-semibold">
-              {loading ? '...' : `${accounts.length} cuentas`}
+              {loading ? '...' : `${mergedAccounts.length} cuentas`}
             </span>
             
             {/* Toggle View Mode */}
@@ -658,7 +664,7 @@ export function PresupuestoResumenPage() {
                     </tr>
                   ))
                 ) : (() => {
-                  const hierarchy = buildHierarchy(accounts);
+                  const hierarchy = buildHierarchy(mergedAccounts);
                   const rows: JSX.Element[] = [];
                   let rowIdx = 0;
 
@@ -805,7 +811,7 @@ export function PresupuestoResumenPage() {
                       </td>
                     </tr>
                   ))
-                ) : accountsMonthlyData.length === 0 ? (
+                ) : mergedAccountsMonthly.length === 0 ? (
                   <tr>
                     <td colSpan={14} className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center gap-4">
@@ -815,7 +821,7 @@ export function PresupuestoResumenPage() {
                     </td>
                   </tr>
                 ) : (() => {
-                  const hierarchy = buildHierarchyMonthly(accountsMonthlyData);
+                  const hierarchy = buildHierarchyMonthly(mergedAccountsMonthly);
                   const rows: JSX.Element[] = [];
                   let rowIdx = 0;
 
@@ -891,14 +897,14 @@ export function PresupuestoResumenPage() {
                   return rows;
                 })()}
               </tbody>
-              {!loadingMonthly && accountsMonthlyData.length > 0 && (
+              {!loadingMonthly && mergedAccountsMonthly.length > 0 && (
                 <tfoot>
                   <tr className="bg-navy-dark text-white">
                     <td className="sticky left-0 z-10 bg-navy-dark px-6 py-5 font-bold text-sm uppercase tracking-widest" colSpan={2}>
                       Total Mensual
                     </td>
                     {Array.from({ length: 12 }).map((_, monthIdx) => {
-                      const monthTotal = accountsMonthlyData.reduce(
+                      const monthTotal = mergedAccountsMonthly.reduce(
                         (sum, acc) => sum + acc.monthlyAmounts[monthIdx],
                         0
                       );
@@ -909,7 +915,7 @@ export function PresupuestoResumenPage() {
                       );
                     })}
                     <td className="sticky right-0 z-10 bg-navy-dark px-6 py-5 text-right tabular-nums font-black text-xl">
-                      {clp(accountsMonthlyData.reduce((sum, acc) => sum + acc.totalClp, 0))}
+                      {clp(mergedAccountsMonthly.reduce((sum, acc) => sum + acc.totalClp, 0))}
                     </td>
                   </tr>
                 </tfoot>

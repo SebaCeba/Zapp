@@ -46,6 +46,21 @@ import styles from './MyView.module.css';
 // Tailwind utilities directamente en className
 ```
 
+### Never Use Emojis in UI Code
+```tsx
+// ❌ PROHIBIDO - Emojis en código UI
+<h3>📊 Presupuesto Mensual</h3>
+<Button>🗑️ Eliminar</Button>
+<td>✅ Completado</td>
+
+// ✅ CORRECTO - Texto limpio con colores semánticos
+<h3 className="text-base font-semibold text-navy-dark">Presupuesto Mensual</h3>
+<Button variant="danger">Eliminar</Button>
+<td className="text-green-700 font-semibold">Completado</td>
+```
+
+**Razón**: Los emojis crean interfaces inconsistentes, dificultan localización, y no siguen los estándares visuales de Zapp Financial Atelier.
+
 ---
 
 ## ✅ Reglas Obligatorias

@@ -1,8 +1,6 @@
-import React from 'react';
-import { Panel, Button, Table } from 'rsuite';
+import { Card } from './primitives';
+import { Button } from './primitives';
 import { ObligacionFormData } from './ObligacionForm';
-
-const { Column, HeaderCell, Cell } = Table;
 
 interface Props {
   data: ObligacionFormData;
@@ -59,130 +57,93 @@ function calcularProyeccion(
   return { mensualCLP, totalAnual, promedioMensual, cuotas };
 }
 
+function clp(amount: number): string {
+  return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(amount);
+}
+
 const VistaPreviaObligacion: React.FC<Props> = ({ data, year, uf, ufVariation, onBack, onSave }) => {
   const { mensualCLP, totalAnual, promedioMensual, cuotas } = calcularProyeccion(data, year, uf, ufVariation);
   const mesesNombre = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
   
-  // Wrappers compactos siguiendo TABLE_STANDARD_V1
-  const CompactCell = (props: any) => (
-    <Cell
-      {...props}
-      style={{
-        padding: '4px',
-        fontSize: '12px',
-        ...props.style
-      }}
-    />
-  );
-
-  const CompactHeaderCell = (props: any) => (
-    <HeaderCell
-      {...props}
-      style={{
-        padding: '4px',
-        ...props.style
-      }}
-    />
-  );
-
-  // Preparar datos para la tabla
-  const tableData = [{
-    id: 'monto-clp',
-    label: 'Monto CLP',
-    ...mesesNombre.reduce((acc, _, i) => ({ ...acc, [`mes${i}`]: mensualCLP[i] }), {})
-  }];
-  
   return (
-    <Panel header="👁️ Vista Previa del Impacto Anual" bordered style={{ marginBottom: '1.5rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-        <span style={{ fontSize: '0.9rem', color: '#666' }}>📅 {data.nombre} - {year}</span>
+    <Card>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="text-base font-semibold text-navy-dark">Vista Previa del Impacto Anual</h3>
+          <p className="text-sm text-slate-500 mt-1">{data.nombre} - {year}</p>
+        </div>
       </div>
       
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
-        <div style={{ padding: '1rem', background: '#f0f9f0', borderRadius: '8px', border: '1px solid #d0e7d0' }}>
-          <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.25rem' }}>Tipo</div>
-          <div style={{ fontWeight: 'bold', color: '#2d7a2d' }}>{data.tipo}</div>
+      {/* Resumen de datos */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <div className="bg-surface-container/30 rounded-xl p-4">
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Tipo</div>
+          <div className="font-semibold text-navy-dark">{data.tipo}</div>
         </div>
-        <div style={{ padding: '1rem', background: '#f0f9f0', borderRadius: '8px', border: '1px solid #d0e7d0' }}>
-          <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.25rem' }}>Moneda</div>
-          <div style={{ fontWeight: 'bold', color: '#2d7a2d' }}>{data.moneda}</div>
+        <div className="bg-surface-container/30 rounded-xl p-4">
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Moneda</div>
+          <div className="font-semibold text-navy-dark">{data.moneda}</div>
         </div>
-        <div style={{ padding: '1rem', background: '#f0f9f0', borderRadius: '8px', border: '1px solid #d0e7d0' }}>
-          <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.25rem' }}>Monto cuota</div>
-          <div style={{ fontWeight: 'bold', color: '#2d7a2d' }}>{data.monto.toLocaleString('es-CL')} {data.moneda}</div>
+        <div className="bg-surface-container/30 rounded-xl p-4">
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Monto Cuota</div>
+          <div className="font-semibold text-navy-dark">{data.monto.toLocaleString('es-CL')} {data.moneda}</div>
         </div>
-        <div style={{ padding: '1rem', background: '#f0f9f0', borderRadius: '8px', border: '1px solid #d0e7d0' }}>
-          <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.25rem' }}>Cuotas en {year}</div>
-          <div style={{ fontWeight: 'bold', color: '#2d7a2d' }}>{cuotas.length} de {data.cuotas}</div>
-        </div>
-      </div>
-
-      <Table
-        data={tableData}
-        autoHeight
-        bordered={true}
-        cellBordered={true}
-        showHeader={true}
-        hover={false}
-        rowHeight={30}
-        headerHeight={30}
-        style={{ marginBottom: '1.5rem' }}
-      >
-        {/* Columna Label (fija izquierda) */}
-        <Column width={160} fixed align="left">
-          <CompactHeaderCell className="app-table-header" style={{ textAlign: 'left' }}>
-            Mes
-          </CompactHeaderCell>
-          <CompactCell>
-            {(rowData: any) => (
-              <div style={{ fontWeight: '500' }}>
-                {rowData.label}
-              </div>
-            )}
-          </CompactCell>
-        </Column>
-
-        {/* Columnas de meses */}
-        {mesesNombre.map((mes, index) => (
-          <Column key={mes} width={90} align="center">
-            <CompactHeaderCell className="app-table-header" style={{ textAlign: 'center' }}>
-              {mes}
-            </CompactHeaderCell>
-            <CompactCell>
-              {(rowData: any) => {
-                const monto = rowData[`mes${index}`];
-                return (
-                  <div style={{ 
-                    textAlign: 'center',
-                    fontWeight: monto > 0 ? 'bold' : 'normal',
-                    color: monto > 0 ? '#2d7a2d' : '#ccc',
-                    background: monto > 0 ? '#f0f9f0' : 'transparent'
-                  }}>
-                    {monto > 0 ? `$${Math.round(monto).toLocaleString('es-CL')}` : '-'}
-                  </div>
-                );
-              }}
-            </CompactCell>
-          </Column>
-        ))}
-      </Table>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-        <div style={{ padding: '1.25rem', background: '#e8f5e9', borderRadius: '8px', border: '2px solid #2d7a2d' }}>
-          <div style={{ fontSize: '0.85rem', color: '#1b5e20', marginBottom: '0.5rem' }}>💰 Total Anual</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#2d7a2d' }}>{totalAnual.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' })}</div>
-        </div>
-        <div style={{ padding: '1.25rem', background: '#e3f2fd', borderRadius: '8px', border: '2px solid #1976d2' }}>
-          <div style={{ fontSize: '0.85rem', color: '#0d47a1', marginBottom: '0.5rem' }}>📊 Promedio Mensual</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1976d2' }}>{promedioMensual.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' })}</div>
+        <div className="bg-surface-container/30 rounded-xl p-4">
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Cuotas en {year}</div>
+          <div className="font-semibold text-navy-dark">{cuotas.length} de {data.cuotas}</div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '1rem' }}>
-        <Button appearance="default" onClick={onBack} style={{ flex: 1 }}>← Volver</Button>
-        <Button appearance="primary" onClick={onSave} style={{ flex: 1, background: '#2d7a2d' }}>✓ Guardar Obligación</Button>
+      {/* Tabla mensual */}
+      <div className="overflow-x-auto mb-6 bg-surface-container/20 rounded-xl p-4">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="border-b border-outline-variant">
+              <th className="text-left py-2 pr-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Mes</th>
+              {mesesNombre.map((mes) => (
+                <th key={mes} className="text-center px-2 py-2 text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                  {mes}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="py-3 pr-4 font-medium text-navy-dark">Monto CLP</td>
+              {mensualCLP.map((monto, index) => (
+                <td key={index} className={`text-center px-2 py-3 tabular-nums ${
+                  monto > 0 ? 'font-bold text-primary' : 'text-slate-300'
+                }`}>
+                  {monto > 0 ? `$${Math.round(monto).toLocaleString('es-CL')}` : '—'}
+                </td>
+              ))}
+            </tr>
+          </tbody>
+        </table>
       </div>
-    </Panel>
+
+      {/* Totales */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="bg-gradient-to-br from-primary to-primary/80 text-white rounded-xl p-6">
+          <div className="text-xs opacity-80 uppercase tracking-widest mb-2">Total Anual</div>
+          <div className="text-3xl font-bold tabular-nums">{clp(totalAnual)}</div>
+        </div>
+        <div className="bg-gradient-to-br from-secondary to-secondary/80 text-white rounded-xl p-6">
+          <div className="text-xs opacity-80 uppercase tracking-widest mb-2">Promedio Mensual</div>
+          <div className="text-3xl font-bold tabular-nums">{clp(promedioMensual)}</div>
+        </div>
+      </div>
+
+      {/* Botones */}
+      <div className="flex gap-3">
+        <Button variant="ghost" onClick={onBack} fullWidth>
+          Volver
+        </Button>
+        <Button onClick={onSave} fullWidth>
+          Guardar Obligación
+        </Button>
+      </div>
+    </Card>
   );
 };
 

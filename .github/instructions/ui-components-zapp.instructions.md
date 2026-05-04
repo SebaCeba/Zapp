@@ -15,6 +15,7 @@ applyTo: ["src/components/**/*.tsx", "src/components/**/*.ts", "**/*.tsx"]
 - **CSS modules** as default pattern (Tailwind-first)
 - **Inline styles** except for dynamic values from props/state
 - **Runtime CSS-in-JS** (emotion, styled-components)
+- **Emojis in UI text** (titles, labels, buttons, table cells) - Use text and semantic colors only
 
 ### ✅ ALWAYS Use
 

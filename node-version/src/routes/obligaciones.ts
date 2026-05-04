@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import prisma from '../db';
+import { syncObligacionToFact, removeObligacionFromFact } from '../services/obligaciones-sync';
 
 const router = Router();
 
@@ -32,6 +33,9 @@ router.post('/', async (req: Request, res: Response) => {
       }
     });
 
+    // Sincronizar con fact_financial (modelo estrella)
+    await syncObligacionToFact(obligacion);
+
     res.status(201).json(obligacion);
   } catch (error) {
     res.status(400).json({ error: 'Invalid obligacion data' });
@@ -41,9 +45,12 @@ router.post('/', async (req: Request, res: Response) => {
 // DELETE obligacion
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
-    await prisma.obligacion.delete({
-      where: { id: parseInt(req.params.id) }
-    });
+    const id = parseInt(req.params.id);
+
+    // Eliminar de fact_financial antes de borrar el registro legacy
+    await removeObligacionFromFact(id);
+
+    await prisma.obligacion.delete({ where: { id } });
     res.status(204).send();
   } catch (error) {
     res.status(404).json({ error: 'Obligacion not found' });
@@ -95,6 +102,17 @@ router.post('/supuestos', async (req: Request, res: Response) => {
     res.json(supuesto);
   } catch (error) {
     res.status(400).json({ error: 'Invalid supuesto data' });
+  }
+});
+
+// POST /api/obligaciones/sync — migración inicial: sincroniza todas las obligaciones legacy
+router.post('/sync', async (_req: Request, res: Response) => {
+  try {
+    const { syncAllObligaciones } = await import('../services/obligaciones-sync');
+    await syncAllObligaciones();
+    res.json({ ok: true, message: 'Sincronización completa' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
   }
 });
 

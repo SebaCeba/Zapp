@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import MainLayout from '../layout/MainLayout';
-import PageTitleSection from '../layout/PageTitleSection';
+import { useState, useEffect } from 'react';
+import { MainLayout } from '../components/layout';
 import YearAndUFSelector from '../components/YearAndUFSelector';
 import ObligacionForm, { ObligacionFormData } from '../components/ObligacionForm';
 import VistaPreviaObligacion from '../components/VistaPreviaObligacion';
@@ -71,23 +70,24 @@ export default function Creditos() {
     setRefreshKey(prev => prev + 1);
   };
 
+  const headerProps = {
+    year,
+    title: 'Créditos y Obligaciones',
+  };
+
   if (loading || uf === null || ufVariation === null) {
     return (
-      <MainLayout>
-        <div className="container" style={{ textAlign: 'center', padding: '3rem' }}>
-          <p style={{ color: '#666' }}>Cargando supuestos anuales...</p>
+      <MainLayout headerProps={headerProps}>
+        <div className="flex items-center justify-center py-16">
+          <p className="text-slate-500">Cargando supuestos anuales...</p>
         </div>
       </MainLayout>
     );
   }
 
   return (
-    <MainLayout>
-      <div className="container">
-        <PageTitleSection
-          title="Créditos y Seguros"
-          description="Gestiona obligaciones de cuota conocida (consumo y seguros) y visualiza el impacto anual proyectado en CLP."
-        />
+    <MainLayout headerProps={headerProps}>
+      <div className="space-y-6">
         <YearAndUFSelector
           year={year}
           setYear={setYear}
