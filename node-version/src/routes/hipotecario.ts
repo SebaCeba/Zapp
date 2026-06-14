@@ -213,13 +213,7 @@ router.post('/seguros', async (req: Request, res: Response) => {
 });
 
 // DELETE seguro por nombre y año (elimina los 12 meses)
-rout// Sincronizar con FACT después de eliminar seguro
-    const syncResult = await syncHipotecarioToFact(parseInt(anio));
-    if (!syncResult.success) {
-      console.log('[HipotecarioAPI] ⚠️ Sincronización con FACT falló:', syncResult.errors);
-    }
-    
-    er.delete('/seguros/:nombre/:anio', async (req: Request, res: Response) => {
+router.delete('/seguros/:nombre/:anio', async (req: Request, res: Response) => {
   try {
     const { nombre, anio } = req.params;
     
@@ -229,6 +223,12 @@ rout// Sincronizar con FACT después de eliminar seguro
         mesAnio: { startsWith: `${anio}-` }
       }
     });
+    
+    // Sincronizar con FACT después de eliminar seguro
+    const syncResult = await syncHipotecarioToFact(parseInt(anio));
+    if (!syncResult.success) {
+      console.log('[HipotecarioAPI] ⚠️ Sincronización con FACT falló:', syncResult.errors);
+    }
     
     res.status(204).send();
   } catch (error) {
