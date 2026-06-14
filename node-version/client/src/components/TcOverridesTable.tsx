@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { format, parse } from 'date-fns';
 import { fetchTcConfig, upsertOverride, deleteOverride } from '../api/tcBillingApi';
 import { TcBillingConfig } from '../types/tcBilling';
@@ -26,7 +26,6 @@ export default function TcOverridesTable({ tcKey, onUpdate, onError, onSuccess }
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [config, setConfig] = useState<TcBillingConfig | null>(null);
   const [monthsData, setMonthsData] = useState<MonthOverride[]>([]);
-  const [editingMonth, setEditingMonth] = useState<number | null>(null);
   const [savingMonth, setSavingMonth] = useState<number | null>(null);
   const [deletingMonth, setDeletingMonth] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -83,7 +82,6 @@ export default function TcOverridesTable({ tcKey, onUpdate, onError, onSuccess }
       onSuccess(`Override guardado para ${MONTH_NAMES[month - 1]}`);
       await loadData();
       onUpdate();
-      setEditingMonth(null);
     } catch (error: any) {
       onError(error.message || 'Error al guardar override');
     } finally {
@@ -168,7 +166,6 @@ export default function TcOverridesTable({ tcKey, onUpdate, onError, onSuccess }
                   type="date"
                   value={monthData.effectiveCloseDate || ''}
                   onChange={(e) => handleDateChange(monthData.month, e.target.value)}
-                  onFocus={() => setEditingMonth(monthData.month)}
                   className={styles.tcOverrides__input}
                 />
               </td>

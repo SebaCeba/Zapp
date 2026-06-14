@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { recalculateCycles } from '../api/tcBillingApi';
 import { RecalculateResponse } from '../types/tcBilling';
 import styles from './TcRecalculationPanel.module.css';
@@ -10,21 +10,35 @@ interface TcRecalculationPanelProps {
   onRecalculated: () => void;
 }
 
+const RECALCULATION_SCOPE = 'FUTURE_ONLY' as const;
+
+function getAffectedCount(data: RecalculateResponse): number {
+  return data.dryRun ? data.wouldChangeCount || 0 : data.changedCount || 0;
+}
+
 export default function TcRecalculationPanel({ tcKey, onSuccess, onError, onRecalculated }: TcRecalculationPanelProps) {
   const [loading, setLoading] = useState(false);
   const [applying, setApplying] = useState(false);
   const [previewData, setPreviewData] = useState<RecalculateResponse | null>(null);
+  const currentYear = new Date().getFullYear();
 
   const handlePreview = async () => {
     setLoading(true);
     setPreviewData(null);
     try {
-      const result = await recalculateCycles({ tcKey, dryRun: true });
+      const result = await recalculateCycles({
+        tcKey,
+        year: currentYear,
+        scope: RECALCULATION_SCOPE,
+        dryRun: true
+      });
+      const affectedCount = getAffectedCount(result);
       setPreviewData(result);
-      if (result.affectedCount === 0) {
-        onSuccess('No hay cuotas que requieran actualización');
+
+      if (affectedCount === 0) {
+        onSuccess('No hay cuotas que requieran actualizacion');
       } else {
-        onSuccess(`Vista previa generada: ${result.affectedCount} registros serán modificados`);
+        onSuccess(`Vista previa generada: ${affectedCount} registros seran modificados`);
       }
     } catch (error: any) {
       onError(error.message || 'Error al generar vista previa');
@@ -34,33 +48,41 @@ export default function TcRecalculationPanel({ tcKey, onSuccess, onError, onReca
   };
 
   const handleApply = async () => {
-    if (!previewData || previewData.affectedCount === 0) {
+    if (!previewData || getAffectedCount(previewData) === 0) {
       onError('Debe generar una vista previa antes de aplicar cambios');
       return;
     }
 
-    if (!confirm(`¿Confirma la actualización de ${previewData.affectedCount} registros?`)) {
+    if (!confirm(`Confirma la actualizacion de ${getAffectedCount(previewData)} registros?`)) {
       return;
     }
 
     setApplying(true);
     try {
-      const result = await recalculateCycles({ tcKey, dryRun: false });
-      onSuccess(`✓ Recalculación aplicada: ${result.affectedCount} registros actualizados`);
+      const result = await recalculateCycles({
+        tcKey,
+        year: currentYear,
+        scope: RECALCULATION_SCOPE,
+        dryRun: false
+      });
+      onSuccess(`Recalculacion aplicada: ${getAffectedCount(result)} registros actualizados`);
       setPreviewData(null);
       onRecalculated();
     } catch (error: any) {
-      onError(error.message || 'Error al aplicar recalculación');
+      onError(error.message || 'Error al aplicar recalculacion');
     } finally {
       setApplying(false);
     }
   };
 
+  const affectedCount = previewData ? getAffectedCount(previewData) : 0;
+  const sampleChanges = previewData?.sampleChanges || [];
+
   return (
     <div className={styles.tcRecalculation}>
-      <h3>Recalculación de Ciclos</h3>
+      <h3>Recalculacion de Ciclos</h3>
       <p className={styles.tcRecalculation__description}>
-        Esta operación recalcula las fechas de vencimiento de cuotas según la configuración actual.
+        Esta operacion recalcula las fechas de vencimiento de cuotas segun la configuracion actual.
         Solo afecta cuotas pendientes (installmentNumber=1) de compras REAL (nunca MANUAL).
       </p>
 
@@ -70,16 +92,16 @@ export default function TcRecalculationPanel({ tcKey, onSuccess, onError, onReca
           disabled={loading}
           className={`${styles.tcRecalculation__button} ${styles['tcRecalculation__button--preview']}`}
         >
-          {loading ? 'Generando vista previa...' : '🔍 Vista previa (dry-run)'}
+          {loading ? 'Generando vista previa...' : 'Vista previa (dry-run)'}
         </button>
 
-        {previewData && previewData.affectedCount > 0 && (
+        {previewData && affectedCount > 0 && (
           <button
             onClick={handleApply}
             disabled={applying}
             className={`${styles.tcRecalculation__button} ${styles['tcRecalculation__button--apply']}`}
           >
-            {applying ? 'Aplicando cambios...' : '✓ Aplicar cambios'}
+            {applying ? 'Aplicando cambios...' : 'Aplicar cambios'}
           </button>
         )}
       </div>
@@ -87,45 +109,45 @@ export default function TcRecalculationPanel({ tcKey, onSuccess, onError, onReca
       {previewData && (
         <div className={styles.tcRecalculation__preview}>
           <div className={styles.tcRecalculation__previewTitle}>
-            Vista Previa de Recalculación
+            Vista Previa de Recalculacion
           </div>
 
           <div className={styles.tcRecalculation__previewSummary}>
-            Se modificarán <strong>{previewData.affectedCount}</strong> registros
+            Se modificaran <strong>{affectedCount}</strong> registros
           </div>
 
-          {previewData.sample && previewData.sample.length > 0 && (
+          {sampleChanges.length > 0 && (
             <>
               <div className={styles.tcRecalculation__sampleTitle}>
                 Muestra de cambios (hasta 5 ejemplos):
               </div>
               <ul className={styles.tcRecalculation__sampleList}>
-                {previewData.sample.map((item, index) => (
+                {sampleChanges.slice(0, 5).map((item, index) => (
                   <li key={index}>
-                    Cuota <code>#{item.installmentId}</code> | 
-                    Compra <code>{item.purchaseTransactionId}</code> | 
-                    Vencimiento: <code>{item.oldDueDate}</code> → <code>{item.newDueDate}</code>
+                    Cuota <code>#{item.installmentId}</code> |
+                    Compra <code>{item.purchaseId}</code> |
+                    Vencimiento: <code>{item.oldDate}</code> a <code>{item.newDate}</code>
                   </li>
                 ))}
               </ul>
 
-              {previewData.affectedCount > 5 && (
+              {affectedCount > 5 && (
                 <p className={styles.tcRecalculation__sampleTitle}>
-                  ... y {previewData.affectedCount - 5} registros más
+                  ... y {affectedCount - 5} registros mas
                 </p>
               )}
             </>
           )}
 
-          {previewData.affectedCount === 0 && (
+          {affectedCount === 0 && (
             <div className={styles.tcRecalculation__success}>
-              ✓ No hay cuotas que requieran actualización. Todos los registros están sincronizados.
+              No hay cuotas que requieran actualizacion. Todos los registros estan sincronizados.
             </div>
           )}
 
-          {previewData.affectedCount > 0 && (
+          {affectedCount > 0 && (
             <div className={styles.tcRecalculation__warning}>
-              ⚠️ Esta acción es IRREVERSIBLE. Verifique la vista previa antes de aplicar.
+              Esta accion es irreversible. Verifique la vista previa antes de aplicar.
             </div>
           )}
         </div>

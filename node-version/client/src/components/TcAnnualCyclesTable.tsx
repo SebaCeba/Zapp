@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { format, parse, getDay } from 'date-fns';
+import { useState, useEffect } from 'react';
+import { format, parse, getDay as getWeekDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { fetchAnnualCycles } from '../api/tcBillingApi';
 import { BillingCycle } from '../types/tcBilling';
@@ -40,11 +40,11 @@ export default function TcAnnualCyclesTable({ tcKey, refreshTrigger }: TcAnnualC
 
   const getDayName = (dateStr: string): string => {
     const date = parse(dateStr, 'yyyy-MM-dd', new Date());
-    const dayIndex = getDay(date);
+    const dayIndex = getWeekDay(date);
     return DAY_NAMES_SHORT[dayIndex];
   };
 
-  const getDay = (dateStr: string): string => {
+  const getMonthDay = (dateStr: string): string => {
     const date = parse(dateStr, 'yyyy-MM-dd', new Date());
     return format(date, 'd');
   };
@@ -106,14 +106,14 @@ export default function TcAnnualCyclesTable({ tcKey, refreshTrigger }: TcAnnualC
                   {getDayName(cycle.fromDate)}
                 </span>
               </td>
-              <td>{getDay(cycle.fromDate)}</td>
+              <td>{getMonthDay(cycle.fromDate)}</td>
               <td>
                 {format(parse(cycle.toDate, 'yyyy-MM-dd', new Date()), 'dd-MMM', { locale: es })}
                 <span className={styles.tcAnnualCycles__dayName}>
                   {getDayName(cycle.toDate)}
                 </span>
               </td>
-              <td>{getDay(cycle.toDate)}</td>
+              <td>{getMonthDay(cycle.toDate)}</td>
               <td>
                 {format(parse(cycle.nominalToDate, 'yyyy-MM-dd', new Date()), 'dd-MMM', { locale: es })}
               </td>

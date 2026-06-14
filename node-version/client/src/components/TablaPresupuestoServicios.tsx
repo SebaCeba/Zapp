@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button, Input, Table } from 'rsuite';
 
 const { Column, HeaderCell, Cell } = Table;
@@ -137,9 +137,26 @@ export default function TablaPresupuestoServicios({ anio, onOpenCatalogo }: Prop
       setServicios(prevServicios => 
         prevServicios.map(servicio => {
           if (servicio.id === servicioId) {
-            const presupuestoActualizado = servicio.presupuestos && servicio.presupuestos.length > 0
-              ? { ...servicio.presupuestos[0], [mes]: montoFloat }
-              : { servicioId, anio, [mes]: montoFloat };
+            const basePresupuesto = servicio.presupuestos && servicio.presupuestos.length > 0
+              ? servicio.presupuestos[0]
+              : {
+                  servicioId,
+                  anio,
+                  enero: 0,
+                  febrero: 0,
+                  marzo: 0,
+                  abril: 0,
+                  mayo: 0,
+                  junio: 0,
+                  julio: 0,
+                  agosto: 0,
+                  septiembre: 0,
+                  octubre: 0,
+                  noviembre: 0,
+                  diciembre: 0
+                };
+
+            const presupuestoActualizado: Presupuesto = { ...basePresupuesto, [mes]: montoFloat };
             
             return {
               ...servicio,
