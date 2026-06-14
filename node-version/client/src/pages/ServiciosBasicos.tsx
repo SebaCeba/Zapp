@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import type { FC } from 'react';
 import { SelectPicker, Button } from 'rsuite';
 import MainLayout from '../layout/MainLayout';
 import PageTitleSection from '../layout/PageTitleSection';
 import TablaPresupuestoServicios from '../components/TablaPresupuestoServicios';
 import GestionarCatalogoModal from '../components/GestionarCatalogoModal';
 
-const ServiciosBasicos: React.FC = () => {
+const ServiciosBasicos: FC = () => {
   const [anioActual] = useState(new Date().getFullYear());
   const [anioSeleccionado, setAnioSeleccionado] = useState(anioActual);
   const [modalAbierto, setModalAbierto] = useState(false);

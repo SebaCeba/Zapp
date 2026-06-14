@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import type { ChangeEvent } from 'react';
 import { Input, InputNumber, SelectPicker, Button } from 'rsuite';
 import MainLayout from '../layout/MainLayout';
 import PageTitleSection from '../layout/PageTitleSection';
@@ -84,7 +85,7 @@ export default function Hipotecario() {
     });
   }, [refreshKey]);
 
-  const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportCSV = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -186,6 +187,9 @@ export default function Hipotecario() {
     return segurosDelMes.reduce((total, seguro) => {
       // Si es UF, convertir a CLP usando el valor UF del mes específico
       if (seguro.moneda === 'UF') {
+        if (uf === null || ufVariation === null) {
+          return total;
+        }
         const ufMes = calcularUfParaMes(parseInt(anio), mes, uf, ufVariation, anioProyectado);
         return total + (seguro.monto * ufMes);
       }
