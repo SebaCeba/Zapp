@@ -25,14 +25,37 @@ Write-Host ""
 
 # Iniciar backend en una nueva ventana de PowerShell
 $backendPath = Join-Path $PWD "node-version"
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$backendPath'; npm run dev"
+$backendTitle = "Zapps - Backend (API)"
+$backendCmd = "Set-Location -Path '$backendPath'; npm run dev"
+Start-Process powershell -ArgumentList `
+    "-NoExit", `
+    "-ExecutionPolicy", "Bypass", `
+    "-Command", `
+    "& { `
+        `$Host.UI.RawUI.WindowTitle = '$backendTitle'; `
+        Write-Host 'Iniciando Backend en: $backendPath' -ForegroundColor Green; `
+        Set-Location -Path '$backendPath'; `
+        npm run dev `
+    }"
 
 # Esperar un momento para que el backend inicie
-Start-Sleep -Seconds 3
+Write-Host "Esperando que el backend inicie..." -ForegroundColor Yellow
+Start-Sleep -Seconds 5
 
 # Iniciar frontend en otra ventana de PowerShell
 $frontendPath = Join-Path $PWD "node-version\client"
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$frontendPath'; npm run dev"
+$frontendTitle = "Zapps - Frontend (React)"
+$frontendCmd = "Set-Location -Path '$frontendPath'; npm run dev"
+Start-Process powershell -ArgumentList `
+    "-NoExit", `
+    "-ExecutionPolicy", "Bypass", `
+    "-Command", `
+    "& { `
+        `$Host.UI.RawUI.WindowTitle = '$frontendTitle'; `
+        Write-Host 'Iniciando Frontend en: $frontendPath' -ForegroundColor Green; `
+        Set-Location -Path '$frontendPath'; `
+        npm run dev `
+    }"
 
 Write-Host ""
 Write-Host "Aplicación iniciada exitosamente!" -ForegroundColor Green
