@@ -1,8 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import Router from './router';
-import 'rsuite/dist/rsuite.min.css';
 import './index.css';
+import 'rsuite/dist/rsuite.min.css';
 
 const apiKey = import.meta.env.VITE_API_KEY;
 const nativeFetch = window.fetch.bind(window);

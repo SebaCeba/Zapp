@@ -147,43 +147,6 @@ async function seed() {
     console.log('✅ Presupuesto de sueldo líquido 2026 creado');
   }
 
-  // Bono demo con reparto
-  const bonoDemo = await prisma.bono.create({
-    data: {
-      nombre: 'Aguinaldo Septiembre',
-      anio: 2026,
-      mes: 9, // Septiembre
-      monto: 800000,
-      descripcion: 'Bono fiestas patrias',
-      repartos: {
-        create: [
-          {
-            destino: 'ahorro',
-            monto: 320000,
-            porcentaje: 40
-          },
-          {
-            destino: 'deuda',
-            monto: 240000,
-            porcentaje: 30
-          },
-          {
-            destino: 'vacaciones',
-            monto: 160000,
-            porcentaje: 20
-          },
-          {
-            destino: 'apoyo_mensual',
-            monto: 80000,
-            porcentaje: 10,
-            mesesDistribucion: 4 // Distribuido en 4 meses
-          }
-        ]
-      }
-    }
-  });
-
-  console.log('✅ Bono demo con reparto creado');
   console.log('🎉 Seed completed!');
 }
 

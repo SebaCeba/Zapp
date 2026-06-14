@@ -3,9 +3,9 @@ import type { ReactNode } from 'react';
 
 export default function MainLayout({ children }: { children: ReactNode }) {
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', overflow: 'hidden' }}>
+    <div className="flex min-h-screen overflow-hidden bg-surface-bright">
       <Sidebar />
-      <main style={{ flex: 1, padding: '20px', overflowY: 'auto', overflowX: 'hidden' }}>
+      <main className="flex-1 p-8 overflow-y-auto overflow-x-hidden bg-cream">
         {children}
       </main>
     </div>

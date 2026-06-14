@@ -96,22 +96,10 @@ Get-ChildItem -Recurse -Include "__pycache__","*.pyc" | Remove-Item -Recurse -Fo
 
 ## Testing
 
-### Verificar errores de parsing (Tenpo)
-```powershell
-cd node-version
-node scripts/check-parse-errors.js
-```
-
 ### Analizar compras con interés
 ```powershell
 cd node-version
 node scripts/analizar-compras-interes.js
-```
-
-### Verificar estado de integración Tenpo
-```powershell
-cd node-version
-node scripts/check-tenpo-status.js
 ```
 
 ## Puertos
@@ -124,6 +112,5 @@ node scripts/check-tenpo-status.js
 
 - `GET /api/subscriptions` - Lista de suscripciones
 - `GET /api/actual/entries` - Entradas del módulo Actual
-- `GET /api/tenpo/emails` - Emails de Tenpo
 - `POST /api/google/auth` - Autenticación Google
 - Ver `node-version/src/routes/` para más endpoints

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import type { ChangeEvent } from 'react';
-import { Input, InputNumber, SelectPicker, Button } from 'rsuite';
-import MainLayout from '../layout/MainLayout';
-import PageTitleSection from '../layout/PageTitleSection';
+import { MainLayout } from '../components/layout';
+import { Card } from '../components/primitives/Card';
+import { Button } from '../components/primitives/Button';
+import { Input } from '../components/primitives/Input';
+import { Select } from '../components/primitives/Select';
 import YearAndUFSelector from '../components/YearAndUFSelector';
 
 interface MortgagePayment {
@@ -41,7 +42,7 @@ export default function Hipotecario() {
   // Cargar supuestos anuales UF
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/obligaciones/supuestos/${anioProyectado}`)
+    fetch(`http://localhost:3000/api/obligaciones/supuestos/${anioProyectado}`)
       .then(res => res.json())
       .then(data => {
         if (data) {
@@ -58,7 +59,7 @@ export default function Hipotecario() {
     if (uf === null || ufVariation === null || loading) return;
     
     const timer = setTimeout(() => {
-      fetch('/api/obligaciones/supuestos', {
+      fetch('http://localhost:3000/api/obligaciones/supuestos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -74,8 +75,8 @@ export default function Hipotecario() {
   // Cargar payments y seguros
   useEffect(() => {
     Promise.all([
-      fetch('/api/hipotecario/payments').then(r => r.json()),
-      fetch('/api/hipotecario/seguros').then(r => r.json())
+      fetch('http://localhost:3000/api/hipotecario/payments').then(r => r.json()),
+      fetch('http://localhost:3000/api/hipotecario/seguros').then(r => r.json())
     ]).then(([paymentsData, segurosData]) => {
       setPayments(Array.isArray(paymentsData) ? paymentsData : []);
       setSeguros(Array.isArray(segurosData) ? segurosData : []);
@@ -85,7 +86,7 @@ export default function Hipotecario() {
     });
   }, [refreshKey]);
 
-  const handleImportCSV = async (e: ChangeEvent<HTMLInputElement>) => {
+  const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -93,7 +94,7 @@ export default function Hipotecario() {
     formData.append('file', file);
 
     try {
-      const res = await fetch('/api/hipotecario/import-csv', {
+      const res = await fetch('http://localhost:3000/api/hipotecario/import-csv', {
         method: 'POST',
         body: formData
       });
@@ -126,7 +127,7 @@ export default function Hipotecario() {
     }
 
     try {
-      const response = await fetch('/api/hipotecario/seguros', {
+      const response = await fetch('http://localhost:3000/api/hipotecario/seguros', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -159,7 +160,7 @@ export default function Hipotecario() {
   const handleDeleteSeguro = async (nombre: string, anio: number) => {
     if (!confirm(`¿Eliminar "${nombre}" para todo el año ${anio}?`)) return;
     try {
-      await fetch(`/api/hipotecario/seguros/${encodeURIComponent(nombre)}/${anio}`, {
+      await fetch(`http://localhost:3000/api/hipotecario/seguros/${encodeURIComponent(nombre)}/${anio}`, {
         method: 'DELETE'
       });
       setRefreshKey(prev => prev + 1);
@@ -187,9 +188,6 @@ export default function Hipotecario() {
     return segurosDelMes.reduce((total, seguro) => {
       // Si es UF, convertir a CLP usando el valor UF del mes específico
       if (seguro.moneda === 'UF') {
-        if (uf === null || ufVariation === null) {
-          return total;
-        }
         const ufMes = calcularUfParaMes(parseInt(anio), mes, uf, ufVariation, anioProyectado);
         return total + (seguro.monto * ufMes);
       }
@@ -198,10 +196,15 @@ export default function Hipotecario() {
   };
 
   if (loading || uf === null || ufVariation === null) {
+    const headerProps = {
+      year: anioProyectado,
+      title: 'Presupuesto Hipotecario',
+    };
+    
     return (
-      <MainLayout>
-        <div className="container" style={{ textAlign: 'center', padding: '3rem' }}>
-          <p style={{ color: '#666' }}>Cargando supuestos anuales...</p>
+      <MainLayout headerProps={headerProps}>
+        <div className="flex items-center justify-center py-16">
+          <p className="text-slate-500">Cargando supuestos anuales...</p>
         </div>
       </MainLayout>
     );
@@ -264,14 +267,14 @@ export default function Hipotecario() {
   const totalSegurosClp = presupuestoAnual.reduce((sum, m) => sum + m.seguroClp, 0);
   const totalAnualClp = totalCuotasClp + totalSegurosClp;
 
-  return (
-    <MainLayout>
-      <div className="container">
-        <PageTitleSection
-          title="Presupuesto Hipotecario"
-          description="Proyección anual del crédito hipotecario en CLP. Importa la tabla de amortización y define el año a presupuestar."
-        />
+  const headerProps = {
+    year: anioProyectado,
+    title: 'Presupuesto Hipotecario',
+  };
 
+  return (
+    <MainLayout headerProps={headerProps}>
+      <div className="space-y-6">
         {/* A) Supuestos Anuales UF + Año a Proyectar */}
         <YearAndUFSelector
           year={anioProyectado}
@@ -283,69 +286,72 @@ export default function Hipotecario() {
         />
 
         {/* C) Importación y Seguros - Lado a lado */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Tabla de Amortización */}
-          <div className="card">
-            <h3 style={{ marginBottom: '1rem', color: '#2d7a2d' }}>📁 Tabla de Amortización</h3>
-            <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '1rem' }}>
+          <Card>
+            <h3 className="text-base font-semibold text-navy-dark mb-4">Tabla de Amortización</h3>
+            <p className="text-sm text-slate-600 mb-4">
               Importa un archivo CSV con las columnas: num_div, amortizacion_uf, interes_uf, com_d_in, total_div_uf, fecha_vencimiento (dd/mm/yyyy), saldo_insoluto_uf.
               Usa punto y coma (;) como separador.
             </p>
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-              <Button appearance="primary" style={{ cursor: 'pointer' }} as="label">
-                📤 Importar CSV
+            <div className="flex gap-4 items-center flex-wrap">
+              <Button as="label" variant="primary">
+                Importar CSV
                 <input
                   type="file"
                   accept=".csv"
                   onChange={handleImportCSV}
-                  style={{ display: 'none' }}
+                  className="hidden"
                 />
               </Button>
               {payments.length > 0 && (
-                <span style={{ padding: '0.5rem 1rem', background: '#e8f5e9', borderRadius: '4px', fontSize: '0.9rem', color: '#2d7a2d' }}>
-                  ✅ {payments.length} cuotas cargadas
+                <span className="px-4 py-2 bg-green-50 rounded-lg text-sm text-green-700 font-medium">
+                  {payments.length} cuotas cargadas
                 </span>
               )}
               {payments.length === 0 && (
-                <span style={{ padding: '0.5rem 1rem', background: '#ffebee', borderRadius: '4px', fontSize: '0.9rem', color: '#c62828' }}>
-                  ⚠️ Sin tabla cargada
+                <span className="px-4 py-2 bg-red-50 rounded-lg text-sm text-red-700 font-medium">
+                  Sin tabla cargada
                 </span>
               )}
             </div>
-          </div>
+          </Card>
 
           {/* Seguros */}
-          <div className="card">
-            <h3 style={{ marginBottom: '1rem', color: '#2d7a2d' }}>🛡️ Seguros Anuales</h3>
-            <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '1rem' }}>
+          <Card>
+            <h3 className="text-base font-semibold text-navy-dark mb-4">Seguros Anuales</h3>
+            <p className="text-sm text-slate-600 mb-4">
               Define seguros mensuales recurrentes para todo el año. Se aplican automáticamente a los 12 meses.
             </p>
             
-            <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-              <Input
+            <div className="flex gap-3 mb-4 flex-wrap">
+              <input
+                type="text"
                 value={newSeguroNombre}
-                onChange={(value) => setNewSeguroNombre(value)}
+                onChange={(e) => setNewSeguroNombre(e.target.value)}
                 placeholder="Nombre del seguro"
-                style={{ flex: '1 1 200px' }}
+                className="flex-1 min-w-[200px] px-4 py-2.5 bg-surface-container/30 border-none rounded-xl text-sm transition-all focus:ring-1 focus:ring-primary focus:outline-none"
               />
-              <InputNumber
-                value={parseFloat(newSeguroMonto) || 0}
-                onChange={(value) => setNewSeguroMonto(String(value || 0))}
+              <input
+                type="number"
+                value={newSeguroMonto}
+                onChange={(e) => setNewSeguroMonto(e.target.value)}
                 placeholder="Monto mensual"
-                step={0.01}
-                min={0}
-                style={{ flex: '0 0 120px' }}
+                step="0.01"
+                min="0"
+                className="w-[120px] px-4 py-2.5 bg-surface-container/30 border-none rounded-xl text-sm transition-all focus:ring-1 focus:ring-primary focus:outline-none"
               />
-              <SelectPicker
-                data={[{ label: 'CLP', value: 'CLP' }, { label: 'UF', value: 'UF' }]}
+              <Select
+                options={[
+                  { label: 'CLP', value: 'CLP' },
+                  { label: 'UF', value: 'UF' }
+                ]}
                 value={newSeguroMoneda}
-                onChange={(value) => setNewSeguroMoneda(value || 'CLP')}
-                cleanable={false}
-                searchable={false}
-                style={{ flex: '0 0 100px' }}
+                onChange={(value) => setNewSeguroMoneda(value)}
+                className="w-[100px]"
               />
-              <Button appearance="primary" onClick={handleAddSeguro}>
-                ➕ Agregar
+              <Button variant="primary" onClick={handleAddSeguro}>
+                Agregar
               </Button>
             </div>
 
@@ -371,36 +377,35 @@ export default function Hipotecario() {
               const segurosUnicos = Object.values(segurosAgrupados);
 
               return (
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse text-sm">
                     <thead>
-                      <tr style={{ background: '#f5f5f5' }}>
-                        <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Nombre</th>
-                        <th style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '2px solid #ddd' }}>Año</th>
-                        <th style={{ padding: '0.75rem', textAlign: 'right', borderBottom: '2px solid #ddd' }}>Monto Mensual</th>
-                        <th style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '2px solid #ddd' }}>Moneda</th>
-                        <th style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '2px solid #ddd' }}>Acciones</th>
+                      <tr className="bg-slate-50">
+                        <th className="px-3 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-widest border-b-2 border-slate-200">Nombre</th>
+                        <th className="px-3 py-3 text-center text-[11px] font-bold text-slate-500 uppercase tracking-widest border-b-2 border-slate-200">Año</th>
+                        <th className="px-3 py-3 text-right text-[11px] font-bold text-slate-500 uppercase tracking-widest border-b-2 border-slate-200">Monto Mensual</th>
+                        <th className="px-3 py-3 text-center text-[11px] font-bold text-slate-500 uppercase tracking-widest border-b-2 border-slate-200">Moneda</th>
+                        <th className="px-3 py-3 text-center text-[11px] font-bold text-slate-500 uppercase tracking-widest border-b-2 border-slate-200">Acciones</th>
                       </tr>
                     </thead>
                     <tbody>
                       {segurosUnicos.map((seguro: any) => (
-                        <tr key={`${seguro.nombre}_${seguro.anio}`} style={{ borderBottom: '1px solid #eee' }}>
-                          <td style={{ padding: '0.75rem', fontWeight: 'bold' }}>{seguro.nombre}</td>
-                          <td style={{ padding: '0.75rem', textAlign: 'center' }}>{seguro.anio}</td>
-                          <td style={{ padding: '0.75rem', textAlign: 'right', fontWeight: 'bold', color: '#2d7a2d' }}>
+                        <tr key={`${seguro.nombre}_${seguro.anio}`} className="border-b border-slate-100">
+                          <td className="px-3 py-3 font-semibold">{seguro.nombre}</td>
+                          <td className="px-3 py-3 text-center tabular-nums">{seguro.anio}</td>
+                          <td className="px-3 py-3 text-right font-semibold text-green-700 tabular-nums">
                             {seguro.monto.toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
-                          <td style={{ padding: '0.75rem', textAlign: 'center', fontWeight: 'bold', color: seguro.moneda === 'UF' ? '#1976d2' : '#2d7a2d' }}>
+                          <td className="px-3 py-3 text-center font-semibold text-blue-600">
                             {seguro.moneda}
                           </td>
-                          <td style={{ padding: '0.75rem', textAlign: 'center' }}>
+                          <td className="px-3 py-3 text-center">
                             <Button
-                              color="red"
-                              appearance="primary"
-                              size="xs"
+                              variant="danger"
+                              size="sm"
                               onClick={() => handleDeleteSeguro(seguro.nombre, parseInt(seguro.anio))}
                             >
-                              🗑️
+                              Eliminar
                             </Button>
                           </td>
                         </tr>
@@ -411,66 +416,78 @@ export default function Hipotecario() {
               );
             })()}
             {seguros.length === 0 && (
-              <p style={{ color: '#999', textAlign: 'center', padding: '1rem', fontSize: '0.9rem' }}>
+              <p className="text-slate-400 text-center py-4 text-sm">
                 Sin seguros registrados
               </p>
             )}
-          </div>
+          </Card>
         </div>
 
         {/* E) Tabla Presupuesto del Año */}
         {payments.length > 0 ? (
-          <div className="card" style={{ marginBottom: '1.5rem' }}>
-            <h3 style={{ marginBottom: '1rem', color: '#2d7a2d' }}>📊 Presupuesto {anioProyectado}</h3>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+          <Card>
+            <h3 className="text-base font-semibold text-navy-dark mb-4">Presupuesto {anioProyectado}</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-sm">
                 <thead>
-                  <tr style={{ background: '#f5f5f5' }}>
-                    <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Mes</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '2px solid #ddd' }}>Fecha</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '2px solid #ddd' }}>N° Div</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'right', borderBottom: '2px solid #ddd' }}>Cuota UF</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'right', borderBottom: '2px solid #ddd' }}>Cuota CLP</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'right', borderBottom: '2px solid #ddd' }}>Seguro CLP</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'right', borderBottom: '2px solid #ddd', fontWeight: 'bold' }}>Total CLP</th>
+                  <tr className="bg-slate-50">
+                    <th className="px-3 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-widest border-b-2 border-slate-200">Mes</th>
+                    <th className="px-3 py-3 text-center text-[11px] font-bold text-slate-500 uppercase tracking-widest border-b-2 border-slate-200">Fecha</th>
+                    <th className="px-3 py-3 text-center text-[11px] font-bold text-slate-500 uppercase tracking-widest border-b-2 border-slate-200">N° Div</th>
+                    <th className="px-3 py-3 text-right text-[11px] font-bold text-slate-500 uppercase tracking-widest border-b-2 border-slate-200">Cuota UF</th>
+                    <th className="px-3 py-3 text-right text-[11px] font-bold text-slate-500 uppercase tracking-widest border-b-2 border-slate-200">Cuota CLP</th>
+                    <th className="px-3 py-3 text-right text-[11px] font-bold text-slate-500 uppercase tracking-widest border-b-2 border-slate-200">Seguro CLP</th>
+                    <th className="px-3 py-3 text-right text-[11px] font-bold text-slate-500 uppercase tracking-widest border-b-2 border-slate-200">Total CLP</th>
                   </tr>
                 </thead>
                 <tbody>
                   {presupuestoAnual.map((row, idx) => (
-                    <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
-                      <td style={{ padding: '0.75rem' }}>{row.mes}</td>
+                    <tr key={idx} className="border-b border-slate-100">
+                      <td className="px-3 py-3">{row.mes}</td>
                       {row.sinDato ? (
                         <>
-                          <td colSpan={4} style={{ padding: '0.75rem', textAlign: 'center', color: '#999', fontStyle: 'italic' }}>
-                            ⚠️ Sin cuota para este mes
+                          <td colSpan={4} className="px-3 py-3 text-center text-slate-400 italic">
+                            Sin cuota para este mes
                           </td>
-                          <td style={{ padding: '0.75rem', textAlign: 'right', color: row.seguroClp > 0 ? '#f57c00' : '#ccc' }}>
-                            {row.seguroClp > 0 ? `$${Math.round(row.seguroClp).toLocaleString('es-CL')}` : '-'}
+                          <td className="px-3 py-3 text-right tabular-nums">
+                            {row.seguroClp > 0 ? (
+                              <span className="text-orange-600 font-semibold">
+                                ${Math.round(row.seguroClp).toLocaleString('es-CL')}
+                              </span>
+                            ) : (
+                              <span className="text-slate-300">-</span>
+                            )}
                           </td>
-                          <td style={{ padding: '0.75rem', textAlign: 'right', fontWeight: 'bold', color: row.totalClp > 0 ? '#2d7a2d' : '#ccc' }}>
-                            {row.totalClp > 0 ? `$${Math.round(row.totalClp).toLocaleString('es-CL')}` : '-'}
+                          <td className="px-3 py-3 text-right tabular-nums">
+                            {row.totalClp > 0 ? (
+                              <span className="font-semibold text-green-700">
+                                ${Math.round(row.totalClp).toLocaleString('es-CL')}
+                              </span>
+                            ) : (
+                              <span className="text-slate-300">-</span>
+                            )}
                           </td>
                         </>
                       ) : (
                         <>
-                          <td style={{ padding: '0.75rem', textAlign: 'center' }}>{row.fechaVencimiento}</td>
-                          <td style={{ padding: '0.75rem', textAlign: 'center', fontWeight: 'bold' }}>{row.numDiv}</td>
-                          <td style={{ padding: '0.75rem', textAlign: 'right' }}>
+                          <td className="px-3 py-3 text-center">{row.fechaVencimiento}</td>
+                          <td className="px-3 py-3 text-center font-semibold tabular-nums">{row.numDiv}</td>
+                          <td className="px-3 py-3 text-right tabular-nums">
                             {row.cuotaUf?.toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
-                          <td style={{ padding: '0.75rem', textAlign: 'right', color: '#1976d2', fontWeight: 'bold' }}>
+                          <td className="px-3 py-3 text-right text-blue-600 font-semibold tabular-nums">
                             ${Math.round(row.cuotaClp || 0).toLocaleString('es-CL')}
                           </td>
-                          <td style={{ padding: '0.75rem', textAlign: 'right', color: row.seguroClp > 0 ? '#f57c00' : '#ccc' }}>
-                            {row.seguroClp > 0 ? `$${Math.round(row.seguroClp).toLocaleString('es-CL')}` : '-'}
+                          <td className="px-3 py-3 text-right tabular-nums">
+                            {row.seguroClp > 0 ? (
+                              <span className="text-orange-600 font-semibold">
+                                ${Math.round(row.seguroClp).toLocaleString('es-CL')}
+                              </span>
+                            ) : (
+                              <span className="text-slate-300">-</span>
+                            )}
                           </td>
-                          <td style={{ 
-                            padding: '0.75rem', 
-                            textAlign: 'right', 
-                            fontWeight: 'bold', 
-                            color: '#2d7a2d',
-                            background: '#f0f9f0'
-                          }}>
+                          <td className="px-3 py-3 text-right font-semibold text-green-700 bg-green-50 tabular-nums">
                             ${Math.round(row.totalClp).toLocaleString('es-CL')}
                           </td>
                         </>
@@ -480,41 +497,41 @@ export default function Hipotecario() {
                 </tbody>
               </table>
             </div>
-          </div>
+          </Card>
         ) : (
-          <div className="card" style={{ textAlign: 'center', padding: '3rem', marginBottom: '1.5rem' }}>
-            <h3 style={{ color: '#999', marginBottom: '1rem' }}>📋 Sin tabla cargada</h3>
-            <p style={{ color: '#666' }}>
+          <Card className="text-center py-12">
+            <h3 className="text-slate-400 mb-4 text-base font-semibold">Sin tabla cargada</h3>
+            <p className="text-slate-500 text-sm">
               Importa un archivo CSV para visualizar el presupuesto anual.
             </p>
-          </div>
+          </Card>
         )}
 
         {/* F) Totales */}
         {payments.length > 0 && (
-          <div className="card">
-            <h3 style={{ marginBottom: '1rem', color: '#2d7a2d' }}>💰 Totales Anuales {anioProyectado}</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-              <div style={{ padding: '1.25rem', background: '#e3f2fd', borderRadius: '8px', border: '2px solid #1976d2' }}>
-                <div style={{ fontSize: '0.85rem', color: '#0d47a1', marginBottom: '0.5rem' }}>Total Cuotas CLP</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1976d2' }}>
+          <Card>
+            <h3 className="text-base font-semibold text-navy-dark mb-4">Totales Anuales {anioProyectado}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-5 bg-blue-50 rounded-2xl border-2 border-blue-200">
+                <div className="text-[11px] font-bold text-blue-900 uppercase tracking-widest mb-2">Total Cuotas CLP</div>
+                <div className="text-2xl font-bold text-blue-600 tabular-nums">
                   ${Math.round(totalCuotasClp).toLocaleString('es-CL')}
                 </div>
               </div>
-              <div style={{ padding: '1.25rem', background: '#fff3e0', borderRadius: '8px', border: '2px solid #f57c00' }}>
-                <div style={{ fontSize: '0.85rem', color: '#e65100', marginBottom: '0.5rem' }}>Total Seguros CLP</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#f57c00' }}>
+              <div className="p-5 bg-orange-50 rounded-2xl border-2 border-orange-200">
+                <div className="text-[11px] font-bold text-orange-900 uppercase tracking-widest mb-2">Total Seguros CLP</div>
+                <div className="text-2xl font-bold text-orange-600 tabular-nums">
                   ${Math.round(totalSegurosClp).toLocaleString('es-CL')}
                 </div>
               </div>
-              <div style={{ padding: '1.25rem', background: '#e8f5e9', borderRadius: '8px', border: '2px solid #2d7a2d' }}>
-                <div style={{ fontSize: '0.85rem', color: '#1b5e20', marginBottom: '0.5rem' }}>Total Anual CLP</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#2d7a2d' }}>
+              <div className="p-5 bg-green-50 rounded-2xl border-2 border-green-200">
+                <div className="text-[11px] font-bold text-green-900 uppercase tracking-widest mb-2">Total Anual CLP</div>
+                <div className="text-2xl font-bold text-green-700 tabular-nums">
                   ${Math.round(totalAnualClp).toLocaleString('es-CL')}
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
         )}
       </div>
     </MainLayout>

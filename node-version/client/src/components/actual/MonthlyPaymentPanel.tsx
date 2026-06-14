@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Panel, Button, InputNumber, Input, Divider, Stack, Table, IconButton } from 'rsuite';
+import { Button } from '../primitives';
+import { Input } from '../primitives';
 import { fetchActualEntries, createActualEntry, deleteActualEntry } from '../../api/actualApi';
-import TrashIcon from '@rsuite/icons/Trash';
-
-const { Column, HeaderCell, Cell } = Table;
 
 interface MonthlyPaymentPanelProps {
   selectedAmount: number;
@@ -19,7 +17,8 @@ export default function MonthlyPaymentPanel({
   selectedCount,
   year,
   month,
-  onPaymentConfirmed
+  onPaymentConfirmed,
+  onCancel
 }: MonthlyPaymentPanelProps) {
   // --- Payment History State ---
   const [payments, setPayments] = useState<any[]>([]);
@@ -75,7 +74,7 @@ export default function MonthlyPaymentPanel({
         year,
         month,
         category: 'PAGO_TC',
-        itemKey: `TENPO_PAY_${crypto.randomUUID()}`,
+        itemKey: `TC_PAY_${crypto.randomUUID()}`,
         label: newDescription,
         amountClp: newAmount
       });
@@ -99,7 +98,7 @@ export default function MonthlyPaymentPanel({
         year,
         month,
         category: 'PAGO_TC',
-        itemKey: `TENPO_PAY_${crypto.randomUUID()}`,
+        itemKey: `TC_PAY_${crypto.randomUUID()}`,
         label: `Pago por selección (${selectedCount} cuotas)`,
         amountClp: actualPaidAmount
       });
@@ -120,66 +119,60 @@ export default function MonthlyPaymentPanel({
   });
 
   return (
-    <Panel 
-      header={<h4 style={{ margin: 0 }}>💳 Gestión Pagos {month}/{year}</h4>} 
-      bodyFill
-      style={{ 
-        background: '#fff', 
-        height: '100%', 
-        display: 'flex', 
-        flexDirection: 'column',
-        overflow: 'hidden',
-        border: 'none',
-        borderRadius: 0
-      }}
-    >
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div className="bg-white h-full flex flex-col overflow-hidden border-none rounded-none">
+      {/* Header */}
+      <div className="px-4 py-3 border-b border-outline-variant/20">
+        <h4 className="m-0 text-base font-semibold text-on-surface">💳 Gestión Pagos {month}/{year}</h4>
+      </div>
+      
+      <div className="flex flex-col h-full">
         
         {/* --- 1. Total Summary (Fixed at Top) --- */}
-        <div style={{ padding: '15px 15px 0 15px', flexShrink: 0 }}>
-          <div style={{ textAlign: 'center', background: '#f8f9fa', padding: 10, borderRadius: 8 }}>
-            <div style={{ fontSize: '0.8rem', color: '#666', marginBottom: 2, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Pagado</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#16a34a' }}>
+        <div className="px-4 pt-4 pb-0 flex-shrink-0">
+          <div className="text-center bg-surface-container/20 p-3 rounded-lg">
+            <div className="text-xs text-outline uppercase tracking-wide mb-0.5">Total Pagado</div>
+            <div className="text-2xl font-bold text-success">
               {formatCurrency(totalPaid)}
             </div>
           </div>
         </div>
 
-        <Divider style={{ margin: '10px 0' }} />
+        <hr className="my-2.5 border-outline-variant/20" />
 
         {/* --- 2. Selection Action Area (Fixed) --- */}
-        <div style={{ padding: '0 15px', flexShrink: 0 }}>
-          <div style={{ 
-            background: selectedCount > 0 ? '#f0f9ff' : '#f9fafb', 
-            padding: 12, 
-            borderRadius: 8, 
-            border: `1px solid ${selectedCount > 0 ? '#bae6fd' : '#e5e7eb'}` 
-          }}>
-            <h6 style={{ marginBottom: 8, color: selectedCount > 0 ? '#0369a1' : '#6b7280', fontSize: '0.9rem' }}>
+        <div className="px-4 flex-shrink-0">
+          <div className={`p-3 rounded-lg border ${
+            selectedCount > 0 
+              ? 'bg-info-container/15 border-info/30' 
+              : 'bg-surface-container/10 border-outline-variant/30'
+          }`}>
+            <h6 className={`mb-2 text-sm font-medium ${
+              selectedCount > 0 ? 'text-info' : 'text-outline'
+            }`}>
               {selectedCount > 0 ? 'Pagar Selección' : 'Selección Actual'}
             </h6>
             
             {selectedCount > 0 ? (
               <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: 8 }}>
+                <div className="flex justify-between text-xs mb-2">
                   <span>{selectedCount} cuotas:</span>
                   <strong>{formatCurrency(selectedAmount)}</strong>
                 </div>
                 
-                <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
-                  <InputNumber 
-                    value={actualPaidAmount} 
-                    onChange={(val) => setActualPaidAmount(Number(val))} 
-                    prefix="$"
-                    size="sm"
-                    style={{ flex: 1 }}
+                <div className="flex gap-1.5 items-center">
+                  <Input 
+                    type="number"
+                    value={actualPaidAmount || ''} 
+                    onChange={(e) => setActualPaidAmount(Number(e.target.value))} 
+                    placeholder="$"
+                    className="flex-1 text-sm py-1.5"
                   />
                   <Button 
-                    appearance="primary" 
-                    color="green" 
+                    variant="primary"
                     size="sm"
                     onClick={handleConfirmSelection} 
-                    loading={isSubmitting}
+                    disabled={isSubmitting}
+                    className="bg-success hover:bg-success/90"
                   >
                     Pagar
                   </Button>
@@ -187,117 +180,114 @@ export default function MonthlyPaymentPanel({
               </>
             ) : (
               <>
-                <p style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: 8, lineHeight: '1.3' }}>
+                <p className="text-xs text-outline mb-2 leading-tight">
                   Seleccione comercios en la tabla para sumarlos aquí.
                 </p>
-                 <Button 
-                    appearance="default" 
-                    disabled
-                    block
-                    size="sm"
-                  >
-                    Registrar Selección
-                  </Button>
+                <Button 
+                  variant="secondary"
+                  disabled
+                  size="sm"
+                  className="w-full"
+                >
+                  Registrar Selección
+                </Button>
               </>
             )}
           </div>
         </div>
 
-        <Divider style={{ margin: '10px 0' }} />
+        <hr className="my-2.5 border-outline-variant/20" />
 
         {/* --- 3. Add Manual Payment (Fixed) --- */}
-        <div style={{ padding: '0 15px', flexShrink: 0 }}>
-          <h6 style={{ marginBottom: 8, fontSize: '0.9rem' }}>Agregar Pago Manual</h6>
-          <Stack spacing={5} alignItems="flex-start" direction="column">
-             <Input 
-               placeholder="Descripción" 
-               value={newDescription}
-               onChange={setNewDescription}
-               size="sm"
-               style={{ width: '100%' }}
-             />
-             <div style={{ display: 'flex', gap: 5, width: '100%' }}>
-                <InputNumber 
-                  placeholder="Monto" 
-                  value={newAmount} 
-                  onChange={(val) => setNewAmount(Number(val))} 
-                  prefix="$"
-                  size="sm"
-                  style={{ flex: 1 }}
-                />
-                <Button 
-                  appearance="primary" 
-                  color="blue" 
-                  size="sm"
-                  onClick={handleAddManualPayment}
-                  disabled={!newAmount || !newDescription || isSubmitting}
-                  loading={isSubmitting}
-                >
-                  +
-                </Button>
-             </div>
-          </Stack>
+        <div className="px-4 flex-shrink-0">
+          <h6 className="mb-2 text-sm font-medium">Agregar Pago Manual</h6>
+          <div className="flex flex-col gap-1.5">
+            <Input 
+              placeholder="Descripción" 
+              value={newDescription}
+              onChange={(e) => setNewDescription(e.target.value)}
+              className="w-full text-sm py-1.5"
+            />
+            <div className="flex gap-1.5 w-full">
+              <Input 
+                type="number"
+                placeholder="Monto" 
+                value={newAmount || ''} 
+                onChange={(e) => setNewAmount(Number(e.target.value))} 
+                className="flex-1 text-sm py-1.5"
+              />
+              <Button 
+                variant="primary"
+                size="sm"
+                onClick={handleAddManualPayment}
+                disabled={!newAmount || !newDescription || isSubmitting}
+              >
+                +
+              </Button>
+            </div>
+          </div>
         </div>
 
-        <Divider style={{ margin: '10px 0' }} />
+        <hr className="my-2.5 border-outline-variant/20" />
 
         {/* --- 4. Payment History (Scrollable Area) --- */}
-        <div style={{  
-          flex: 1, 
-          overflowY: 'auto', 
-          padding: '0 15px 15px 15px',
-          minHeight: 0 // Important for flex scroll
-        }}>
-           <h6 style={{ marginBottom: 8, fontSize: '0.9rem', position: 'sticky', top: 0, background: '#fff', zIndex: 1, paddingBottom: 5 }}>
-             Historial ({payments.length})
-           </h6>
-           <Table
-            autoHeight
-            data={payments}
-            loading={loadingPayments}
-            bordered
-            cellBordered
-            headerHeight={30}
-            rowHeight={40}
-            style={{ width: '100%' }}
-          >
-            <Column width={85} align="center" fixed>
-              <HeaderCell style={{ padding: 4, fontSize: '0.75rem' }}>Fecha</HeaderCell>
-              <Cell style={{ padding: 4 }}>
-                {(rowData) => <span style={{ fontSize: '0.75rem' }}>{formatDate(rowData.createdAt).split(',')[0]}</span>}
-              </Cell>
-            </Column>
-
-            <Column flexGrow={1}>
-              <HeaderCell style={{ padding: 4, fontSize: '0.75rem' }}>Item</HeaderCell>
-              <Cell dataKey="label" style={{ padding: '4px 8px', fontSize: '0.8rem' }} />
-            </Column>
-
-            <Column width={70} align="right">
-              <HeaderCell style={{ padding: 4, fontSize: '0.75rem' }}>Monto</HeaderCell>
-              <Cell style={{ padding: 4 }}>
-                {(rowData) => <span style={{ fontWeight: 500, fontSize: '0.8rem' }}>{formatCurrency(rowData.amountClp)}</span>}
-              </Cell>
-            </Column>
-
-            <Column width={40} align="center" fixed="right">
-              <HeaderCell style={{ padding: 4 }}>{''}</HeaderCell>
-              <Cell style={{ padding: '2px' }}>
-                {(rowData) => (
-                  <IconButton 
-                    icon={<TrashIcon />} 
-                    size="xs" 
-                    appearance="subtle" 
-                    color="red"
-                    onClick={() => handleDelete(rowData.id)}
-                  />
-                )}
-              </Cell>
-            </Column>
-          </Table>
+        <div className="flex-1 overflow-y-auto px-4 pb-4 min-h-0">
+          <h6 className="mb-2 text-sm font-medium sticky top-0 bg-white z-10 pb-1.5">
+            Historial ({payments.length})
+          </h6>
+          
+          {loadingPayments ? (
+            <div className="text-center py-8 text-sm text-outline">Cargando...</div>
+          ) : payments.length === 0 ? (
+            <div className="text-center py-8 text-sm text-outline">No hay pagos registrados</div>
+          ) : (
+            <div className="border border-outline-variant/30 rounded-lg overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-surface-container/20">
+                  <tr>
+                    <th className="px-1 py-2 text-xs font-medium text-outline text-center w-20">
+                      Fecha
+                    </th>
+                    <th className="px-2 py-2 text-xs font-medium text-outline text-left">
+                      Item
+                    </th>
+                    <th className="px-1 py-2 text-xs font-medium text-outline text-right w-16">
+                      Monto
+                    </th>
+                    <th className="px-1 py-2 text-xs font-medium text-outline text-center w-10">
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/20">
+                  {payments.map((payment) => (
+                    <tr key={payment.id} className="hover:bg-surface-container/10 transition-colors">
+                      <td className="px-1 py-2.5 text-xs text-center">
+                        {formatDate(payment.createdAt).split(',')[0]}
+                      </td>
+                      <td className="px-2 py-2.5 text-xs">
+                        {payment.label}
+                      </td>
+                      <td className="px-1 py-2.5 text-xs text-right font-medium">
+                        {formatCurrency(payment.amountClp)}
+                      </td>
+                      <td className="px-1 py-2.5 text-center">
+                        <button
+                          onClick={() => handleDelete(payment.id)}
+                          className="p-0.5 text-error hover:bg-error/10 rounded transition-colors"
+                          title="Eliminar"
+                        >
+                          <span className="material-symbols-outlined text-base">delete</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
       </div>
-    </Panel>
+    </div>
   );
 }

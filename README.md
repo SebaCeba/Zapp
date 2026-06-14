@@ -1,17 +1,20 @@
 # Zapps - Sistema de Gestión Financiera Personal
 
-Sistema completo de planificación y gestión financiera que incluye:
+Sistema completo de planificación y gestión financiera personal con modelo dimensional y arquitectura moderna.
+
+> **Nota Arquitectónica:** Se migró a un modelo dimensional (star schema) con v2 API. Los módulos Tenpo TC, Bonos y TC Billing fueron eliminados como parte de la simplificación arquitectónica (Enero-Abril 2026).
 
 ## 🌟 Características
 
 - 📅 **Suscripciones**: Gestión de suscripciones periódicas con calendario
-- 💳 **Integración Tenpo**: Procesamiento automático de emails de compras y pagos
 - 🏠 **Hipotecario**: Cálculo y seguimiento de dividendos hipotecarios
-- 💰 **Ingresos**: Gestión de ingresos, bonos y repartos
+- 💰 **Ingresos**: Gestión de ingresos con modelo dimensional
 - 🔧 **Servicios Básicos**: Seguimiento de servicios (agua, luz, gas, internet, etc.)
 - 🛒 **Supermercado**: Control de gastos de supermercado
 - 📊 **Módulo Actual**: Presupuesto mensual actualizable con estado de pagos
-- 📧 **Integración Gmail**: Autenticación OAuth2 para procesamiento de emails
+- 💳 **Créditos**: Gestión de tarjetas de crédito y cuotas
+- 📧 **Integración Gmail**: Autenticación OAuth2 para procesamiento de facturas
+- 🎨 **Financial Atelier Design System**: Interfaz moderna con Tailwind CSS
 
 ## 🚀 Inicio Rápido
 
@@ -76,17 +79,17 @@ Consulta la carpeta [docs/](docs/) para documentación detallada:
 ### Arquitectura y Desarrollo
 - [ARQUITECTURA.md](docs/ARQUITECTURA.md) - Visión general del sistema
 - [DESARROLLO.md](docs/DESARROLLO.md) - Guías de desarrollo
+- [DATABASE_MODEL.md](docs/DATABASE_MODEL.md) - Modelo dimensional (star schema)
 - [CHANGELOG.md](CHANGELOG.md) - Historial de cambios consolidado
 
 ### Integraciones
-- [Tenpo](docs/tenpo/) - Documentación completa de integración Tenpo
-- [Gmail OAuth](docs/auditoria_oauth_gmail.md) - Autenticación Gmail API
+- [Gmail OAuth](docs/auditorias/auditoria_oauth_gmail.md) - Autenticación Gmail API
 - [Servicios Básicos](docs/servicios-basicos_architectura.md) - Arquitectura de servicios
 
-### Componentes Específicos
-- [TC Billing](docs/tc-billing/) - Sistema de facturación tarjeta de crédito
-- [UI/RSuite](docs/ui/) - Migraciones de componentes UI
-- [Product](docs/product/) - Definición de producto y roadmap
+### Componentes y Migraciones
+- [UI/Tailwind](docs/MIGRACION_RSUITE_TAILWIND.md) - Migración RSuite → Tailwind
+- [Auditorías](docs/auditorias/) - Auditorías técnicas y de arquitectura
+- [Changelogs](docs/changelogs/) - Logs de cambios detallados
 
 ## 🛠️ Tecnologías
 

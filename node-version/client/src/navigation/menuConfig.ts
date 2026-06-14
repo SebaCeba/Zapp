@@ -9,6 +9,8 @@ export interface MenuChild {
   key: string;
   label: string;
   disabled?: boolean;
+  isHeader?: boolean;
+  indent?: boolean;
 }
 
 export interface MenuItem {
@@ -29,17 +31,16 @@ export const menuConfig: MenuItem[] = [
     label: 'Presupuesto',
     iconName: 'funnel',
     children: [
-      { key: '/presupuesto/resumen', label: 'Resumen' },
-      { key: '/ingresos', label: 'Ingresos' },
-      { key: 'gastos-header', label: 'Gastos', disabled: true },
-      { key: '/app', label: '    Suscripciones' },
-      { key: '/creditos', label: '    Créditos y Seguros' },
-      { key: '/hipotecario', label: '    Hipotecario' },
-      { key: '/servicios-basicos', label: '    Servicios Básicos' },
-      { key: '/supermercado', label: '    Supermercado' },
-      { key: '/presupuesto/tenpo', label: '    Tenpo TC' },
-      { key: 'ahorros-header', label: 'Ahorros', disabled: true },
-      { key: '/ahorros', label: '    Ahorros' },
+      { key: '/presupuesto', label: 'Resumen' },
+      { key: '/presupuesto/ingresos', label: 'Ingresos' },
+      { key: 'gastos-header', label: 'Gastos', disabled: true, isHeader: true },
+      { key: '/suscripciones', label: 'Suscripciones', indent: true },
+      { key: '/creditos', label: 'Créditos y Seguros', indent: true },
+      { key: '/hipotecario', label: 'Hipotecario', indent: true },
+      { key: '/servicios-basicos', label: 'Servicios Básicos', indent: true },
+      { key: '/supermercado', label: 'Supermercado', indent: true },
+      { key: 'ahorros-header', label: 'Ahorros', disabled: true, isHeader: true },
+      { key: '/ahorros', label: 'Ahorros', indent: true },
     ],
   },
   {
@@ -48,14 +49,7 @@ export const menuConfig: MenuItem[] = [
     iconName: 'page',
     children: [
       { key: '/actual', label: 'Resumen' },
-      { key: 'actual-gastos-header', label: 'Gastos', disabled: true },
-      { key: '/actual/suscripciones', label: '    Suscripciones' },
-      { key: '/actual/creditos', label: '    Créditos y Seguros' },
-      { key: '/actual/hipotecario', label: '    Hipotecario' },
-      { key: '/actual/utilities', label: '    Servicios Básicos' },
-      { key: '/actual/supermercado', label: '    Supermercado' },
-      { key: '/actual/tenpo', label: '    Tenpo TC' },
-      { key: 'actual-ahorros-header', label: 'Ahorros', disabled: true },
+      { key: '/comparacion', label: 'Comparación' },
     ],
   },
   {
@@ -63,9 +57,6 @@ export const menuConfig: MenuItem[] = [
     label: 'Configuración',
     children: [
       { key: '/config/servicios-basicos', label: 'Servicios Básicos' },
-      { key: '/presupuesto/tenpo/config', label: 'Tenpo TC' },
-      { key: '/tenpo/categorias', label: 'Categorías Tenpo' },
-      { key: '/tenpo/asignacion', label: 'Asignación Comercios' },
     ],
   },
 ];

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { SelectPicker } from 'rsuite';
 import MainLayout from './layout/MainLayout';
 import PageTitleSection from './layout/PageTitleSection';
-import Dashboard from './components/Dashboard';
 import AddSubscriptionForm from './components/AddSubscriptionForm';
 import SubscriptionTable from './components/SubscriptionTable';
 
@@ -30,8 +29,6 @@ function App() {
             />
           }
         />
-
-        <Dashboard year={currentYear} refreshKey={refreshKey} />
 
         <div className="grid grid-2">
           <AddSubscriptionForm onSuccess={handleRefresh} />

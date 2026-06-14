@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
-import MainLayout from '../layout/MainLayout';
-import PageTitleSection from '../layout/PageTitleSection';
+import { MainLayout } from '../components/layout';
 import YearAndUFSelector from '../components/YearAndUFSelector';
 import ObligacionForm, { ObligacionFormData } from '../components/ObligacionForm';
 import VistaPreviaObligacion from '../components/VistaPreviaObligacion';
-import DashboardObligaciones from '../components/DashboardObligaciones';
 import TablaObligaciones from '../components/TablaObligaciones';
 
 export default function Creditos() {
@@ -18,7 +16,7 @@ export default function Creditos() {
   // Cargar supuestos anuales al cambiar el año
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/obligaciones/supuestos/${year}`)
+    fetch(`http://localhost:3000/api/obligaciones/supuestos/${year}`)
       .then(res => res.json())
       .then(data => {
         setUf(data.valorUfBase);
@@ -35,7 +33,7 @@ export default function Creditos() {
     if (uf === null || ufVariation === null || loading) return;
     
     const timer = setTimeout(() => {
-      fetch('/api/obligaciones/supuestos', {
+      fetch('http://localhost:3000/api/obligaciones/supuestos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ anio: year, valorUfBase: uf, variacionAnualUf: ufVariation })
@@ -47,7 +45,7 @@ export default function Creditos() {
   const handleSaveObligacion = async () => {
     if (!previewData) return;
     try {
-      await fetch('/api/obligaciones', {
+      await fetch('http://localhost:3000/api/obligaciones', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -72,23 +70,24 @@ export default function Creditos() {
     setRefreshKey(prev => prev + 1);
   };
 
+  const headerProps = {
+    year,
+    title: 'Créditos y Obligaciones',
+  };
+
   if (loading || uf === null || ufVariation === null) {
     return (
-      <MainLayout>
-        <div className="container" style={{ textAlign: 'center', padding: '3rem' }}>
-          <p style={{ color: '#666' }}>Cargando supuestos anuales...</p>
+      <MainLayout headerProps={headerProps}>
+        <div className="flex items-center justify-center py-16">
+          <p className="text-slate-500">Cargando supuestos anuales...</p>
         </div>
       </MainLayout>
     );
   }
 
   return (
-    <MainLayout>
-      <div className="container">
-        <PageTitleSection
-          title="Créditos y Seguros"
-          description="Gestiona obligaciones de cuota conocida (consumo y seguros) y visualiza el impacto anual proyectado en CLP."
-        />
+    <MainLayout headerProps={headerProps}>
+      <div className="space-y-6">
         <YearAndUFSelector
           year={year}
           setYear={setYear}
@@ -96,12 +95,6 @@ export default function Creditos() {
           setUf={setUf}
           ufVariation={ufVariation}
           setUfVariation={setUfVariation}
-        />
-        <DashboardObligaciones
-          year={year}
-          uf={uf}
-          ufVariation={ufVariation}
-          refreshKey={refreshKey}
         />
         {previewData ? (
           <VistaPreviaObligacion

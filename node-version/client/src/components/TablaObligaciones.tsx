@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { Card } from './primitives';
+import { Button } from './primitives';
 
 interface Props {
   refreshKey: number;
@@ -20,7 +22,7 @@ export default function TablaObligaciones({ refreshKey, onDelete }: Props) {
   const [obligaciones, setObligaciones] = useState<Obligacion[]>([]);
 
   useEffect(() => {
-    fetch('/api/obligaciones')
+    fetch('http://localhost:3000/api/obligaciones')
       .then(res => res.json())
       .then(data => setObligaciones(data))
       .catch(() => {});
@@ -29,69 +31,57 @@ export default function TablaObligaciones({ refreshKey, onDelete }: Props) {
   const handleDelete = async (id: number) => {
     if (!confirm('¿Eliminar esta obligación?')) return;
     try {
-      await fetch(`/api/obligaciones/${id}`, { method: 'DELETE' });
+      await fetch(`http://localhost:3000/api/obligaciones/${id}`, { method: 'DELETE' });
       onDelete();
     } catch (error) {
       alert('Error al eliminar');
     }
   };
 
-  const tipoEmoji: Record<string, string> = {
-    consumo: '💳',
-    seguro: '🛡️'
-  };
-
   return (
-    <div className="card">
-      <h3 style={{ marginBottom: '1rem', color: '#2d7a2d' }}>📋 Obligaciones Registradas</h3>
+    <Card>
+      <h3 className="text-base font-semibold text-navy-dark mb-4">Obligaciones Registradas</h3>
       {obligaciones.length === 0 ? (
-        <p style={{ color: '#666', textAlign: 'center', padding: '2rem' }}>
-          No hay obligaciones registradas. Agrega una nueva para comenzar.
-        </p>
+        <div className="text-center py-12">
+          <p className="text-slate-500">
+            No hay obligaciones registradas. Agrega una nueva para comenzar.
+          </p>
+        </div>
       ) : (
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
             <thead>
-              <tr style={{ background: '#f5f5f5' }}>
-                <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Nombre</th>
-                <th style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '2px solid #ddd' }}>Tipo</th>
-                <th style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '2px solid #ddd' }}>Moneda</th>
-                <th style={{ padding: '0.75rem', textAlign: 'right', borderBottom: '2px solid #ddd' }}>Cuota</th>
-                <th style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '2px solid #ddd' }}>Cuotas</th>
-                <th style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '2px solid #ddd' }}>Inicio</th>
-                <th style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '2px solid #ddd' }}>Acciones</th>
+              <tr className="border-b border-outline-variant">
+                <th className="text-left py-3 pr-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Nombre</th>
+                <th className="text-center px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Tipo</th>
+                <th className="text-center px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Moneda</th>
+                <th className="text-right px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Cuota</th>
+                <th className="text-center px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Cuotas</th>
+                <th className="text-center px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Inicio</th>
+                <th className="text-center px-3 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {obligaciones.map((obl) => (
-                <tr key={obl.id} style={{ borderBottom: '1px solid #eee' }}>
-                  <td style={{ padding: '0.75rem' }}>{obl.nombre}</td>
-                  <td style={{ padding: '0.75rem', textAlign: 'center' }}>
-                    {tipoEmoji[obl.tipo]} {obl.tipo}
-                  </td>
-                  <td style={{ padding: '0.75rem', textAlign: 'center' }}>{obl.moneda}</td>
-                  <td style={{ padding: '0.75rem', textAlign: 'right', fontWeight: 'bold', color: '#2d7a2d' }}>
+                <tr key={obl.id} className="border-b border-outline-variant/30 hover:bg-surface-container/20 transition-colors">
+                  <td className="py-3 pr-4 font-medium text-navy-dark">{obl.nombre}</td>
+                  <td className="text-center px-3 py-3 capitalize">{obl.tipo}</td>
+                  <td className="text-center px-3 py-3 font-medium">{obl.moneda}</td>
+                  <td className="text-right px-3 py-3 font-bold text-primary tabular-nums">
                     {obl.montoCuota.toLocaleString('es-CL')} {obl.moneda}
                   </td>
-                  <td style={{ padding: '0.75rem', textAlign: 'center' }}>{obl.cuotasTotales}</td>
-                  <td style={{ padding: '0.75rem', textAlign: 'center' }}>
+                  <td className="text-center px-3 py-3 tabular-nums">{obl.cuotasTotales}</td>
+                  <td className="text-center px-3 py-3 tabular-nums">
                     {obl.mesInicio.toString().padStart(2, '0')}/{obl.anioInicio}
                   </td>
-                  <td style={{ padding: '0.75rem', textAlign: 'center' }}>
-                    <button 
+                  <td className="text-center px-3 py-3">
+                    <Button 
+                      variant="danger"
+                      size="sm"
                       onClick={() => handleDelete(obl.id)}
-                      style={{ 
-                        background: '#ef4444', 
-                        color: 'white', 
-                        border: 'none', 
-                        padding: '0.5rem 1rem', 
-                        borderRadius: '4px', 
-                        cursor: 'pointer',
-                        fontSize: '0.85rem'
-                      }}
                     >
-                      🗑️ Eliminar
-                    </button>
+                      Eliminar
+                    </Button>
                   </td>
                 </tr>
               ))}
@@ -99,6 +89,6 @@ export default function TablaObligaciones({ refreshKey, onDelete }: Props) {
           </table>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

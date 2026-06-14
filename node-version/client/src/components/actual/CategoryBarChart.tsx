@@ -10,7 +10,7 @@ import {
   Cell,
   LabelList
 } from 'recharts';
-import { Panel, Button, Stack } from 'rsuite';
+import { Button } from '../primitives';
 
 // Re-using interfaces locally since they are not exported from a common type file yet
 // ideally this should be in types.ts
@@ -185,21 +185,26 @@ export default function CategoryBarChart({
   if (data.length === 0) return null;
 
   return (
-    <Panel bordered style={{ background: '#fff', marginBottom: '1.5rem' }}>
-      <Stack justifyContent="space-between" alignItems="center" style={{ marginBottom: 10 }}>
-        <h5 style={{ margin: 0 }}>Composición por Categoría</h5>
+    <div className="bg-white rounded-[24px] shadow-sm p-6 mb-6 border border-outline-variant/30">
+      <div className="flex justify-between items-center mb-4">
+        <h5 className="text-lg font-semibold text-on-surface m-0">Composición por Categoría</h5>
         {selectedCategory && (
-          <Button appearance="subtle" size="xs" onClick={() => onSelectCategory(null)} color="red">
-            Limpiar filtro: <b>{selectedCategory}</b>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => onSelectCategory(null)}
+            className="text-error hover:bg-error/10"
+          >
+            Limpiar filtro: <b className="ml-1">{selectedCategory}</b>
           </Button>
         )}
-      </Stack>
+      </div>
       
-      <div style={{ width: '100%', height: 320 }}>
+      <div className="w-full h-80">
         <ResponsiveContainer>
           <BarChart
             data={data}
-            margin={{ top: 25, right: 30, left: 10, bottom: 5 }} // Más top margin para etiquetas
+            margin={{ top: 25, right: 30, left: 10, bottom: 5 }}
           >
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
             <XAxis 
@@ -209,9 +214,6 @@ export default function CategoryBarChart({
               interval={0} 
               height={40} 
               tick={{ fontSize: 11, fill: '#4b5563' }}
-              // Si hay muchas categorías, Recharts puede ocultar etiquetas si no caben con interval 0.
-              // Para asegurar que se vean todas, a veces se usa un tick formatter truncado o rotate si son demasiadas.
-              // El prompt pide eliminar rotación diagonal.
             />
             <YAxis 
               tickFormatter={formatK}
@@ -244,6 +246,6 @@ export default function CategoryBarChart({
           </BarChart>
         </ResponsiveContainer>
       </div>
-    </Panel>
+    </div>
   );
 }
