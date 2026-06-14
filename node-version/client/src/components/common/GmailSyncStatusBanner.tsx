@@ -1,4 +1,4 @@
-import React from 'react';
+import type { CSSProperties } from 'react';
 import { Message } from 'rsuite';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -10,7 +10,7 @@ interface GmailSyncStatusBannerProps {
   lastSync?: Date | null;
   onReauthorize?: () => void;
   className?: string;
-  style?: React.CSSProperties;
+  style?: CSSProperties;
 }
 
 /**

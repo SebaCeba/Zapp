@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import type { FC } from 'react';
 import { SelectPicker } from 'rsuite';
 import MainLayout from '../layout/MainLayout';import PageTitleSection from '../layout/PageTitleSection';
 interface ResumenMensual {
@@ -48,7 +49,7 @@ interface DetalleAhorros {
   valores: number[];
 }
 
-const Presupuesto: React.FC = () => {
+const Presupuesto: FC = () => {
   const [anioActual] = useState(new Date().getFullYear());
   const [anioSeleccionado, setAnioSeleccionado] = useState(anioActual);
   const [resumen, setResumen] = useState<ResumenMensual[]>([]);

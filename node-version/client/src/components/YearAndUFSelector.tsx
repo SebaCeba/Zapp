@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { Panel, InputNumber, SelectPicker } from 'rsuite';
 
 interface YearAndUFProps {
@@ -12,7 +12,7 @@ interface YearAndUFProps {
 
 const yearData = [2025, 2026, 2027, 2028].map(y => ({ label: y.toString(), value: y }));
 
-const YearAndUFSelector: React.FC<YearAndUFProps> = ({ year, setYear, uf, setUf, ufVariation, setUfVariation }) => {
+const YearAndUFSelector: FC<YearAndUFProps> = ({ year, setYear, uf, setUf, ufVariation, setUfVariation }) => {
   return (
     <Panel bordered header="📊 Supuestos Anuales" style={{ marginBottom: '1.5rem' }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>

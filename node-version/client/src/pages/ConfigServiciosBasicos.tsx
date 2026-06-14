@@ -300,7 +300,11 @@ export default function ConfigServiciosBasicos() {
         <Panel bordered>
           <Tabs 
             activeKey={activeTab} 
-            onSelect={setActiveTab}
+            onSelect={(eventKey) => {
+              if (eventKey !== undefined) {
+                setActiveTab(String(eventKey));
+              }
+            }}
             appearance="subtle"
           >
             {providers.map(provider => {

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import type { FC, FormEvent } from 'react';
 import { Panel, Input, InputNumber, SelectPicker, Button, DatePicker } from 'rsuite';
 
 export interface ObligacionFormData {
@@ -27,7 +28,7 @@ const monedaData = [
   { label: '📈 UF (Unidad de Fomento)', value: 'UF' }
 ];
 
-const ObligacionForm: React.FC<Props> = ({ onPreview }) => {
+const ObligacionForm: FC<Props> = ({ onPreview }) => {
   const currentYear = new Date().getFullYear();
   const [form, setForm] = useState<ObligacionFormData>({
     nombre: '',
@@ -51,7 +52,7 @@ const ObligacionForm: React.FC<Props> = ({ onPreview }) => {
     };
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     onPreview(form);
   };

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { FC } from 'react';
 import { SelectPicker, Button } from 'rsuite';
 import MainLayout from '../layout/MainLayout';
 import PageTitleSection from '../layout/PageTitleSection';
@@ -6,7 +7,7 @@ import TablaPresupuestoIngresos from '../components/TablaPresupuestoIngresos';
 import GestionarIngresosModal from '../components/GestionarIngresosModal';
 import GestionarBonosModal from '../components/GestionarBonosModal';
 
-const Ingresos: React.FC = () => {
+const Ingresos: FC = () => {
   const [anioActual] = useState(new Date().getFullYear());
   const [anioSeleccionado, setAnioSeleccionado] = useState(anioActual);
   const [modalIngresosAbierto, setModalIngresosAbierto] = useState(false);

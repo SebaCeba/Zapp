@@ -1,11 +1,12 @@
 import { useState } from 'react';
+import type { FC } from 'react';
 import { SelectPicker, Button } from 'rsuite';
 import MainLayout from '../layout/MainLayout';
 import PageTitleSection from '../layout/PageTitleSection';
 import TablaPresupuestoAhorros from '../components/TablaPresupuestoAhorros';
 import GestionarAhorrosModal from '../components/GestionarAhorrosModal';
 
-const Ahorros: React.FC = () => {
+const Ahorros: FC = () => {
   const [anioActual] = useState(new Date().getFullYear());
   const [anioSeleccionado, setAnioSeleccionado] = useState(anioActual);
   const [modalAbierto, setModalAbierto] = useState(false);

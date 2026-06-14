@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { Panel, Button, Table } from 'rsuite';
 import { ObligacionFormData } from './ObligacionForm';
 
@@ -20,7 +20,6 @@ function calcularProyeccion(
   ufVariation: number
 ) {
   // Calcular UF estimada por mes
-  const meses = Array.from({ length: 12 }, (_, i) => i + 1);
   const ufMensual = [uf];
   const tasaMensual = Math.pow(1 + ufVariation / 100, 1 / 12) - 1;
   for (let i = 1; i < 12; i++) {
@@ -59,7 +58,7 @@ function calcularProyeccion(
   return { mensualCLP, totalAnual, promedioMensual, cuotas };
 }
 
-const VistaPreviaObligacion: React.FC<Props> = ({ data, year, uf, ufVariation, onBack, onSave }) => {
+const VistaPreviaObligacion: FC<Props> = ({ data, year, uf, ufVariation, onBack, onSave }) => {
   const { mensualCLP, totalAnual, promedioMensual, cuotas } = calcularProyeccion(data, year, uf, ufVariation);
   const mesesNombre = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
   

@@ -1,4 +1,5 @@
 import { Button } from 'rsuite';
+import type { ChangeEvent } from 'react';
 
 interface UtilityImportCardProps {
   provider: string;
@@ -19,7 +20,7 @@ export default function UtilityImportCard({
   onAddManual,
   importingEmail = false
 }: UtilityImportCardProps) {
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       onImport(file);

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import type { FormEvent } from 'react';
 import { fetchTcConfig, upsertTcConfig } from '../api/tcBillingApi';
 import styles from './TcConfigForm.module.css';
 
@@ -40,7 +41,7 @@ export default function TcConfigForm({ tcKey, onSave, onError, onSuccess }: TcCo
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     if (closingDay < 1 || closingDay > 31) {

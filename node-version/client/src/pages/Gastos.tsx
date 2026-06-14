@@ -1,9 +1,10 @@
 import { useState } from 'react';
+import type { FC } from 'react';
 import { SelectPicker } from 'rsuite';
 import MainLayout from '../layout/MainLayout';
 import PageTitleSection from '../layout/PageTitleSection';
 
-const Gastos: React.FC = () => {
+const Gastos: FC = () => {
   const [anioActual] = useState(new Date().getFullYear());
   const [anioSeleccionado, setAnioSeleccionado] = useState(anioActual);
 

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { KeyboardEvent } from 'react';
 import { ActualCategory } from '../../types/actual';
 import { upsertActualEntry } from '../../api/actualApi';
 
@@ -57,7 +58,7 @@ export default function ActualEditableCell({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter') handleSave();
     if (e.key === 'Escape') {
       setIsEditing(false);

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import type { FocusEvent, KeyboardEvent } from 'react';
 import { Table } from 'rsuite';
 
 const { Column, HeaderCell, Cell } = Table;
@@ -109,7 +110,7 @@ export default function TablaPresupuestoSupermercado({ anio }: Props) {
     setEditando(mes);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, mes: string) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>, mes: string) => {
     if (e.key === 'Enter') {
       guardarMonto(mes, e.currentTarget.value);
     } else if (e.key === 'Escape') {
@@ -117,7 +118,7 @@ export default function TablaPresupuestoSupermercado({ anio }: Props) {
     }
   };
 
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>, mes: string) => {
+  const handleBlur = (e: FocusEvent<HTMLInputElement>, mes: string) => {
     guardarMonto(mes, e.currentTarget.value);
   };
 

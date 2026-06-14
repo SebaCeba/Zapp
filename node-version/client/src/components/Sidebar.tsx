@@ -21,9 +21,10 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleOpenChange = (keys: string[]) => {
-    setOpenKeys(keys);
-    localStorage.setItem('sidebar-open-keys', JSON.stringify(keys));
+  const handleOpenChange = (keys: (string | number)[]) => {
+    const nextKeys = keys.map(String);
+    setOpenKeys(nextKeys);
+    localStorage.setItem('sidebar-open-keys', JSON.stringify(nextKeys));
   };
 
   return (

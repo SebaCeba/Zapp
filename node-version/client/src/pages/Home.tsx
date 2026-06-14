@@ -1,8 +1,9 @@
 import { Button } from 'rsuite';
+import type { FC } from 'react';
 import MainLayout from '../layout/MainLayout';
 
 
-const Home: React.FC = () => {
+const Home: FC = () => {
   return (
     <MainLayout>
       <div>

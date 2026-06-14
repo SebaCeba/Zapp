@@ -99,7 +99,15 @@ export default function ActualUtilities() {
 
         {/* Tabs dinámicos por provider */}
         <div className="card" style={{ padding: '1rem 1rem 0 1rem', marginBottom: '1rem' }}>
-          <Nav appearance="tabs" activeKey={activeTab} onSelect={setActiveTab}>
+          <Nav
+            appearance="tabs"
+            activeKey={activeTab}
+            onSelect={(eventKey) => {
+              if (eventKey !== undefined) {
+                setActiveTab(String(eventKey));
+              }
+            }}
+          >
             {providers.map(provider => (
               <Nav.Item key={provider.nombre} eventKey={provider.nombre}>
                 {provider.nombre}

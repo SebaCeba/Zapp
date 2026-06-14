@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import type { FormEvent } from 'react';
 import { format } from 'date-fns';
 import { InputNumber, DatePicker, Button } from 'rsuite';
 import MainLayout from '../layout/MainLayout';
@@ -46,7 +47,7 @@ export default function TenpoConfig() {
     }
   };
 
-  const handleCrearTasa = async (e: React.FormEvent) => {
+  const handleCrearTasa = async (e: FormEvent) => {
     e.preventDefault();
 
     const tasaMensual = parseFloat(nuevaTasaMensual);

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { KeyboardEvent } from 'react';
 import { ActualLine, ActualCategory } from '../../types/actual';
 import { upsertActualEntry } from '../../api/actualApi';
 
@@ -48,7 +49,7 @@ export default function ActualRow({ line, year, month, category, onSaved }: Actu
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter') handleSave();
     if (e.key === 'Escape') {
       setIsEditing(false);

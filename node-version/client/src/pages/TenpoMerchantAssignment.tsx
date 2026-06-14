@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import type { FC } from 'react';
 import { Panel, Button, Message, toaster, CheckPicker, Tree } from 'rsuite';
 import { useNavigate } from 'react-router-dom';
 import '../styles/tenpo-merchant-assignment.css';
@@ -20,7 +21,7 @@ interface TreeNode {
   children?: TreeNode[];
 }
 
-const TenpoMerchantAssignment: React.FC = () => {
+const TenpoMerchantAssignment: FC = () => {
   const navigate = useNavigate();
   const [categories, setCategories] = useState<Category[]>([]);
   const [uncategorizedMerchants, setUncategorizedMerchants] = useState<string[]>([]);
