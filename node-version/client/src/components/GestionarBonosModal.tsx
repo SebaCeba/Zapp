@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Modal, Button, Input, InputNumber, SelectPicker, IconButton, Panel } from 'rsuite';
+import { Modal, Button, Input, InputNumber, SelectPicker, IconButton } from 'rsuite';
 import CloseIcon from '@rsuite/icons/Close';
 
 interface Bono {

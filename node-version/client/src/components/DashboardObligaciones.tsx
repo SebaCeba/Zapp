@@ -26,7 +26,6 @@ export default function DashboardObligaciones({ year, uf, ufVariation, refreshKe
   const [totalAnual, setTotalAnual] = useState(0);
   const [obligacionesActivas, setObligacionesActivas] = useState(0);
   const [promedioMensual, setPromedioMensual] = useState(0);
-  const [monthlyTotals, setMonthlyTotals] = useState<number[]>(Array(12).fill(0));
   const [obligacionesConMontos, setObligacionesConMontos] = useState<ObligacionConMontos[]>([]);
 
   useEffect(() => {
@@ -57,7 +56,6 @@ export default function DashboardObligaciones({ year, uf, ufVariation, refreshKe
         const total = monthly.reduce((a, b) => a + b, 0);
         const promedio = activas > 0 ? total / 12 : 0;
 
-        setMonthlyTotals(monthly);
         setTotalAnual(total);
         setPromedioMensual(promedio);
         setObligacionesActivas(activas);

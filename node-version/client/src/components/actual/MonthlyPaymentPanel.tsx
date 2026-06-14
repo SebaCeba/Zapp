@@ -19,8 +19,7 @@ export default function MonthlyPaymentPanel({
   selectedCount,
   year,
   month,
-  onPaymentConfirmed,
-  onCancel
+  onPaymentConfirmed
 }: MonthlyPaymentPanelProps) {
   // --- Payment History State ---
   const [payments, setPayments] = useState<any[]>([]);
@@ -282,7 +281,7 @@ export default function MonthlyPaymentPanel({
             </Column>
 
             <Column width={40} align="center" fixed="right">
-              <HeaderCell style={{ padding: 4 }}></HeaderCell>
+              <HeaderCell style={{ padding: 4 }}>{''}</HeaderCell>
               <Cell style={{ padding: '2px' }}>
                 {(rowData) => (
                   <IconButton 

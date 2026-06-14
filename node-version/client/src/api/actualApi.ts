@@ -1,4 +1,4 @@
-import { ActualSummary, UpsertActualEntryPayload } from '../types/actual';
+import { ActualSummary } from '../types/actual';
 
 const API_BASE = '/api/actual';
 
