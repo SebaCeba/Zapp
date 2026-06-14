@@ -84,9 +84,9 @@ export default function TablaPresupuestoIngresos({ anio, onOpenCatalogo, onOpenB
         fetch(`/api/ingresos/bonos/${anio}`)
       ]);
       const ingresosData = await ingresosRes.json();
-      const bonosData = await bonosRes.json();
-      setIngresos(ingresosData);
-      setBonos(bonosData);
+      const bonosPayload = await bonosRes.json();
+      setIngresos(Array.isArray(ingresosData) ? ingresosData : []);
+      setBonos(Array.isArray(bonosPayload) ? bonosPayload : []);
     } catch (error) {
       console.error('Error al cargar ingresos:', error);
     } finally {

@@ -105,7 +105,7 @@ const Presupuesto: FC = () => {
 
       const ingresosData = await ingresosRes.json();
       const serviciosData = await serviciosRes.json();
-      const bonosData = await bonosRes.json();
+      const bonosPayload = await bonosRes.json();
       const subscriptionsData = await subscriptionsRes.json();
       const obligacionesData = await obligacionesRes.json();
       const paymentsData = await paymentsRes.json();
@@ -126,6 +126,8 @@ const Presupuesto: FC = () => {
       });
 
       // Agregar bonos al detalle
+      const bonosData = Array.isArray(bonosPayload) ? bonosPayload : [];
+
       const valoresBonos = MESES_KEYS.map((_, idx) => {
         let total = 0;
         const mesNum = idx + 1;
