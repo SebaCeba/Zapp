@@ -25,6 +25,11 @@ yarn-error.log*
 *.sqlite
 *.sqlite3
 
+# Backups
+*.zip
+*.bak
+*backup*
+
 # Credenciales sensibles
 CREDENCIALES_GOOGLE.md
 credentials.json

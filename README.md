@@ -15,58 +15,78 @@ Sistema completo de planificación y gestión financiera que incluye:
 
 ## 🚀 Inicio Rápido
 
-### Versión Node.js (Principal)
+### Inicio Automático
+
+**Opción 1 - Script PowerShell:**
+```powershell
+.\start.ps1
+```
+
+**Opción 2 - Batch file:**
+```cmd
+start.bat
+```
+
+Esto iniciará automáticamente:
+- **Backend** (API Node.js) en `http://localhost:3000`
+- **Frontend** (React + Vite) en `http://localhost:5173`
+
+### Inicio Manual
+
+Si prefieres controlar los servicios individualmente:
 
 ```powershell
-# Iniciar backend y frontend
-.\start.ps1
-
-# O manualmente:
+# Backend
 cd node-version
 npm install
 npx prisma generate
 npx prisma migrate dev
 npm run dev
 
-# Frontend (en otra terminal)
+# Frontend (nueva terminal)
 cd node-version/client
 npm install
 npm run dev
 ```
 
-### Versión Python (Legacy)
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-python app.py
-```
-
 ## 📁 Estructura del Proyecto
 
 ```
-├── node-version/           # Versión principal (Node.js + TypeScript)
+Zapps/
+├── node-version/           # Stack principal (Node.js + TypeScript + React)
 │   ├── src/               # Backend Express + Prisma
-│   │   ├── routes/        # Endpoints API
-│   │   └── services/      # Lógica de negocio
-│   ├── client/            # Frontend React + TypeScript
-│   │   └── src/           # Componentes y páginas
-│   └── prisma/            # Schema y migraciones
-├── src/                   # Versión Python (legacy)
-│   └── planificador/      # Módulos Python
-├── docs/                  # Documentación técnica
-├── scripts/               # Scripts de utilidad
-└── templates/             # Templates HTML (Python)
+│   │   ├── routes/        # Endpoints API REST
+│   │   ├── services/      # Lógica de negocio
+│   │   └── security/      # OAuth, tokens, seguridad
+│   ├── client/            # Frontend React + TypeScript + Vite
+│   │   └── src/
+│   │       ├── components/ # Componentes React reutilizables
+│   │       ├── pages/     # Páginas principales
+│   │       └── api/       # Cliente API (fetch)
+│   └── prisma/            # Schema DB y migraciones
+├── docs/                  # Documentación técnica y arquitectura
+├── start.ps1              # Script de inicio automático
+└── CHANGELOG.md           # Historial de cambios
 ```
 
 ## 📚 Documentación
 
 Consulta la carpeta [docs/](docs/) para documentación detallada:
-- [Integración Tenpo](docs/TENPO_INTEGRATION.md)
-- [Implementación Backend](docs/RESUMEN_IMPLEMENTACION_BACKEND_ACTUAL.md)
-- [Implementación Frontend](docs/RESUMEN_IMPLEMENTACION_FRONTEND_ACTUAL.md)
-- [Credenciales Google](docs/CREDENCIALES_GOOGLE.md)
+
+### Arquitectura y Desarrollo
+- [ARQUITECTURA.md](docs/ARQUITECTURA.md) - Visión general del sistema
+- [DESARROLLO.md](docs/DESARROLLO.md) - Guías de desarrollo
+- [CHANGELOG.md](CHANGELOG.md) - Historial de cambios consolidado
+
+### Integraciones
+- [Tenpo](docs/tenpo/) - Documentación completa de integración Tenpo
+- [Gmail OAuth](docs/auditoria_oauth_gmail.md) - Autenticación Gmail API
+- [Servicios Básicos](docs/servicios-basicos_architectura.md) - Arquitectura de servicios
+
+### Componentes Específicos
+- [TC Billing](docs/tc-billing/) - Sistema de facturación tarjeta de crédito
+- [UI/RSuite](docs/ui/) - Migraciones de componentes UI
+- [Product](docs/product/) - Definición de producto y roadmap
 
 ## 🛠️ Tecnologías
 
