@@ -18,7 +18,7 @@ export default function Creditos() {
   // Cargar supuestos anuales al cambiar el año
   useEffect(() => {
     setLoading(true);
-    fetch(`http://localhost:3000/api/obligaciones/supuestos/${year}`)
+    fetch(`/api/obligaciones/supuestos/${year}`)
       .then(res => res.json())
       .then(data => {
         setUf(data.valorUfBase);
@@ -35,7 +35,7 @@ export default function Creditos() {
     if (uf === null || ufVariation === null || loading) return;
     
     const timer = setTimeout(() => {
-      fetch('http://localhost:3000/api/obligaciones/supuestos', {
+      fetch('/api/obligaciones/supuestos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ anio: year, valorUfBase: uf, variacionAnualUf: ufVariation })
@@ -47,7 +47,7 @@ export default function Creditos() {
   const handleSaveObligacion = async () => {
     if (!previewData) return;
     try {
-      await fetch('http://localhost:3000/api/obligaciones', {
+      await fetch('/api/obligaciones', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

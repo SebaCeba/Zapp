@@ -70,7 +70,7 @@ export default function PurchaseDetailModal({ purchase, open, onClose, onDataCha
 
   const handleToggleInteres = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/api/tenpo/purchases/${purchase.id}/interes`, {
+      const response = await fetch(`/api/tenpo/purchases/${purchase.id}/interes`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tieneInteres: !purchase.tieneInteres })
@@ -104,7 +104,7 @@ export default function PurchaseDetailModal({ purchase, open, onClose, onDataCha
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api/tenpo/purchases/${purchase.id}/confirmar-real`, {
+      const response = await fetch(`/api/tenpo/purchases/${purchase.id}/confirmar-real`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cuotaReal })
@@ -131,7 +131,7 @@ export default function PurchaseDetailModal({ purchase, open, onClose, onDataCha
     if (!scheduleDateInput) {
       // Usuario quiere volver a AUTO
       try {
-        const response = await fetch(`http://localhost:3000/api/tenpo/purchases/${purchase.id}/schedule`, {
+        const response = await fetch(`/api/tenpo/purchases/${purchase.id}/schedule`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ scheduleMode: 'AUTO' })
@@ -157,7 +157,7 @@ export default function PurchaseDetailModal({ purchase, open, onClose, onDataCha
 
     // Usuario ingresó nueva fecha
     try {
-      const response = await fetch(`http://localhost:3000/api/tenpo/purchases/${purchase.id}/schedule`, {
+      const response = await fetch(`/api/tenpo/purchases/${purchase.id}/schedule`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

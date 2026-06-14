@@ -30,7 +30,7 @@ export default function DashboardObligaciones({ year, uf, ufVariation, refreshKe
   const [obligacionesConMontos, setObligacionesConMontos] = useState<ObligacionConMontos[]>([]);
 
   useEffect(() => {
-    fetch('http://localhost:3000/api/obligaciones')
+    fetch('/api/obligaciones')
       .then(res => res.json())
       .then((obligaciones: Obligacion[]) => {
         const monthly = Array(12).fill(0);

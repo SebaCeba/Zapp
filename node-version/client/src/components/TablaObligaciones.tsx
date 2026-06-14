@@ -20,7 +20,7 @@ export default function TablaObligaciones({ refreshKey, onDelete }: Props) {
   const [obligaciones, setObligaciones] = useState<Obligacion[]>([]);
 
   useEffect(() => {
-    fetch('http://localhost:3000/api/obligaciones')
+    fetch('/api/obligaciones')
       .then(res => res.json())
       .then(data => setObligaciones(data))
       .catch(() => {});
@@ -29,7 +29,7 @@ export default function TablaObligaciones({ refreshKey, onDelete }: Props) {
   const handleDelete = async (id: number) => {
     if (!confirm('¿Eliminar esta obligación?')) return;
     try {
-      await fetch(`http://localhost:3000/api/obligaciones/${id}`, { method: 'DELETE' });
+      await fetch(`/api/obligaciones/${id}`, { method: 'DELETE' });
       onDelete();
     } catch (error) {
       alert('Error al eliminar');

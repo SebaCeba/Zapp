@@ -3,7 +3,19 @@ import prisma from '../db';
 import multer from 'multer';
 
 const router = Router();
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: Number(process.env.CSV_UPLOAD_MAX_BYTES || 2 * 1024 * 1024)
+  },
+  fileFilter: (_req, file, callback) => {
+    if (!file.originalname.toLowerCase().endsWith('.csv')) {
+      return callback(new Error('Solo se permiten archivos CSV'));
+    }
+
+    callback(null, true);
+  }
+});
 
 // GET config (año proyectado)
 router.get('/config', async (_req: Request, res: Response) => {

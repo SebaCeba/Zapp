@@ -121,12 +121,12 @@ export default function Tenpo() {
 
   const checkAuthStatus = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/integrations/google/status');
+      const response = await fetch('/api/integrations/google/status');
       const data = await response.json();
       setTokenExpired(data.tokenExpired || false);
 
       if (!data.authenticated || data.tokenExpired) {
-        const authResponse = await fetch('http://localhost:3000/api/integrations/google/auth-url');
+        const authResponse = await fetch('/api/integrations/google/auth-url');
         const authData = await authResponse.json();
         setAuthUrl(authData.authUrl);
       }
@@ -138,7 +138,7 @@ export default function Tenpo() {
   const handleSync = async () => {
     setSyncing(true);
     try {
-      const response = await fetch('http://localhost:3000/api/tenpo/sync', {
+      const response = await fetch('/api/tenpo/sync', {
         method: 'POST',
       });
       const data = await response.json();
@@ -224,7 +224,7 @@ export default function Tenpo() {
         body.firstDueDateOverride = manualForm.firstDueDateOverride;
       }
 
-      const response = await fetch('http://localhost:3000/api/tenpo/purchases/manual', {
+      const response = await fetch('/api/tenpo/purchases/manual', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
@@ -258,7 +258,7 @@ export default function Tenpo() {
       console.log('🔍 Cargando compras con cuotas del año:', anioSeleccionado);
       
       // Cargar todas las compras (sin filtrar por año de compra)
-      const purchasesRes = await fetch('http://localhost:3000/api/tenpo/purchases');
+      const purchasesRes = await fetch('/api/tenpo/purchases');
       const purchasesData = await purchasesRes.json();
       
       console.log('📦 Total compras recibidas:', purchasesData.length);
@@ -283,7 +283,7 @@ export default function Tenpo() {
       setPurchases(filteredPurchases);
 
       // Cargar todos los pagos
-      const paymentsRes = await fetch('http://localhost:3000/api/tenpo/payments');
+      const paymentsRes = await fetch('/api/tenpo/payments');
       const paymentsData = await paymentsRes.json();
       
       console.log('💰 Total pagos recibidos:', paymentsData.length);

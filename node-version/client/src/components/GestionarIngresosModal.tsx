@@ -33,7 +33,7 @@ export default function GestionarIngresosModal({ isOpen, onClose, onIngresosUpda
   const cargarIngresos = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3000/api/ingresos/catalogo');
+      const response = await fetch('/api/ingresos/catalogo');
       const data = await response.json();
       setIngresos(data);
     } catch (error) {
@@ -50,7 +50,7 @@ export default function GestionarIngresosModal({ isOpen, onClose, onIngresosUpda
     }
 
     try {
-      const response = await fetch('http://localhost:3000/api/ingresos/catalogo', {
+      const response = await fetch('/api/ingresos/catalogo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nombre: nuevoNombre.trim(), esRecurrente: true })
@@ -78,7 +78,7 @@ export default function GestionarIngresosModal({ isOpen, onClose, onIngresosUpda
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api/ingresos/catalogo/${id}`, {
+      const response = await fetch(`/api/ingresos/catalogo/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nombre: nuevoNombre.trim() })
@@ -109,7 +109,7 @@ export default function GestionarIngresosModal({ isOpen, onClose, onIngresosUpda
     if (!confirm(mensaje)) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/api/ingresos/catalogo/${id}/toggle`, {
+      const response = await fetch(`/api/ingresos/catalogo/${id}/toggle`, {
         method: 'PATCH'
       });
 
@@ -129,7 +129,7 @@ export default function GestionarIngresosModal({ isOpen, onClose, onIngresosUpda
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api/ingresos/catalogo/${id}`, {
+      const response = await fetch(`/api/ingresos/catalogo/${id}`, {
         method: 'DELETE'
       });
 

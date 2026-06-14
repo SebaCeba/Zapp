@@ -1,9 +1,8 @@
-import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+﻿import { Router, Request, Response } from 'express';
+import prisma from '../db';
 import { getMonthlyBudget } from '../services/consolidado';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 const VALID_CATEGORIES = [
   'INGRESOS',
@@ -17,20 +16,63 @@ const VALID_CATEGORIES = [
   'AHORROS'
 ];
 
+function validateActualEntryPayload(body: any) {
+  const { year, month, category, itemKey, label, amountClp, isPaid } = body;
+
+  if (!Number.isInteger(year) || year < 2000 || year > 2100) {
+    return { error: 'Anio invalido (2000-2100)' };
+  }
+  if (!Number.isInteger(month) || month < 1 || month > 12) {
+    return { error: 'Mes invalido (1-12)' };
+  }
+  if (!category || !VALID_CATEGORIES.includes(category)) {
+    return { error: 'Categoria invalida' };
+  }
+  if (!itemKey || typeof itemKey !== 'string' || itemKey.trim() === '') {
+    return { error: 'itemKey requerido' };
+  }
+  if (!Number.isInteger(amountClp) || amountClp < 0) {
+    return { error: 'amountClp debe ser entero >= 0' };
+  }
+  if (isPaid !== undefined && typeof isPaid !== 'boolean') {
+    return { error: 'isPaid debe ser boolean' };
+  }
+  if (category === 'AJUSTES' && (!label || label.trim() === '')) {
+    return { error: 'label requerido para AJUSTES' };
+  }
+
+  return {
+    value: {
+      year,
+      month,
+      category,
+      itemKey: itemKey.trim(),
+      label,
+      amountClp,
+      isPaid
+    }
+  };
+}
+
 // PUT /api/actual/entry - Upsert entry
 router.put('/entry', async (req: Request, res: Response) => {
   try {
+    const validation = validateActualEntryPayload(req.body);
+    if (validation.error) {
+      return res.status(400).json({ error: validation.error });
+    }
+
     const { year, month, category, itemKey, label, amountClp, isPaid } = req.body;
 
     // Validaciones
     if (!year || year < 2000 || year > 2100) {
-      return res.status(400).json({ error: 'Año inválido (2000-2100)' });
+      return res.status(400).json({ error: 'AÃ±o invÃ¡lido (2000-2100)' });
     }
     if (!month || month < 1 || month > 12) {
-      return res.status(400).json({ error: 'Mes inválido (1-12)' });
+      return res.status(400).json({ error: 'Mes invÃ¡lido (1-12)' });
     }
     if (!category || !VALID_CATEGORIES.includes(category)) {
-      return res.status(400).json({ error: 'Categoría inválida' });
+      return res.status(400).json({ error: 'CategorÃ­a invÃ¡lida' });
     }
     if (!itemKey || typeof itemKey !== 'string' || itemKey.trim() === '') {
       return res.status(400).json({ error: 'itemKey requerido' });
@@ -91,19 +133,24 @@ router.put('/entry', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/actual/entry - Crear/Actualizar entry (alias de PUT para semántica de creación)
+// POST /api/actual/entry - Crear/Actualizar entry (alias de PUT para semÃ¡ntica de creaciÃ³n)
 router.post('/entry', async (req: Request, res: Response) => {
   try {
+    const validation = validateActualEntryPayload(req.body);
+    if (validation.error) {
+      return res.status(400).json({ error: validation.error });
+    }
+
     const { year, month, category, itemKey, label, amountClp } = req.body;
 
-    // Reutilizamos la validación y lógica de upsert del PUT
-    // Podríamos refactorizar en una función común, pero por ahora duplico la validación básica
-    // o simplemente hago un redirect interno a la lógica, pero Express no permite eso fácilmente sin middleware.
-    // Voy a copiar la lógica esencial ya que es un requerimiento específico tener POST.
+    // Reutilizamos la validaciÃ³n y lÃ³gica de upsert del PUT
+    // PodrÃ­amos refactorizar en una funciÃ³n comÃºn, pero por ahora duplico la validaciÃ³n bÃ¡sica
+    // o simplemente hago un redirect interno a la lÃ³gica, pero Express no permite eso fÃ¡cilmente sin middleware.
+    // Voy a copiar la lÃ³gica esencial ya que es un requerimiento especÃ­fico tener POST.
 
-    if (!year || year < 2000 || year > 2100) return res.status(400).json({ error: 'Año inválido' });
-    if (!month || month < 1 || month > 12) return res.status(400).json({ error: 'Mes inválido' });
-    if (!category || !VALID_CATEGORIES.includes(category)) return res.status(400).json({ error: 'Categoría inválida' });
+    if (!year || year < 2000 || year > 2100) return res.status(400).json({ error: 'AÃ±o invÃ¡lido' });
+    if (!month || month < 1 || month > 12) return res.status(400).json({ error: 'Mes invÃ¡lido' });
+    if (!category || !VALID_CATEGORIES.includes(category)) return res.status(400).json({ error: 'CategorÃ­a invÃ¡lida' });
     if (!itemKey) return res.status(400).json({ error: 'itemKey requerido' });
     
     // Upsert para garantizar idempotencia (si pago varias veces el mismo mes, actualiza)
@@ -146,10 +193,10 @@ router.get('/summary', async (req: Request, res: Response) => {
     const month = parseInt(req.query.month as string);
 
     if (!year || year < 2000 || year > 2100) {
-      return res.status(400).json({ error: 'Año inválido' });
+      return res.status(400).json({ error: 'AÃ±o invÃ¡lido' });
     }
     if (!month || month < 1 || month > 12) {
-      return res.status(400).json({ error: 'Mes inválido' });
+      return res.status(400).json({ error: 'Mes invÃ¡lido' });
     }
 
     // Obtener budget
@@ -166,7 +213,7 @@ router.get('/summary', async (req: Request, res: Response) => {
       actualMap.set(key, entry);
     });
 
-    // Construir summary por categoría
+    // Construir summary por categorÃ­a
     const categories = VALID_CATEGORIES.map(categoryName => {
       const budgetLines = budget[categoryName as keyof typeof budget] || [];
       const lines: any[] = [];
@@ -197,7 +244,7 @@ router.get('/summary', async (req: Request, res: Response) => {
         processedKeys.add(budgetLine.itemKey);
       });
 
-      // Agregar líneas que solo estén en actual (ej: AJUSTES)
+      // Agregar lÃ­neas que solo estÃ©n en actual (ej: AJUSTES)
       actualEntries
         .filter(e => e.category === categoryName && !processedKeys.has(e.itemKey))
         .forEach(entry => {
@@ -215,7 +262,7 @@ router.get('/summary', async (req: Request, res: Response) => {
           });
         });
 
-      // Totales de categoría
+      // Totales de categorÃ­a
       const budgetClp = lines.reduce((sum, l) => sum + l.budgetClp, 0);
       const actualClp = lines.reduce((sum, l) => sum + l.actualClp, 0);
       const deltaClp = actualClp - budgetClp;

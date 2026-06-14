@@ -33,7 +33,7 @@ export default function GestionarCatalogoModal({ isOpen, onClose, onServiciosUpd
   const cargarServicios = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3000/api/servicios-basicos/catalogo');
+      const response = await fetch('/api/servicios-basicos/catalogo');
       const data = await response.json();
       setServicios(data);
     } catch (error) {
@@ -50,7 +50,7 @@ export default function GestionarCatalogoModal({ isOpen, onClose, onServiciosUpd
     }
 
     try {
-      const response = await fetch('http://localhost:3000/api/servicios-basicos/catalogo', {
+      const response = await fetch('/api/servicios-basicos/catalogo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nombre: nuevoNombre.trim() })
@@ -78,7 +78,7 @@ export default function GestionarCatalogoModal({ isOpen, onClose, onServiciosUpd
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api/servicios-basicos/catalogo/${id}`, {
+      const response = await fetch(`/api/servicios-basicos/catalogo/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nombre: nuevoNombre.trim() })
@@ -109,7 +109,7 @@ export default function GestionarCatalogoModal({ isOpen, onClose, onServiciosUpd
     if (!confirm(mensaje)) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/api/servicios-basicos/catalogo/${id}/toggle`, {
+      const response = await fetch(`/api/servicios-basicos/catalogo/${id}/toggle`, {
         method: 'PATCH'
       });
 
@@ -129,7 +129,7 @@ export default function GestionarCatalogoModal({ isOpen, onClose, onServiciosUpd
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api/servicios-basicos/catalogo/${id}`, {
+      const response = await fetch(`/api/servicios-basicos/catalogo/${id}`, {
         method: 'DELETE'
       });
 

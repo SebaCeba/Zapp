@@ -128,7 +128,7 @@ export default function ActualTenpoTable({ purchases, year, month, onDataChange,
 
   const loadCategories = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/tenpo/categories');
+      const response = await fetch('/api/tenpo/categories');
       const data = await response.json();
       // Filtrar categorías del sistema como "Sin Categorizar"
       setCategories(data.filter((cat: Category) => !data.find((c: any) => c.id === cat.id && c.isSystem)));
@@ -200,7 +200,7 @@ export default function ActualTenpoTable({ purchases, year, month, onDataChange,
 
     try {
       setAssigningBatch(true);
-      const response = await fetch('http://localhost:3000/api/tenpo/merchants/batch-assign', {
+      const response = await fetch('/api/tenpo/merchants/batch-assign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

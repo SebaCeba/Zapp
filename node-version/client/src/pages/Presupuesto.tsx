@@ -90,16 +90,16 @@ const Presupuesto: React.FC = () => {
       
       // Cargar datos de todas las fuentes
       const [ingresosRes, serviciosRes, bonosRes, subscriptionsRes, obligacionesRes, paymentsRes, segurosRes, supuestoRes, supermercadoRes, ahorrosRes] = await Promise.all([
-        fetch(`http://localhost:3000/api/ingresos/presupuesto/${anioSeleccionado}`),
-        fetch(`http://localhost:3000/api/servicios-basicos/presupuesto/${anioSeleccionado}`),
-        fetch(`http://localhost:3000/api/ingresos/bonos/${anioSeleccionado}`),
-        fetch(`http://localhost:3000/api/subscriptions/`),
-        fetch(`http://localhost:3000/api/obligaciones/`),
-        fetch(`http://localhost:3000/api/hipotecario/payments`),
-        fetch(`http://localhost:3000/api/hipotecario/seguros`),
-        fetch(`http://localhost:3000/api/obligaciones/supuestos/${anioSeleccionado}`),
-        fetch(`http://localhost:3000/api/supermercado/presupuesto/${anioSeleccionado}`),
-        fetch(`http://localhost:3000/api/ahorros/presupuesto/${anioSeleccionado}`)
+        fetch(`/api/ingresos/presupuesto/${anioSeleccionado}`),
+        fetch(`/api/servicios-basicos/presupuesto/${anioSeleccionado}`),
+        fetch(`/api/ingresos/bonos/${anioSeleccionado}`),
+        fetch(`/api/subscriptions/`),
+        fetch(`/api/obligaciones/`),
+        fetch(`/api/hipotecario/payments`),
+        fetch(`/api/hipotecario/seguros`),
+        fetch(`/api/obligaciones/supuestos/${anioSeleccionado}`),
+        fetch(`/api/supermercado/presupuesto/${anioSeleccionado}`),
+        fetch(`/api/ahorros/presupuesto/${anioSeleccionado}`)
       ]);
 
       const ingresosData = await ingresosRes.json();

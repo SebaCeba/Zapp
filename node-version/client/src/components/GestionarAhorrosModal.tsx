@@ -32,7 +32,7 @@ export default function GestionarAhorrosModal({ isOpen, onClose, onAhorrosUpdate
   const cargarAhorros = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3000/api/ahorros/catalogo');
+      const response = await fetch('/api/ahorros/catalogo');
       const data = await response.json();
       setAhorros(data);
     } catch (error) {
@@ -49,7 +49,7 @@ export default function GestionarAhorrosModal({ isOpen, onClose, onAhorrosUpdate
     }
 
     try {
-      const response = await fetch('http://localhost:3000/api/ahorros/catalogo', {
+      const response = await fetch('/api/ahorros/catalogo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nombre: nuevoNombre.trim() })
@@ -77,7 +77,7 @@ export default function GestionarAhorrosModal({ isOpen, onClose, onAhorrosUpdate
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api/ahorros/catalogo/${id}`, {
+      const response = await fetch(`/api/ahorros/catalogo/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nombre: nuevoNombre.trim() })
@@ -106,7 +106,7 @@ export default function GestionarAhorrosModal({ isOpen, onClose, onAhorrosUpdate
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api/ahorros/catalogo/${id}/toggle`, {
+      const response = await fetch(`/api/ahorros/catalogo/${id}/toggle`, {
         method: 'PATCH'
       });
 
@@ -128,7 +128,7 @@ export default function GestionarAhorrosModal({ isOpen, onClose, onAhorrosUpdate
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api/ahorros/catalogo/${id}`, {
+      const response = await fetch(`/api/ahorros/catalogo/${id}`, {
         method: 'DELETE'
       });
 

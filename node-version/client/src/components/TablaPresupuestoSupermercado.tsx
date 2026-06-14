@@ -47,7 +47,7 @@ export default function TablaPresupuestoSupermercado({ anio }: Props) {
   const cargarDatos = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3000/api/supermercado/presupuesto/${anio}`);
+      const response = await fetch(`/api/supermercado/presupuesto/${anio}`);
       const data = await response.json();
       setPresupuesto(data);
     } catch (error) {
@@ -85,7 +85,7 @@ export default function TablaPresupuestoSupermercado({ anio }: Props) {
       const montoFloat = parseFloat(monto) || 0;
 
       const response = await fetch(
-        `http://localhost:3000/api/supermercado/presupuesto/${anio}/${mes}`,
+        `/api/supermercado/presupuesto/${anio}/${mes}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },

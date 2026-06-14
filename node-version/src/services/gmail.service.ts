@@ -1,5 +1,6 @@
 import { google } from 'googleapis';
 import prisma from '../db';
+import { decryptToken, encryptToken } from '../security/tokenCrypto';
 
 const SCOPES = ['https://www.googleapis.com/auth/gmail.readonly'];
 
@@ -29,8 +30,8 @@ export class GmailService {
     await prisma.googleAuthToken.deleteMany({}); // Solo un token activo
     await prisma.googleAuthToken.create({
       data: {
-        accessToken: tokens.access_token!,
-        refreshToken: tokens.refresh_token!,
+        accessToken: encryptToken(tokens.access_token!),
+        refreshToken: encryptToken(tokens.refresh_token!),
         expiryDate: new Date(tokens.expiry_date!),
         scope: tokens.scope!,
         tokenType: tokens.token_type || 'Bearer'
@@ -50,8 +51,8 @@ export class GmailService {
     }
 
     this.oauth2Client.setCredentials({
-      access_token: tokenRecord.accessToken,
-      refresh_token: tokenRecord.refreshToken,
+      access_token: decryptToken(tokenRecord.accessToken),
+      refresh_token: decryptToken(tokenRecord.refreshToken),
       expiry_date: tokenRecord.expiryDate.getTime(),
       scope: tokenRecord.scope,
       token_type: tokenRecord.tokenType
@@ -65,7 +66,7 @@ export class GmailService {
         await prisma.googleAuthToken.update({
           where: { id: tokenRecord.id },
           data: {
-            accessToken: credentials.access_token!,
+            accessToken: encryptToken(credentials.access_token!),
             expiryDate: new Date(credentials.expiry_date!),
           }
         });

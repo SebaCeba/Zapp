@@ -58,7 +58,7 @@ export default function TablaPresupuestoServicios({ anio, onOpenCatalogo }: Prop
   const cargarDatos = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3000/api/servicios-basicos/presupuesto/${anio}`);
+      const response = await fetch(`/api/servicios-basicos/presupuesto/${anio}`);
       const data = await response.json();
       setServicios(data);
     } catch (error) {
@@ -123,7 +123,7 @@ export default function TablaPresupuestoServicios({ anio, onOpenCatalogo }: Prop
       const montoFloat = parseFloat(monto) || 0;
 
       const response = await fetch(
-        `http://localhost:3000/api/servicios-basicos/presupuesto/${servicioId}/${anio}/${mes}`,
+        `/api/servicios-basicos/presupuesto/${servicioId}/${anio}/${mes}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },

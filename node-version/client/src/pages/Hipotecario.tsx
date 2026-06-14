@@ -40,7 +40,7 @@ export default function Hipotecario() {
   // Cargar supuestos anuales UF
   useEffect(() => {
     setLoading(true);
-    fetch(`http://localhost:3000/api/obligaciones/supuestos/${anioProyectado}`)
+    fetch(`/api/obligaciones/supuestos/${anioProyectado}`)
       .then(res => res.json())
       .then(data => {
         if (data) {
@@ -57,7 +57,7 @@ export default function Hipotecario() {
     if (uf === null || ufVariation === null || loading) return;
     
     const timer = setTimeout(() => {
-      fetch('http://localhost:3000/api/obligaciones/supuestos', {
+      fetch('/api/obligaciones/supuestos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -73,8 +73,8 @@ export default function Hipotecario() {
   // Cargar payments y seguros
   useEffect(() => {
     Promise.all([
-      fetch('http://localhost:3000/api/hipotecario/payments').then(r => r.json()),
-      fetch('http://localhost:3000/api/hipotecario/seguros').then(r => r.json())
+      fetch('/api/hipotecario/payments').then(r => r.json()),
+      fetch('/api/hipotecario/seguros').then(r => r.json())
     ]).then(([paymentsData, segurosData]) => {
       setPayments(Array.isArray(paymentsData) ? paymentsData : []);
       setSeguros(Array.isArray(segurosData) ? segurosData : []);
@@ -92,7 +92,7 @@ export default function Hipotecario() {
     formData.append('file', file);
 
     try {
-      const res = await fetch('http://localhost:3000/api/hipotecario/import-csv', {
+      const res = await fetch('/api/hipotecario/import-csv', {
         method: 'POST',
         body: formData
       });
@@ -125,7 +125,7 @@ export default function Hipotecario() {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/api/hipotecario/seguros', {
+      const response = await fetch('/api/hipotecario/seguros', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -158,7 +158,7 @@ export default function Hipotecario() {
   const handleDeleteSeguro = async (nombre: string, anio: number) => {
     if (!confirm(`¿Eliminar "${nombre}" para todo el año ${anio}?`)) return;
     try {
-      await fetch(`http://localhost:3000/api/hipotecario/seguros/${encodeURIComponent(nombre)}/${anio}`, {
+      await fetch(`/api/hipotecario/seguros/${encodeURIComponent(nombre)}/${anio}`, {
         method: 'DELETE'
       });
       setRefreshKey(prev => prev + 1);

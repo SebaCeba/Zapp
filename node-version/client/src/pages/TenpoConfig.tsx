@@ -28,8 +28,8 @@ export default function TenpoConfig() {
   const loadData = async () => {
     try {
       const [tasaRes, historialRes] = await Promise.all([
-        fetch('http://localhost:3000/api/tenpo/config/tasa'),
-        fetch('http://localhost:3000/api/tenpo/config/tasa/historial')
+        fetch('/api/tenpo/config/tasa'),
+        fetch('/api/tenpo/config/tasa/historial')
       ]);
 
       if (tasaRes.ok) {
@@ -59,7 +59,7 @@ export default function TenpoConfig() {
 
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:3000/api/tenpo/config/tasa', {
+      const response = await fetch('/api/tenpo/config/tasa', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -77,7 +77,7 @@ export default function TenpoConfig() {
       showToast('Tasa actualizada. Se recalcularán las compras en modo ESTIMADO.', 'info');
 
       // Recalcular compras estimadas
-      await fetch('http://localhost:3000/api/tenpo/recalcular-estimadas', {
+      await fetch('/api/tenpo/recalcular-estimadas', {
         method: 'POST'
       });
 

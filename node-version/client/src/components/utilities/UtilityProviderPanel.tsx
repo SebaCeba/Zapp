@@ -58,7 +58,7 @@ export default function UtilityProviderPanel({ provider, providerConfig, year, o
     setLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:3000/api/utilities/${provider}?year=${year}`
+        `/api/utilities/${provider}?year=${year}`
       );
       
       if (!response.ok) {
@@ -86,8 +86,8 @@ export default function UtilityProviderPanel({ provider, providerConfig, year, o
   const loadSummaries = async () => {
     try {
       const [currentResponse, previousResponse] = await Promise.all([
-        fetch(`http://localhost:3000/api/utilities/${provider}/summary?year=${year}`),
-        fetch(`http://localhost:3000/api/utilities/${provider}/summary?year=${year - 1}`)
+        fetch(`/api/utilities/${provider}/summary?year=${year}`),
+        fetch(`/api/utilities/${provider}/summary?year=${year - 1}`)
       ]);
 
       if (currentResponse.ok) {
@@ -110,7 +110,7 @@ export default function UtilityProviderPanel({ provider, providerConfig, year, o
     setImportingEmail(true);
     try {
       const response = await fetch(
-        `http://localhost:3000/api/utilities/${provider}/import-email/preview`,
+        `/api/utilities/${provider}/import-email/preview`,
         { method: 'POST' }
       );
 
@@ -205,7 +205,7 @@ export default function UtilityProviderPanel({ provider, providerConfig, year, o
 
     try {
       const response = await fetch(
-        `http://localhost:3000/api/utilities/${provider}/import-email/confirm`,
+        `/api/utilities/${provider}/import-email/confirm`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -234,7 +234,7 @@ export default function UtilityProviderPanel({ provider, providerConfig, year, o
   const handleUpdateSavedPayPeriod = async (transactionId: number, payYear: number, payMonth: number) => {
     try {
       const response = await fetch(
-        `http://localhost:3000/api/utilities/${provider}/transactions/${transactionId}/pay-period`,
+        `/api/utilities/${provider}/transactions/${transactionId}/pay-period`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -274,7 +274,7 @@ export default function UtilityProviderPanel({ provider, providerConfig, year, o
       });
 
       const response = await fetch(
-        `http://localhost:3000/api/utilities/${provider}/import`,
+        `/api/utilities/${provider}/import`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -303,7 +303,7 @@ export default function UtilityProviderPanel({ provider, providerConfig, year, o
 
     try {
       const response = await fetch(
-        `http://localhost:3000/api/utilities/${provider}/${id}`,
+        `/api/utilities/${provider}/${id}`,
         { method: 'DELETE' }
       );
 
@@ -332,7 +332,7 @@ export default function UtilityProviderPanel({ provider, providerConfig, year, o
 
     try {
       const response = await fetch(
-        `http://localhost:3000/api/utilities/${provider}`,
+        `/api/utilities/${provider}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

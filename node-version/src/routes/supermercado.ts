@@ -1,8 +1,7 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../db';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // GET presupuesto por año
 router.get('/presupuesto/:anio', async (req: Request, res: Response) => {

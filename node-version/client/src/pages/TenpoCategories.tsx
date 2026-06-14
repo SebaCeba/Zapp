@@ -77,9 +77,9 @@ export default function TenpoCategories() {
     try {
       setLoading(true);
       const [categoriesRes, uncategorizedRes, merchantsRes] = await Promise.all([
-        fetch('http://localhost:3000/api/tenpo/categories'),
-        fetch('http://localhost:3000/api/tenpo/merchants/uncategorized'),
-        fetch('http://localhost:3000/api/tenpo/merchants')
+        fetch('/api/tenpo/categories'),
+        fetch('/api/tenpo/merchants/uncategorized'),
+        fetch('/api/tenpo/merchants')
       ]);
 
       const categoriesData = await categoriesRes.json();
@@ -104,7 +104,7 @@ export default function TenpoCategories() {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/api/tenpo/categories', {
+      const response = await fetch('/api/tenpo/categories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -134,7 +134,7 @@ export default function TenpoCategories() {
     if (!editingCategory || !newCategoryName.trim()) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/api/tenpo/categories/${editingCategory.id}`, {
+      const response = await fetch(`/api/tenpo/categories/${editingCategory.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -162,7 +162,7 @@ export default function TenpoCategories() {
     if (!deletingCategory) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/api/tenpo/categories/${deletingCategory.id}`, {
+      const response = await fetch(`/api/tenpo/categories/${deletingCategory.id}`, {
         method: 'DELETE'
       });
 
@@ -187,7 +187,7 @@ export default function TenpoCategories() {
 
     try {
       const response = await fetch(
-        `http://localhost:3000/api/tenpo/merchants/${encodeURIComponent(selectedMerchant)}/category`,
+        `/api/tenpo/merchants/${encodeURIComponent(selectedMerchant)}/category`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -340,7 +340,7 @@ export default function TenpoCategories() {
 
       try {
         const response = await fetch(
-          `http://localhost:3000/api/tenpo/merchants/${encodeURIComponent(merchantName)}/category`,
+          `/api/tenpo/merchants/${encodeURIComponent(merchantName)}/category`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -393,7 +393,7 @@ export default function TenpoCategories() {
       
       try {
         const response = await fetch(
-          `http://localhost:3000/api/tenpo/categories/${draggedCategory.id}`,
+          `/api/tenpo/categories/${draggedCategory.id}`,
           {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -425,7 +425,7 @@ export default function TenpoCategories() {
 
     try {
       const response = await fetch(
-        `http://localhost:3000/api/tenpo/merchants/${encodeURIComponent(merchantName)}/category`,
+        `/api/tenpo/merchants/${encodeURIComponent(merchantName)}/category`,
         {
           method: 'DELETE'
         }
@@ -485,7 +485,7 @@ export default function TenpoCategories() {
 
     try {
       const response = await fetch(
-        `http://localhost:3000/api/tenpo/merchants/${encodeURIComponent(merchantName)}/category`,
+        `/api/tenpo/merchants/${encodeURIComponent(merchantName)}/category`,
         {
           method: 'DELETE'
         }

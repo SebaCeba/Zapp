@@ -80,8 +80,8 @@ export default function TablaPresupuestoIngresos({ anio, onOpenCatalogo, onOpenB
     try {
       setLoading(true);
       const [ingresosRes, bonosRes] = await Promise.all([
-        fetch(`http://localhost:3000/api/ingresos/presupuesto/${anio}`),
-        fetch(`http://localhost:3000/api/ingresos/bonos/${anio}`)
+        fetch(`/api/ingresos/presupuesto/${anio}`),
+        fetch(`/api/ingresos/bonos/${anio}`)
       ]);
       const ingresosData = await ingresosRes.json();
       const bonosData = await bonosRes.json();
@@ -194,7 +194,7 @@ export default function TablaPresupuestoIngresos({ anio, onOpenCatalogo, onOpenB
       const montoFloat = parseFloat(monto) || 0;
 
       const response = await fetch(
-        `http://localhost:3000/api/ingresos/presupuesto/${ingresoId}/${anio}/${mes}`,
+        `/api/ingresos/presupuesto/${ingresoId}/${anio}/${mes}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },

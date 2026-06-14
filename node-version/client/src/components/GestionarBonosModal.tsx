@@ -73,7 +73,7 @@ export default function GestionarBonosModal({ isOpen, onClose, onBonosUpdated, a
   const cargarBonos = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3000/api/ingresos/bonos/${anio}`);
+      const response = await fetch(`/api/ingresos/bonos/${anio}`);
       const data = await response.json();
       setBonos(data);
     } catch (error) {
@@ -192,8 +192,8 @@ export default function GestionarBonosModal({ isOpen, onClose, onBonosUpdated, a
       };
 
       const url = bonoEditando
-        ? `http://localhost:3000/api/ingresos/bonos/${bonoEditando.id}`
-        : 'http://localhost:3000/api/ingresos/bonos';
+        ? `/api/ingresos/bonos/${bonoEditando.id}`
+        : '/api/ingresos/bonos';
 
       const response = await fetch(url, {
         method: bonoEditando ? 'PUT' : 'POST',
@@ -220,7 +220,7 @@ export default function GestionarBonosModal({ isOpen, onClose, onBonosUpdated, a
     if (!confirm(`¿Eliminar bono "${nombreBono}"?`)) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/api/ingresos/bonos/${id}`, {
+      const response = await fetch(`/api/ingresos/bonos/${id}`, {
         method: 'DELETE'
       });
 

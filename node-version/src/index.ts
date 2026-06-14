@@ -23,9 +23,40 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173,http://127.0.0.1:5173')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
+const apiKey = process.env.API_KEY;
 
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Origin not allowed by CORS'));
+  }
+}));
+app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || '1mb' }));
+
+app.get('/health', (_, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.use('/api', (req, res, next) => {
+  if (!apiKey) {
+    return next();
+  }
+  if (req.method === 'GET' && req.path === '/integrations/google/callback') {
+    return next();
+  }
+
+  if (req.header('x-api-key') === apiKey) {
+    return next();
+  }
+
+  return res.status(401).json({ error: 'Unauthorized' });
+});
 
 // API Routes
 app.use('/api/subscriptions', subscriptionRoutes);
@@ -44,10 +75,6 @@ app.use('/api/tenpo', merchantMappingsRoutes);
 app.use('/api/actual', actualRoutes);
 app.use('/api/tc-billing', tcBillingRoutes);
 app.use('/api/utilities', utilitiesRoutes);
-
-app.get('/health', (_, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
 
 // Inicializar tasa default al arrancar
 async function initializeDefaults() {

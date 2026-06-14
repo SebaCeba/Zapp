@@ -26,7 +26,7 @@ export default function ActualUtilities() {
 
   const loadProviders = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/utilities/providers');
+      const response = await fetch('/api/utilities/providers');
       const data = await response.json();
       setProviders(data);
       if (data.length > 0 && !activeTab) {

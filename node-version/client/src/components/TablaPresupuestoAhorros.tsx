@@ -57,7 +57,7 @@ export default function TablaPresupuestoAhorros({ anio, onOpenCatalogo }: Props)
   const cargarDatos = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3000/api/ahorros/presupuesto/${anio}`);
+      const response = await fetch(`/api/ahorros/presupuesto/${anio}`);
       const data = await response.json();
       setAhorros(data);
     } catch (error) {
@@ -122,7 +122,7 @@ export default function TablaPresupuestoAhorros({ anio, onOpenCatalogo }: Props)
       const montoFloat = parseFloat(monto) || 0;
 
       const response = await fetch(
-        `http://localhost:3000/api/ahorros/presupuesto/${ahorroId}/${anio}/${mes}`,
+        `/api/ahorros/presupuesto/${ahorroId}/${anio}/${mes}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
